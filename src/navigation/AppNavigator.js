@@ -9,6 +9,8 @@ import HomeScreen from '../screens/HomeScreen';
 import CreateRaceScreen from '../screens/CreateRaceScreen';
 import AidStationSetupScreen from '../screens/AidStationSetupScreen';
 import RaceDetailsScreen from '../screens/RaceDetailsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -41,12 +43,12 @@ const MainTabNavigator = () => {
       {/* We'll add more tabs later */}
       <Tab.Screen 
         name="Profile" 
-        component={PlaceholderScreen} 
+        component={ProfileScreen} 
         options={{ tabBarLabel: 'Profile' }}
       />
       <Tab.Screen 
         name="Settings" 
-        component={PlaceholderScreen} 
+        component={SettingsScreen} 
         options={{ tabBarLabel: 'Settings' }}
       />
     </Tab.Navigator>

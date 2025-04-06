@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Text, Card, Button, Avatar, Divider, List, useTheme, ProgressBar, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ const ProfileScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { getRacesArray } = useRaces();
   
-  const races = getRacesArray();
+  // Use useMemo to prevent recalculation on every render
+  const races = useMemo(() => getRacesArray(), [getRacesArray]);
   
   // Mock user data - in a real app, this would come from a user context or API
   const [userData, setUserData] = useState({
@@ -28,8 +29,8 @@ const ProfileScreen = ({ navigation }) => {
     },
     achievements: [
       { id: '1', name: 'First Race Plan', icon: 'flag-outline', date: '2024-03-15' },
-      { id: '2', name: 'Mountain Master', icon: 'mountain-outline', date: '2024-04-01' },
-      { id: '3', name: 'Nutrition Expert', icon: 'nutrition-outline', date: '2024-04-10' },
+      { id: '2', name: 'Mountain Master', icon: 'mountain', date: '2024-04-01' },
+      { id: '3', name: 'Nutrition Expert', icon: 'food-apple', date: '2024-04-10' },
     ],
     preferences: {
       distanceUnit: 'miles',
@@ -45,16 +46,38 @@ const ProfileScreen = ({ navigation }) => {
   
   // Update stats when races change
   useEffect(() => {
-    setUserData(prevData => ({
-      ...prevData,
-      stats: {
-        ...prevData.stats,
-        racesPlanned: races.length,
-        totalDistance: races.reduce((sum, race) => sum + race.distance, 0),
-        longestRace: Math.max(...races.map(race => race.distance), 0),
-      },
-      upcomingRace: races.length > 0 ? races[0] : null,
-    }));
+    // Only update if races array has content and is different from current data
+    if (races && races.length > 0) {
+      setUserData(prevData => {
+        // Calculate new values
+        const racesPlanned = races.length;
+        const totalDistance = races.reduce((sum, race) => sum + (race.distance || 0), 0);
+        const longestRace = Math.max(...races.map(race => race.distance || 0), 0);
+        const upcomingRace = races[0];
+        
+        // Check if any values have actually changed to prevent unnecessary updates
+        if (
+          prevData.stats.racesPlanned !== racesPlanned ||
+          prevData.stats.totalDistance !== totalDistance ||
+          prevData.stats.longestRace !== longestRace ||
+          prevData.upcomingRace?.id !== upcomingRace?.id
+        ) {
+          return {
+            ...prevData,
+            stats: {
+              ...prevData.stats,
+              racesPlanned,
+              totalDistance,
+              longestRace,
+            },
+            upcomingRace,
+          };
+        }
+        
+        // Return the previous state unchanged if nothing has changed
+        return prevData;
+      });
+    }
   }, [races]);
 
   const renderStatItem = (label, value, unit = '') => (

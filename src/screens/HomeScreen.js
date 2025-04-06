@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, Button, Card, Title, Paragraph, useTheme } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 
 const HomeScreen = ({ navigation }) => {
@@ -27,71 +27,82 @@ const HomeScreen = ({ navigation }) => {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       contentContainerStyle={{
         paddingTop: insets.top > 0 ? 0 : 16, // Only add padding if there's no notch
-        paddingBottom: insets.bottom + 16
+        paddingBottom: insets.bottom + 16,
       }}
     >
-      <Card style={styles.welcomeCard}>
-        <Card.Content>
-          <Title style={styles.title}>Ultra Endurance Planner</Title>
-          <Paragraph style={styles.paragraph}>
-            Plan, prepare, and conquer your next ultra marathon with confidence.
-          </Paragraph>
-        </Card.Content>
-        <Card.Actions style={styles.cardActions}>
-          <Button 
-            mode="contained" 
-            onPress={() => navigation.navigate('CreateRace')}
-            style={styles.button}
-          >
-            Create New Race Plan
-          </Button>
-        </Card.Actions>
-      </Card>
-
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Upcoming Races</Text>
-        
-        {races.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Card.Content>
-              <Paragraph style={styles.emptyText}>
-                You don't have any races planned yet. Create your first race plan to get started!
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        ) : (
-          races.map(race => (
-            <Card key={race.id} style={styles.raceCard}>
-              <Card.Content>
-                <Title>{race.name}</Title>
-                <Paragraph>{race.distance} miles • {race.date}</Paragraph>
-              </Card.Content>
-              <Card.Actions>
-                <Button onPress={() => navigation.navigate('RaceDetails', { id: race.id })}>
-                  View Details
-                </Button>
-              </Card.Actions>
-            </Card>
-          ))
-        )}
-      </View>
-
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Training Tips</Text>
-        <Card style={styles.tipCard}>
+        <Card style={styles.welcomeCard}>
           <Card.Content>
-            <Title>Nutrition Strategy</Title>
-            <Paragraph>Proper fueling can make or break your race. Learn how to calculate your caloric needs.</Paragraph>
+            <Title style={styles.title}>Ultra Endurance Planner</Title>
+            <Paragraph style={styles.paragraph}>
+              Plan, prepare, and conquer your next ultra marathon with
+              confidence.
+            </Paragraph>
           </Card.Content>
-          <Card.Actions>
-            <Button>Read More</Button>
+          <Card.Actions style={styles.cardActions}>
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate("CreateRace")}
+              style={styles.button}
+            >
+              Create New Race Plan
+            </Button>
           </Card.Actions>
         </Card>
-      </View>
+
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Upcoming Races</Text>
+
+          {races.length === 0 ? (
+            <Card style={styles.emptyCard}>
+              <Card.Content>
+                <Paragraph style={styles.emptyText}>
+                  You don't have any races planned yet. Create your first race
+                  plan to get started!
+                </Paragraph>
+              </Card.Content>
+            </Card>
+          ) : (
+            races.map((race) => (
+              <Card key={race.id} style={styles.raceCard}>
+                <Card.Content>
+                  <Title>{race.name}</Title>
+                  <Paragraph>
+                    {race.distance} miles • {race.date}
+                  </Paragraph>
+                </Card.Content>
+                <Card.Actions>
+                  <Button
+                    onPress={() =>
+                      navigation.navigate("RaceDetails", { id: race.id })
+                    }
+                  >
+                    View Details
+                  </Button>
+                </Card.Actions>
+              </Card>
+            ))
+          )}
+        </View>
+
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Training Tips</Text>
+          <Card style={styles.tipCard}>
+            <Card.Content>
+              <Title>Nutrition Strategy</Title>
+              <Paragraph>
+                Proper fueling can make or break your race. Learn how to
+                calculate your caloric needs.
+              </Paragraph>
+            </Card.Content>
+            <Card.Actions>
+              <Button>Read More</Button>
+            </Card.Actions>
+          </Card>
+        </View>
     </ScrollView>
   );
 };
@@ -100,6 +111,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    marginTop: 50,
   },
   loadingContainer: {
     flex: 1,

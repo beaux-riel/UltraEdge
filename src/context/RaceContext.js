@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Create the context
 const RaceContext = createContext();
@@ -91,39 +92,62 @@ export const RaceProvider = ({ children }) => {
   useEffect(() => {
     const loadRaces = async () => {
       try {
+        // Always set initial data first to ensure the app has something to display
+        setRaces(initialRaces);
+        
+        // Then try to load from AsyncStorage
         const storedRaces = await AsyncStorage.getItem('races');
         if (storedRaces) {
-          setRaces(JSON.parse(storedRaces));
+          try {
+            const parsedRaces = JSON.parse(storedRaces);
+            if (parsedRaces && typeof parsedRaces === 'object') {
+              setRaces(parsedRaces);
+            }
+          } catch (parseError) {
+            console.error('Failed to parse races from storage', parseError);
+            // Keep using initialRaces if parsing fails
+            await AsyncStorage.setItem('races', JSON.stringify(initialRaces));
+          }
         } else {
-          // Use initial data if no stored data
-          setRaces(initialRaces);
+          // No stored data, save initial data
           await AsyncStorage.setItem('races', JSON.stringify(initialRaces));
         }
       } catch (error) {
         console.error('Failed to load races from storage', error);
-        // Fallback to initial data
-        setRaces(initialRaces);
+        // We already set initialRaces above, so no need to do it again
       } finally {
         setLoading(false);
       }
     };
 
-    loadRaces();
+    // Small delay to ensure the component is mounted
+    const timer = setTimeout(() => {
+      loadRaces();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Save races to AsyncStorage whenever they change
   useEffect(() => {
     const saveRaces = async () => {
-      if (!loading) {
+      if (!loading && Object.keys(races).length > 0) {
         try {
-          await AsyncStorage.setItem('races', JSON.stringify(races));
+          const racesToSave = JSON.stringify(races);
+          await AsyncStorage.setItem('races', racesToSave);
+          console.log('Races saved successfully');
         } catch (error) {
           console.error('Failed to save races to storage', error);
         }
       }
     };
 
-    saveRaces();
+    // Small delay to avoid potential race conditions
+    const timer = setTimeout(() => {
+      saveRaces();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [races, loading]);
 
   // Add a new race

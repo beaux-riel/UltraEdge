@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
+import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
 
@@ -17,6 +18,26 @@ const theme = {
 };
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+
+  // Add a small delay to ensure everything is initialized properly
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+        <ActivityIndicator size="large" color="#3f51b5" />
+        <Text style={{ marginTop: 16, fontSize: 16 }}>Loading Ultra Endurance Planner...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>

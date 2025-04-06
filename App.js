@@ -20,7 +20,6 @@ const theme = {
 export default function App() {
   const [isReady, setIsReady] = useState(false);
 
-  // Add a small delay to ensure everything is initialized properly
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);

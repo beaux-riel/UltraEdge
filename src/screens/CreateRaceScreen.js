@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, Divider, Switch, HelperText, useTheme, SegmentedButtons, IconButton, Portal, Modal, List } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRaces } from '../context/RaceContext';
 
 const CreateRaceScreen = ({ route, navigation }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { addRace, getRaceById, updateRace } = useRaces();
   
   // Check if we're in edit mode
@@ -108,7 +110,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
   return (
     <Portal.Host>
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16
+        }}
+      >
         <View style={styles.content}>
           <Text style={styles.title}>{existingRace ? 'Edit Race Plan' : 'Create New Race Plan'}</Text>
           

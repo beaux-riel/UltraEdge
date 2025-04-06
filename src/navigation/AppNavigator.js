@@ -92,7 +92,7 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="RaceDetails" 
           component={RaceDetailsScreen} 
-          options={{ headerShown: false }}
+          options={{ title: 'Race Details' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

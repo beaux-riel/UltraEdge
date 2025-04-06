@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme, Portal, Modal, IconButton, Chip } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 
 const AidStationSetupScreen = ({ route, navigation }) => {
   const { raceData } = route.params;
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { updateRace } = useRaces();
   
   const [aidStations, setAidStations] = useState([]);
@@ -108,7 +110,12 @@ const AidStationSetupScreen = ({ route, navigation }) => {
   
   return (
     <Portal.Host>
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16
+        }}
+      >
         <View style={styles.content}>
           <Text style={styles.title}>Aid Station Setup</Text>
           <Text style={styles.subtitle}>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Text, Card, Button, Chip, List, Divider, FAB, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 
 const RaceDetailsScreen = ({ route, navigation }) => {
   const { id, isNew } = route.params;
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
   
   // Get race data from context
@@ -219,38 +221,34 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   );
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{raceData.name}</Text>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.tabBar}>
+        <Button
+          mode={activeTab === 'overview' ? 'contained' : 'text'}
+          onPress={() => setActiveTab('overview')}
+          style={styles.tabButton}
+          labelStyle={styles.tabLabel}
+        >
+          Overview
+        </Button>
         
-        <View style={styles.tabBar}>
-          <Button
-            mode={activeTab === 'overview' ? 'contained' : 'text'}
-            onPress={() => setActiveTab('overview')}
-            style={styles.tabButton}
-            labelStyle={styles.tabLabel}
-          >
-            Overview
-          </Button>
-          
-          <Button
-            mode={activeTab === 'aidStations' ? 'contained' : 'text'}
-            onPress={() => setActiveTab('aidStations')}
-            style={styles.tabButton}
-            labelStyle={styles.tabLabel}
-          >
-            Aid Stations
-          </Button>
-          
-          <Button
-            mode={activeTab === 'crew' ? 'contained' : 'text'}
-            onPress={() => setActiveTab('crew')}
-            style={styles.tabButton}
-            labelStyle={styles.tabLabel}
-          >
-            Crew
-          </Button>
-        </View>
+        <Button
+          mode={activeTab === 'aidStations' ? 'contained' : 'text'}
+          onPress={() => setActiveTab('aidStations')}
+          style={styles.tabButton}
+          labelStyle={styles.tabLabel}
+        >
+          Aid Stations
+        </Button>
+        
+        <Button
+          mode={activeTab === 'crew' ? 'contained' : 'text'}
+          onPress={() => setActiveTab('crew')}
+          style={styles.tabButton}
+          labelStyle={styles.tabLabel}
+        >
+          Crew
+        </Button>
       </View>
       
       <ScrollView style={styles.scrollView}>
@@ -259,7 +257,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         {activeTab === 'crew' && renderCrewTab()}
       </ScrollView>
       
-      <View style={styles.fabContainer}>
+      <View style={[styles.fabContainer, { bottom: insets.bottom }]}>
         <FAB
           style={[styles.fab, styles.fabDelete]}
           icon="delete"
@@ -291,25 +289,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
-  header: {
-    backgroundColor: '#3f51b5',
-    paddingTop: 16,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   tabButton: {
     flex: 1,
@@ -450,7 +437,6 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     right: 0,
-    bottom: 0,
     margin: 16,
   },
   fab: {

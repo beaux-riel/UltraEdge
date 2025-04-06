@@ -1,17 +1,25 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, Button, Card, Title, Paragraph, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 
 const HomeScreen = ({ navigation }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { getRacesArray, loading } = useRaces();
   
   const races = getRacesArray();
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[
+        styles.loadingContainer, 
+        { 
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom
+        }
+      ]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Loading your races...</Text>
       </View>
@@ -19,7 +27,13 @@ const HomeScreen = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{
+        paddingTop: insets.top > 0 ? 0 : 16, // Only add padding if there's no notch
+        paddingBottom: insets.bottom + 16
+      }}
+    >
       <Card style={styles.welcomeCard}>
         <Card.Content>
           <Title style={styles.title}>Ultra Endurance Planner</Title>

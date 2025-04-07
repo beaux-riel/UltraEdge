@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme, Portal, Modal, IconButton, Chip } from 'react-native-paper';
+import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
+import { useAppTheme } from '../context/ThemeContext';
 
 const AidStationSetupScreen = ({ route, navigation }) => {
   const { raceData } = route.params;
-  const theme = useTheme();
+  const paperTheme = usePaperTheme();
+  const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { updateRace } = useRaces();
   
@@ -108,29 +110,96 @@ const AidStationSetupScreen = ({ route, navigation }) => {
     navigation.navigate('RaceDetails', { id: completePlan.id, isNew: true });
   };
   
+  // Create dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? theme.colors.background : '#f5f5f5',
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      textAlign: 'center',
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    subtitle: {
+      fontSize: 16,
+      marginBottom: 24,
+      textAlign: 'center',
+      opacity: 0.7,
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    stationCard: {
+      marginBottom: 16,
+      borderRadius: 8,
+      backgroundColor: isDarkMode ? theme.colors.surface : '#ffffff',
+    },
+    input: {
+      marginBottom: 12,
+      backgroundColor: isDarkMode ? theme.colors.surface : '#ffffff',
+    },
+    sectionLabel: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginTop: 8,
+      marginBottom: 4,
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    divider: {
+      marginVertical: 12,
+      backgroundColor: isDarkMode ? theme.colors.border : '#e0e0e0',
+    },
+    emptyText: {
+      fontStyle: 'italic',
+      opacity: 0.7,
+      marginVertical: 8,
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    modalContainer: {
+      backgroundColor: isDarkMode ? theme.colors.surface : '#ffffff',
+      padding: 20,
+      margin: 20,
+      borderRadius: 8,
+      maxHeight: '80%',
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    modalSubtitle: {
+      marginBottom: 16,
+      opacity: 0.7,
+      color: isDarkMode ? theme.colors.text : '#000000',
+    },
+  };
+
   return (
     <Portal.Host>
       <ScrollView 
-        style={styles.container}
+        style={dynamicStyles.container}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16
         }}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Aid Station Setup</Text>
-          <Text style={styles.subtitle}>
+          <Text style={dynamicStyles.title}>Aid Station Setup</Text>
+          <Text style={dynamicStyles.subtitle}>
             {raceData.name} - {raceData.distance} {raceData.distanceUnit || 'miles'}
           </Text>
           
           {aidStations.map((station, index) => (
-            <Card key={station.id} style={styles.stationCard}>
+            <Card key={station.id} style={dynamicStyles.stationCard}>
               <Card.Content>
                 <TextInput
                   label="Aid Station Name"
                   value={station.name}
                   onChangeText={(value) => updateAidStation(index, 'name', value)}
-                  style={styles.input}
+                  style={dynamicStyles.input}
                   mode="outlined"
+                  theme={paperTheme}
                 />
                 
                 <View style={styles.rowInputs}>
@@ -138,21 +207,23 @@ const AidStationSetupScreen = ({ route, navigation }) => {
                     label={`Distance (${station.distanceUnit || 'miles'})`}
                     value={station.distance}
                     onChangeText={(value) => updateAidStation(index, 'distance', value)}
-                    style={[styles.input, styles.halfInput]}
+                    style={[dynamicStyles.input, styles.halfInput]}
                     keyboardType="numeric"
                     mode="outlined"
+                    theme={paperTheme}
                   />
                   
                   <TextInput
                     label="Cut-off Time (hh:mm)"
                     value={station.cutoffTime}
                     onChangeText={(value) => updateAidStation(index, 'cutoffTime', value)}
-                    style={[styles.input, styles.halfInput]}
+                    style={[dynamicStyles.input, styles.halfInput]}
                     mode="outlined"
+                    theme={paperTheme}
                   />
                 </View>
                 
-                <Text style={styles.sectionLabel}>Available Supplies:</Text>
+                <Text style={dynamicStyles.sectionLabel}>Available Supplies:</Text>
                 
                 <View style={styles.checkboxRow}>
                   <Checkbox.Item
@@ -208,12 +279,12 @@ const AidStationSetupScreen = ({ route, navigation }) => {
                   onPress={() => updateAidStation(index, 'supplies.medical', !station.supplies.medical)}
                 />
                 
-                <Divider style={styles.divider} />
+                <Divider style={dynamicStyles.divider} />
                 
                 {raceData.mandatoryEquipment && raceData.mandatoryEquipment.length > 0 && (
                   <View style={styles.equipmentSection}>
                     <View style={styles.sectionHeader}>
-                      <Text style={styles.sectionLabel}>Required Equipment Check:</Text>
+                      <Text style={dynamicStyles.sectionLabel}>Required Equipment Check:</Text>
                       <Button 
                         mode="outlined" 
                         onPress={() => openEquipmentModal(index)}
@@ -236,10 +307,10 @@ const AidStationSetupScreen = ({ route, navigation }) => {
                         ))}
                       </View>
                     ) : (
-                      <Text style={styles.emptyText}>No equipment checks at this station.</Text>
+                      <Text style={dynamicStyles.emptyText}>No equipment checks at this station.</Text>
                     )}
                     
-                    <Divider style={styles.divider} />
+                    <Divider style={dynamicStyles.divider} />
                   </View>
                 )}
                 
@@ -276,10 +347,10 @@ const AidStationSetupScreen = ({ route, navigation }) => {
         <Modal
           visible={equipmentModalVisible}
           onDismiss={() => setEquipmentModalVisible(false)}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={dynamicStyles.modalContainer}
         >
-          <Text style={styles.modalTitle}>Required Equipment Check</Text>
-          <Text style={styles.modalSubtitle}>
+          <Text style={dynamicStyles.modalTitle}>Required Equipment Check</Text>
+          <Text style={dynamicStyles.modalSubtitle}>
             Select equipment that must be checked at this aid station:
           </Text>
           

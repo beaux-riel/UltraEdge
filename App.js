@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
-import { View, Text, ActivityIndicator, Platform } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { View, Text, ActivityIndicator, useColorScheme } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
-// Define our custom theme
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#3f51b5',
-    accent: '#f50057',
-    background: '#f5f5f5',
-  },
-};
-
-export default function App() {
+const AppContent = () => {
+  const { theme, isDarkMode } = useTheme();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -30,21 +21,51 @@ export default function App() {
 
   if (!isReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
-        <ActivityIndicator size="large" color="#3f51b5" />
-        <Text style={{ marginTop: 16, fontSize: 16 }}>Loading Ultra Endurance Planner...</Text>
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' 
+      }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{ 
+          marginTop: 16, 
+          fontSize: 16,
+          color: isDarkMode ? '#ffffff' : '#000000'
+        }}>
+          Loading Ultra Endurance Planner...
+        </Text>
       </View>
     );
   }
 
   return (
+    <>
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
+      <AppNavigator />
+    </>
+  );
+};
+
+export default function App() {
+  return (
     <SafeAreaProvider>
-      <PaperProvider theme={theme}>
-        <RaceProvider>
-          <StatusBar style="auto" />
-          <AppNavigator />
-        </RaceProvider>
-      </PaperProvider>
+      <ThemeProvider>
+        <PaperProviderWithTheme />
+      </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+// Use a separate component to access the theme context
+const PaperProviderWithTheme = () => {
+  const { theme } = useTheme();
+  
+  return (
+    <PaperProvider theme={theme}>
+      <RaceProvider>
+        <AppContent />
+      </RaceProvider>
+    </PaperProvider>
   );
 }

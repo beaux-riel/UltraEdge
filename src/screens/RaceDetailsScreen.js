@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -27,15 +27,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
+    const didMountRef = useRef(false);
 
-  // Local state for managing the active tab.
-  const [activeTab, setActiveTab] = useState("overview");
 
-  // Retrieve race data.
-  const raceData = getRaceById(id) || {};
-
-  // Handle case when race is not found.
   useEffect(() => {
+    // Skip on the first render
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    
     if (!loading && !raceData.id) {
       Alert.alert(
         "Race Deleted",
@@ -43,7 +44,13 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         [{ text: "OK", onPress: () => navigation.navigate("Main") }]
       );
     }
-  }, [raceData, loading, navigation]);
+  }, [loading, raceData, navigation]);
+
+  // Local state for managing the active tab.
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Retrieve race data.
+  const raceData = getRaceById(id) || {};
 
   // Conditional returns after hooks are declared.
   if (loading) {

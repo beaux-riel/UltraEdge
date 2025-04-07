@@ -148,7 +148,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       <ScrollView
         style={[
           styles.container,
-          { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" },
+          { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5", },
         ]}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16,

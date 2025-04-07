@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { Text, Button, Card, Title, Paragraph, useTheme } from 'react-native-paper';
+import { Text, Button, Card, Title, Paragraph, useTheme as usePaperTheme } from 'react-native-paper';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
+import { useAppTheme } from '../context/ThemeContext';
 
 const HomeScreen = ({ navigation }) => {
-  const theme = useTheme();
+  const paperTheme = usePaperTheme();
+  const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRacesArray, loading } = useRaces();
   
@@ -17,27 +19,45 @@ const HomeScreen = ({ navigation }) => {
         styles.loadingContainer, 
         { 
           paddingTop: insets.top,
-          paddingBottom: insets.bottom
+          paddingBottom: insets.bottom,
+          backgroundColor: isDarkMode ? '#121212' : '#f5f5f5'
         }
       ]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading your races...</Text>
+        <Text style={[
+          styles.loadingText,
+          { color: isDarkMode ? '#ffffff' : '#000000' }
+        ]}>Loading your races...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+      ]}
       contentContainerStyle={{
         paddingTop: insets.top > 0 ? 0 : 16, // Only add padding if there's no notch
         paddingBottom: insets.bottom + 16,
       }}
     >
-        <Card style={styles.welcomeCard}>
+        <Card 
+          style={[
+            styles.welcomeCard,
+            { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }
+          ]}
+        >
           <Card.Content>
-            <Title style={styles.title}>Ultra Endurance Planner</Title>
-            <Paragraph style={styles.paragraph}>
+            <Title style={[
+              styles.title,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>Ultra Endurance Planner</Title>
+            <Paragraph style={[
+              styles.paragraph,
+              { color: isDarkMode ? '#e0e0e0' : '#333333' }
+            ]}>
               Plan, prepare, and conquer your next ultra marathon with
               confidence.
             </Paragraph>
@@ -47,6 +67,7 @@ const HomeScreen = ({ navigation }) => {
               mode="contained"
               onPress={() => navigation.navigate("CreateRace")}
               style={styles.button}
+              color={theme.colors.primary}
             >
               Create New Race Plan
             </Button>
@@ -54,12 +75,23 @@ const HomeScreen = ({ navigation }) => {
         </Card>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Upcoming Races</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Upcoming Races</Text>
 
           {races.length === 0 ? (
-            <Card style={styles.emptyCard}>
+            <Card 
+              style={[
+                styles.emptyCard,
+                { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }
+              ]}
+            >
               <Card.Content>
-                <Paragraph style={styles.emptyText}>
+                <Paragraph style={[
+                  styles.emptyText,
+                  { color: isDarkMode ? '#9e9e9e' : '#757575' }
+                ]}>
                   You don't have any races planned yet. Create your first race
                   plan to get started!
                 </Paragraph>
@@ -67,10 +99,18 @@ const HomeScreen = ({ navigation }) => {
             </Card>
           ) : (
             races.map((race) => (
-              <Card key={race.id} style={styles.raceCard}>
+              <Card 
+                key={race.id} 
+                style={[
+                  styles.raceCard,
+                  { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }
+                ]}
+              >
                 <Card.Content>
-                  <Title>{race.name}</Title>
-                  <Paragraph>
+                  <Title style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                    {race.name}
+                  </Title>
+                  <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
                     {race.distance} miles • {race.date}
                   </Paragraph>
                 </Card.Content>
@@ -79,6 +119,7 @@ const HomeScreen = ({ navigation }) => {
                     onPress={() =>
                       navigation.navigate("RaceDetails", { id: race.id })
                     }
+                    color={theme.colors.primary}
                   >
                     View Details
                   </Button>
@@ -89,17 +130,27 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Training Tips</Text>
-          <Card style={styles.tipCard}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Training Tips</Text>
+          <Card 
+            style={[
+              styles.tipCard,
+              { backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff' }
+            ]}
+          >
             <Card.Content>
-              <Title>Nutrition Strategy</Title>
-              <Paragraph>
+              <Title style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                Nutrition Strategy
+              </Title>
+              <Paragraph style={{ color: isDarkMode ? '#e0e0e0' : '#333333' }}>
                 Proper fueling can make or break your race. Learn how to
                 calculate your caloric needs.
               </Paragraph>
             </Card.Content>
             <Card.Actions>
-              <Button>Read More</Button>
+              <Button color={theme.colors.primary}>Read More</Button>
             </Card.Actions>
           </Card>
         </View>
@@ -110,14 +161,12 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     marginTop: 50,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 16,

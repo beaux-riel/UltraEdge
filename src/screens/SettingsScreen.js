@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, List, Switch, Divider, Button, RadioButton, useTheme as usePaperTheme } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, List, Switch, Divider, Button, RadioButton, useTheme as usePaperTheme, Dialog, Portal, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../context/ThemeContext';
+import { useSupabase } from '../context/SupabaseContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = () => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { 
+    user, 
+    isPremium, 
+    lastBackupDate, 
+    signIn, 
+    signUp, 
+    signOut, 
+    backupRaces, 
+    restoreRaces, 
+    upgradeToPremium 
+  } = useSupabase();
   
   // Settings state
   const [notifications, setNotifications] = useState(true);
@@ -16,6 +28,17 @@ const SettingsScreen = () => {
   const [elevationUnit, setElevationUnit] = useState('ft');
   const [syncWithStrava, setSyncWithStrava] = useState(false);
   const [autoBackup, setAutoBackup] = useState(true);
+  
+  // Auth state
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showSignupDialog, setShowSignupDialog] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Backup state
+  const [showBackupDialog, setShowBackupDialog] = useState(false);
   
   // Load settings from AsyncStorage
   useEffect(() => {
@@ -78,6 +101,158 @@ const SettingsScreen = () => {
   // Handle dark mode toggle
   const handleDarkModeChange = () => {
     toggleTheme();
+  };
+  
+  // Handle login
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+    
+    setIsLoading(true);
+    const { success, error } = await signIn(email, password);
+    setIsLoading(false);
+    
+    if (success) {
+      setShowLoginDialog(false);
+      setEmail('');
+      setPassword('');
+      Alert.alert('Success', 'You have been logged in successfully');
+    } else {
+      Alert.alert('Error', error || 'Failed to log in');
+    }
+  };
+  
+  // Handle signup
+  const handleSignup = async () => {
+    if (!email || !password || !name) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    
+    setIsLoading(true);
+    const { success, error } = await signUp(email, password, name);
+    setIsLoading(false);
+    
+    if (success) {
+      setShowSignupDialog(false);
+      setEmail('');
+      setPassword('');
+      setName('');
+      Alert.alert('Success', 'Your account has been created. Please check your email to verify your account.');
+    } else {
+      Alert.alert('Error', error || 'Failed to create account');
+    }
+  };
+  
+  // Handle logout
+  const handleLogout = async () => {
+    setIsLoading(true);
+    const { success, error } = await signOut();
+    setIsLoading(false);
+    
+    if (success) {
+      Alert.alert('Success', 'You have been logged out');
+    } else {
+      Alert.alert('Error', error || 'Failed to log out');
+    }
+  };
+  
+  // Handle backup
+  const handleBackup = async () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+    
+    if (!isPremium) {
+      setShowBackupDialog(true);
+      return;
+    }
+    
+    setIsLoading(true);
+    const { success, error } = await backupRaces();
+    setIsLoading(false);
+    
+    if (success) {
+      Alert.alert('Success', 'Your race data has been backed up successfully');
+    } else {
+      Alert.alert('Error', error || 'Failed to backup data');
+    }
+  };
+  
+  // Handle restore
+  const handleRestore = async () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+    
+    if (!isPremium) {
+      setShowBackupDialog(true);
+      return;
+    }
+    
+    Alert.alert(
+      'Restore Data',
+      'This will replace your current race data with the backup. Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Restore',
+          onPress: async () => {
+            setIsLoading(true);
+            const { success, error, backupDate } = await restoreRaces();
+            setIsLoading(false);
+            
+            if (success) {
+              Alert.alert('Success', `Your race data has been restored from backup (${backupDate.toLocaleDateString()})`);
+              // Force reload the app or refresh races context
+              // This would typically reload the app or navigate to the home screen
+            } else {
+              Alert.alert('Error', error || 'Failed to restore data');
+            }
+          },
+        },
+      ],
+    );
+  };
+  
+  // Handle upgrade to premium
+  const handleUpgradeToPremium = async () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+    
+    Alert.alert(
+      'Upgrade to Premium',
+      'This will upgrade your account to premium, enabling cloud backup and restore features. In a real app, this would process payment.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Upgrade',
+          onPress: async () => {
+            setIsLoading(true);
+            const { success, error } = await upgradeToPremium();
+            setIsLoading(false);
+            
+            if (success) {
+              Alert.alert('Success', 'Your account has been upgraded to premium');
+            } else {
+              Alert.alert('Error', error || 'Failed to upgrade account');
+            }
+          },
+        },
+      ],
+    );
   };
   
   // Create dynamic styles based on theme
@@ -239,6 +414,44 @@ const SettingsScreen = () => {
       </View>
       
       <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Cloud Backup</Text>
+        
+        <List.Item
+          title="Backup to Cloud"
+          description={lastBackupDate ? `Last backup: ${lastBackupDate.toLocaleDateString()}` : "Backup your race data to the cloud"}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="cloud-upload-outline" color={isDarkMode ? '#ffffff' : undefined} />}
+          onPress={handleBackup}
+        />
+        
+        <Divider />
+        
+        <List.Item
+          title="Restore from Cloud"
+          description="Restore your race data from the cloud"
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="cloud-download-outline" color={isDarkMode ? '#ffffff' : undefined} />}
+          onPress={handleRestore}
+        />
+        
+        {!isPremium && (
+          <>
+            <Divider />
+            <List.Item
+              title="Upgrade to Premium"
+              description="Get cloud backup and more features"
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="star" color={isDarkMode ? '#ffd700' : '#ffc107'} />}
+              onPress={handleUpgradeToPremium}
+            />
+          </>
+        )}
+      </View>
+      
+      <View style={dynamicStyles.section}>
         <Text style={dynamicStyles.sectionTitle}>Integrations</Text>
         
         <List.Item
@@ -271,25 +484,61 @@ const SettingsScreen = () => {
       <View style={dynamicStyles.section}>
         <Text style={dynamicStyles.sectionTitle}>Account</Text>
         
-        <List.Item
-          title="Edit Profile"
-          description="Change your name, email, and photo"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="account-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Navigate to edit profile */}}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Change Password"
-          description="Update your account password"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="lock-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Handle password change */}}
-        />
+        {user ? (
+          <>
+            <List.Item
+              title={user.user_metadata?.name || user.email}
+              description={isPremium ? "Premium Account" : "Free Account"}
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="account" color={isDarkMode ? '#ffffff' : undefined} />}
+            />
+            
+            <Divider />
+            
+            <List.Item
+              title="Edit Profile"
+              description="Change your name, email, and photo"
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="account-edit-outline" color={isDarkMode ? '#ffffff' : undefined} />}
+              onPress={() => {/* Navigate to edit profile */}}
+            />
+            
+            <Divider />
+            
+            <List.Item
+              title="Change Password"
+              description="Update your account password"
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="lock-outline" color={isDarkMode ? '#ffffff' : undefined} />}
+              onPress={() => {/* Handle password change */}}
+            />
+          </>
+        ) : (
+          <>
+            <List.Item
+              title="Sign In"
+              description="Log in to your account"
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="login" color={isDarkMode ? '#ffffff' : undefined} />}
+              onPress={() => setShowLoginDialog(true)}
+            />
+            
+            <Divider />
+            
+            <List.Item
+              title="Create Account"
+              description="Sign up for a new account"
+              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+              left={props => <List.Icon {...props} icon="account-plus-outline" color={isDarkMode ? '#ffffff' : undefined} />}
+              onPress={() => setShowSignupDialog(true)}
+            />
+          </>
+        )}
         
         <Divider />
         
@@ -338,21 +587,113 @@ const SettingsScreen = () => {
         />
       </View>
       
-      <View style={styles.buttonContainer}>
-        <Button 
-          mode="outlined" 
-          style={[
-            styles.logoutButton,
-            { borderColor: isDarkMode ? "#ff6b6b" : "#f44336" }
-          ]}
-          labelStyle={{ color: isDarkMode ? "#ff6b6b" : "#f44336" }}
-          color={isDarkMode ? "#ff6b6b" : "#f44336"}
-          onPress={() => {/* Handle logout */}}
-        >
-          Log Out
-        </Button>
-      </View>
+      {user && (
+        <View style={styles.buttonContainer}>
+          <Button 
+            mode="outlined" 
+            style={[
+              styles.logoutButton,
+              { borderColor: isDarkMode ? "#ff6b6b" : "#f44336" }
+            ]}
+            labelStyle={{ color: isDarkMode ? "#ff6b6b" : "#f44336" }}
+            color={isDarkMode ? "#ff6b6b" : "#f44336"}
+            onPress={handleLogout}
+            loading={isLoading}
+            disabled={isLoading}
+          >
+            Log Out
+          </Button>
+        </View>
+      )}
     </ScrollView>
+    
+    {/* Login Dialog */}
+    <Portal>
+      <Dialog visible={showLoginDialog} onDismiss={() => setShowLoginDialog(false)}>
+        <Dialog.Title>Sign In</Dialog.Title>
+        <Dialog.Content>
+          <TextInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            mode="outlined"
+            style={{ marginBottom: 12 }}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            mode="outlined"
+            secureTextEntry
+            style={{ marginBottom: 12 }}
+          />
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={() => setShowLoginDialog(false)}>Cancel</Button>
+          <Button onPress={() => setShowSignupDialog(true) || setShowLoginDialog(false)}>Sign Up</Button>
+          <Button onPress={handleLogin} loading={isLoading} disabled={isLoading}>Login</Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
+    
+    {/* Signup Dialog */}
+    <Portal>
+      <Dialog visible={showSignupDialog} onDismiss={() => setShowSignupDialog(false)}>
+        <Dialog.Title>Create Account</Dialog.Title>
+        <Dialog.Content>
+          <TextInput
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            mode="outlined"
+            style={{ marginBottom: 12 }}
+          />
+          <TextInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            mode="outlined"
+            style={{ marginBottom: 12 }}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            mode="outlined"
+            secureTextEntry
+            style={{ marginBottom: 12 }}
+          />
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={() => setShowSignupDialog(false)}>Cancel</Button>
+          <Button onPress={() => setShowLoginDialog(true) || setShowSignupDialog(false)}>Sign In</Button>
+          <Button onPress={handleSignup} loading={isLoading} disabled={isLoading}>Sign Up</Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
+    
+    {/* Premium Upgrade Dialog */}
+    <Portal>
+      <Dialog visible={showBackupDialog} onDismiss={() => setShowBackupDialog(false)}>
+        <Dialog.Title>Premium Feature</Dialog.Title>
+        <Dialog.Content>
+          <Text style={{ marginBottom: 12 }}>
+            Cloud backup and restore are premium features. Upgrade to premium to enable these features.
+          </Text>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={() => setShowBackupDialog(false)}>Cancel</Button>
+          <Button onPress={() => {
+            setShowBackupDialog(false);
+            handleUpgradeToPremium();
+          }}>Upgrade</Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
   );
 };
 

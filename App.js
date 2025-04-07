@@ -6,6 +6,7 @@ import { View, Text, ActivityIndicator, useColorScheme, Button } from 'react-nat
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
+import { SupabaseProvider } from './src/context/SupabaseContext';
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -63,9 +64,11 @@ const PaperProviderWithTheme = () => {
   
   return (
     <PaperProvider theme={theme}>
-      <RaceProvider>
-        <AppContent />
-      </RaceProvider>
+      <SupabaseProvider>
+        <RaceProvider>
+          <AppContent />
+        </RaceProvider>
+      </SupabaseProvider>
     </PaperProvider>
   );
 }

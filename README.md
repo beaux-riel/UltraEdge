@@ -13,6 +13,10 @@ A React Native application for planning and managing ultra marathon races and en
   - Medical support availability
 - Track crew members and assign them to specific aid stations
 - View race details including elevation, distance, and mandatory equipment
+- Premium features:
+  - Cloud backup of race data to Supabase
+  - Restore race data from cloud backups
+  - Secure user authentication
 
 ## Technical Details
 
@@ -20,6 +24,7 @@ A React Native application for planning and managing ultra marathon races and en
 - Uses React Navigation for app navigation
 - Implements React Native Paper for UI components
 - Stores data locally using AsyncStorage
+- Integrates with Supabase for cloud storage and authentication
 
 ## Getting Started
 
@@ -44,7 +49,12 @@ npm install
 yarn install
 ```
 
-3. Start the development server
+3. Configure Supabase (for premium features)
+```bash
+# See instructions in /supabase/README.md
+```
+
+4. Start the development server
 ```bash
 npx expo start
 ```

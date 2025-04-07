@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { Text, Card, Button, Chip, List, Divider, FAB, useTheme } from 'react-native-paper';
+import { Text, Card, Button, Chip, List, Divider, FAB, useTheme as usePaperTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
+import { useAppTheme } from '../context/ThemeContext';
 
 const RaceDetailsScreen = ({ route, navigation }) => {
   const { id, isNew } = route.params;
-  const theme = useTheme();
+  const paperTheme = usePaperTheme();
+  const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
   
@@ -45,9 +47,15 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[
+        styles.loadingContainer,
+        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+      ]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading race details...</Text>
+        <Text style={[
+          styles.loadingText,
+          { color: isDarkMode ? '#ffffff' : '#000000' }
+        ]}>Loading race details...</Text>
       </View>
     );
   }
@@ -60,51 +68,110 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   
   const renderOverviewTab = () => (
     <View style={styles.tabContent}>
-      <Card style={styles.infoCard}>
+      <Card style={[
+        styles.infoCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Distance:</Text>
-            <Text style={styles.infoValue}>
+            <Text style={[
+              styles.infoLabel,
+              { color: isDarkMode ? '#9e9e9e' : undefined }
+            ]}>Distance:</Text>
+            <Text style={[
+              styles.infoValue,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>
               {raceData.distance} {raceData.distanceUnit || 'miles'}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Elevation Gain:</Text>
-            <Text style={styles.infoValue}>
+            <Text style={[
+              styles.infoLabel,
+              { color: isDarkMode ? '#9e9e9e' : undefined }
+            ]}>Elevation Gain:</Text>
+            <Text style={[
+              styles.infoValue,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>
               {raceData.elevation} {raceData.elevationUnit || 'ft'}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Race Date:</Text>
-            <Text style={styles.infoValue}>{raceData.date}</Text>
+            <Text style={[
+              styles.infoLabel,
+              { color: isDarkMode ? '#9e9e9e' : undefined }
+            ]}>Race Date:</Text>
+            <Text style={[
+              styles.infoValue,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>{raceData.date}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Aid Stations:</Text>
-            <Text style={styles.infoValue}>{raceData.numAidStations}</Text>
+            <Text style={[
+              styles.infoLabel,
+              { color: isDarkMode ? '#9e9e9e' : undefined }
+            ]}>Aid Stations:</Text>
+            <Text style={[
+              styles.infoValue,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>{raceData.numAidStations}</Text>
           </View>
           
           <View style={styles.chipContainer}>
             {raceData.dropBagsAllowed && (
-              <Chip style={styles.chip} icon="bag-personal">Drop Bags</Chip>
+              <Chip 
+                style={[
+                  styles.chip,
+                  { backgroundColor: isDarkMode ? '#333333' : undefined }
+                ]} 
+                icon="bag-personal"
+                textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+              >
+                Drop Bags
+              </Chip>
             )}
             
             {raceData.crewAllowed && (
-              <Chip style={styles.chip} icon="account-group">Crew Access</Chip>
+              <Chip 
+                style={[
+                  styles.chip,
+                  { backgroundColor: isDarkMode ? '#333333' : undefined }
+                ]} 
+                icon="account-group"
+                textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+              >
+                Crew Access
+              </Chip>
             )}
           </View>
         </Card.Content>
       </Card>
       
       {raceData.mandatoryEquipment && raceData.mandatoryEquipment.length > 0 && (
-        <Card style={styles.equipmentCard}>
+        <Card style={[
+          styles.equipmentCard,
+          { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+        ]}>
           <Card.Content>
-            <Text style={styles.sectionTitle}>Mandatory Equipment</Text>
+            <Text style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>Mandatory Equipment</Text>
             <View style={styles.equipmentList}>
               {raceData.mandatoryEquipment.map((item, index) => (
-                <Chip key={index} style={styles.equipmentChip} icon="check">
+                <Chip 
+                  key={index} 
+                  style={[
+                    styles.equipmentChip,
+                    { backgroundColor: isDarkMode ? '#333333' : undefined }
+                  ]} 
+                  icon="check"
+                  textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+                >
                   {item}
                 </Chip>
               ))}
@@ -113,15 +180,21 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         </Card>
       )}
       
-      <Card style={styles.notesCard}>
+      <Card style={[
+        styles.notesCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Race Notes</Text>
-          <Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Race Notes</Text>
+          <Text style={{ color: isDarkMode ? '#e0e0e0' : '#000000' }}>
             Tap to add notes about race strategy, gear requirements, or other important details.
           </Text>
         </Card.Content>
         <Card.Actions>
-          <Button>Add Notes</Button>
+          <Button color={theme.colors.primary}>Add Notes</Button>
         </Card.Actions>
       </Card>
     </View>
@@ -130,27 +203,59 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const renderAidStationsTab = () => (
     <View style={styles.tabContent}>
       {raceData.aidStations?.map((station, index) => (
-        <Card key={station.id} style={styles.stationCard}>
+        <Card 
+          key={station.id} 
+          style={[
+            styles.stationCard,
+            { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+          ]}
+        >
           <Card.Content>
             <View style={styles.stationHeader}>
-              <Text style={styles.stationName}>{station.name}</Text>
-              <Text style={styles.stationDistance}>
+              <Text style={[
+                styles.stationName,
+                { color: isDarkMode ? '#ffffff' : '#000000' }
+              ]}>{station.name}</Text>
+              <Text style={[
+                styles.stationDistance,
+                { color: isDarkMode ? '#9e9e9e' : undefined }
+              ]}>
                 {raceData.distanceUnit === 'km' ? 'KM' : 'Mile'} {station.distance}
               </Text>
             </View>
             
-            <Divider style={styles.divider} />
+            <Divider style={[
+              styles.divider,
+              { backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }
+            ]} />
             
             <View style={styles.stationDetails}>
-              <Text style={styles.detailLabel}>Cut-off Time:</Text>
-              <Text style={styles.detailValue}>{station.cutoffTime}</Text>
+              <Text style={[
+                styles.detailLabel,
+                { color: isDarkMode ? '#9e9e9e' : undefined }
+              ]}>Cut-off Time:</Text>
+              <Text style={[
+                styles.detailValue,
+                { color: isDarkMode ? '#ffffff' : '#000000' }
+              ]}>{station.cutoffTime}</Text>
             </View>
             
-            <Text style={styles.suppliesTitle}>Available:</Text>
+            <Text style={[
+              styles.suppliesTitle,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>Available:</Text>
             <View style={styles.suppliesContainer}>
               {Object.entries(station.supplies).map(([key, value]) => (
                 value && (
-                  <Chip key={key} style={styles.supplyChip} small>
+                  <Chip 
+                    key={key} 
+                    style={[
+                      styles.supplyChip,
+                      { backgroundColor: isDarkMode ? '#333333' : undefined }
+                    ]} 
+                    small
+                    textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+                  >
                     {key.replace('_', ' ')}
                   </Chip>
                 )
@@ -159,10 +264,22 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             
             {station.requiredEquipment && station.requiredEquipment.length > 0 && (
               <View style={styles.equipmentCheckContainer}>
-                <Text style={styles.equipmentCheckTitle}>Equipment Check:</Text>
+                <Text style={[
+                  styles.equipmentCheckTitle,
+                  { color: isDarkMode ? '#ffffff' : '#000000' }
+                ]}>Equipment Check:</Text>
                 <View style={styles.equipmentCheckList}>
                   {station.requiredEquipment.map((item, idx) => (
-                    <Chip key={idx} style={styles.equipmentCheckChip} small icon="check">
+                    <Chip 
+                      key={idx} 
+                      style={[
+                        styles.equipmentCheckChip,
+                        { backgroundColor: isDarkMode ? '#333333' : undefined }
+                      ]} 
+                      small 
+                      icon="check"
+                      textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+                    >
                       {item}
                     </Chip>
                   ))}
@@ -172,11 +289,31 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             
             <View style={styles.accessContainer}>
               {station.dropBagAllowed && (
-                <Chip icon="bag-personal" style={styles.accessChip} small>Drop Bag</Chip>
+                <Chip 
+                  icon="bag-personal" 
+                  style={[
+                    styles.accessChip,
+                    { backgroundColor: isDarkMode ? '#333333' : undefined }
+                  ]} 
+                  small
+                  textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+                >
+                  Drop Bag
+                </Chip>
               )}
               
               {station.crewAllowed && (
-                <Chip icon="account-group" style={styles.accessChip} small>Crew</Chip>
+                <Chip 
+                  icon="account-group" 
+                  style={[
+                    styles.accessChip,
+                    { backgroundColor: isDarkMode ? '#333333' : undefined }
+                  ]} 
+                  small
+                  textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
+                >
+                  Crew
+                </Chip>
               )}
             </View>
           </Card.Content>
@@ -187,47 +324,79 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   
   const renderCrewTab = () => (
     <View style={styles.tabContent}>
-      <Card style={styles.crewCard}>
+      <Card style={[
+        styles.crewCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Crew Members</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Crew Members</Text>
           
           <List.Item
             title="Add Crew Member"
-            left={props => <List.Icon {...props} icon="plus-circle" />}
+            titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+            left={props => <List.Icon {...props} icon="plus-circle" color={theme.colors.primary} />}
             onPress={() => {}}
           />
           
-          <Divider />
+          <Divider style={{ backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }} />
           
-          <Text style={styles.emptyState}>
+          <Text style={[
+            styles.emptyState,
+            { color: isDarkMode ? '#9e9e9e' : undefined }
+          ]}>
             No crew members added yet. Add crew members to assign them to aid stations.
           </Text>
         </Card.Content>
       </Card>
       
-      <Card style={styles.crewCard}>
+      <Card style={[
+        styles.crewCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Crew Instructions</Text>
-          <Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Crew Instructions</Text>
+          <Text style={{ color: isDarkMode ? '#e0e0e0' : '#000000' }}>
             Tap to add specific instructions for your crew, including meeting points, 
             driving directions, and what to bring.
           </Text>
         </Card.Content>
         <Card.Actions>
-          <Button>Add Instructions</Button>
+          <Button color={theme.colors.primary}>Add Instructions</Button>
         </Card.Actions>
       </Card>
     </View>
   );
   
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <View style={styles.tabBar}>
+    <View style={[
+      styles.container, 
+      { 
+        paddingBottom: insets.bottom,
+        backgroundColor: isDarkMode ? '#121212' : '#f5f5f5'
+      }
+    ]}>
+      <View style={[
+        styles.tabBar,
+        {
+          backgroundColor: isDarkMode ? '#121212' : '#f5f5f5',
+          borderBottomColor: isDarkMode ? '#333333' : '#e0e0e0'
+        }
+      ]}>
         <Button
           mode={activeTab === 'overview' ? 'contained' : 'text'}
           onPress={() => setActiveTab('overview')}
           style={styles.tabButton}
-          labelStyle={styles.tabLabel}
+          labelStyle={[
+            styles.tabLabel,
+            activeTab !== 'overview' && { color: isDarkMode ? '#ffffff' : undefined }
+          ]}
+          color={theme.colors.primary}
         >
           Overview
         </Button>
@@ -236,7 +405,11 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           mode={activeTab === 'aidStations' ? 'contained' : 'text'}
           onPress={() => setActiveTab('aidStations')}
           style={styles.tabButton}
-          labelStyle={styles.tabLabel}
+          labelStyle={[
+            styles.tabLabel,
+            activeTab !== 'aidStations' && { color: isDarkMode ? '#ffffff' : undefined }
+          ]}
+          color={theme.colors.primary}
         >
           Aid Stations
         </Button>
@@ -245,13 +418,20 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           mode={activeTab === 'crew' ? 'contained' : 'text'}
           onPress={() => setActiveTab('crew')}
           style={styles.tabButton}
-          labelStyle={styles.tabLabel}
+          labelStyle={[
+            styles.tabLabel,
+            activeTab !== 'crew' && { color: isDarkMode ? '#ffffff' : undefined }
+          ]}
+          color={theme.colors.primary}
         >
           Crew
         </Button>
       </View>
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={[
+        styles.scrollView,
+        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+      ]}>
         {activeTab === 'overview' && renderOverviewTab()}
         {activeTab === 'aidStations' && renderAidStationsTab()}
         {activeTab === 'crew' && renderCrewTab()}
@@ -263,11 +443,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           icon="delete"
           onPress={handleDeleteRace}
           small
+          color="#ffffff"
         />
         <FAB
-          style={styles.fab}
+          style={[
+            styles.fab,
+            { backgroundColor: theme.colors.primary }
+          ]}
           icon="pencil"
           onPress={() => navigation.navigate('CreateRace', { editMode: true, raceData })}
+          color="#ffffff"
         />
       </View>
     </View>
@@ -277,13 +462,11 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 16,
@@ -292,11 +475,9 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   tabButton: {
     flex: 1,
@@ -441,7 +622,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     marginTop: 8,
-    backgroundColor: '#3f51b5',
   },
   fabDelete: {
     backgroundColor: '#f44336',

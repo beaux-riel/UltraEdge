@@ -20,6 +20,14 @@ const LightTheme = {
     notification: '#f50057',
     card: '#ffffff',
     border: '#e0e0e0',
+    elevation: {
+      level0: 'transparent',
+      level1: 'rgb(247, 243, 249)',
+      level2: 'rgb(243, 237, 246)',
+      level3: 'rgb(238, 232, 244)',
+      level4: 'rgb(236, 230, 243)',
+      level5: 'rgb(233, 226, 240)',
+    },
   },
 };
 
@@ -41,6 +49,14 @@ const CustomDarkTheme = {
     notification: '#ff4081',
     card: '#1e1e1e',
     border: '#333333',
+    elevation: {
+      level0: 'transparent',
+      level1: 'rgb(37, 35, 42)',
+      level2: 'rgb(44, 40, 49)',
+      level3: 'rgb(49, 44, 56)',
+      level4: 'rgb(51, 46, 58)',
+      level5: 'rgb(52, 47, 60)',
+    },
   },
 };
 

@@ -6,7 +6,6 @@ import { View, Text, ActivityIndicator, useColorScheme, Button } from 'react-nat
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
-import TestDarkMode from './test-dark-mode';
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();

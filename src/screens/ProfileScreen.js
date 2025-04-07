@@ -1,42 +1,73 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { Text, Card, Button, Avatar, Divider, List, useTheme as usePaperTheme, ProgressBar, Chip } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRaces } from '../context/RaceContext';
-import { useAppTheme } from '../context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from "react-native";
+import {
+  Text,
+  Card,
+  Button,
+  Avatar,
+  Divider,
+  List,
+  useTheme as usePaperTheme,
+  ProgressBar,
+  Chip,
+} from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRaces } from "../context/RaceContext";
+import { useAppTheme } from "../context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const ProfileScreen = ({ navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRacesArray } = useRaces();
-  
+
   // Use useMemo to prevent recalculation on every render
   const races = useMemo(() => getRacesArray(), [getRacesArray]);
-  
+
   // Mock user data - in a real app, this would come from a user context or API
   const [userData, setUserData] = useState({
-    name: 'Alex Runner',
-    email: 'alex.runner@example.com',
+    name: "Alex Runner",
+    email: "alex.runner@example.com",
     profileImage: null, // We'll use a placeholder
-    location: 'Boulder, CO',
-    bio: 'Ultra runner passionate about mountain trails and pushing limits. Completed 10+ ultras including Western States and UTMB.',
+    location: "Boulder, CO",
+    bio: "Ultra runner passionate about mountain trails and pushing limits. Completed 10+ ultras including Western States and UTMB.",
     stats: {
       racesPlanned: races.length,
       racesCompleted: 3,
       totalDistance: races.reduce((sum, race) => sum + race.distance, 0),
       appUsage: 15, // Number of times app used for planning
-      longestRace: Math.max(...races.map(race => race.distance), 0),
+      longestRace: Math.max(...races.map((race) => race.distance), 0),
     },
     achievements: [
-      { id: '1', name: 'First Race Plan', icon: 'flag-outline', date: '2024-03-15' },
-      { id: '2', name: 'Mountain Master', icon: 'mountain', date: '2024-04-01' },
-      { id: '3', name: 'Nutrition Expert', icon: 'food-apple', date: '2024-04-10' },
+      {
+        id: "1",
+        name: "First Race Plan",
+        icon: "flag-outline",
+        date: "2024-03-15",
+      },
+      {
+        id: "2",
+        name: "Mountain Master",
+        icon: "pyramid",
+        date: "2024-04-01",
+      },
+      {
+        id: "3",
+        name: "Nutrition Expert",
+        icon: "food-apple",
+        date: "2024-04-10",
+      },
     ],
     preferences: {
-      distanceUnit: 'miles',
-      elevationUnit: 'ft',
+      distanceUnit: "miles",
+      elevationUnit: "ft",
       notifications: true,
       darkMode: false,
     },
@@ -44,19 +75,26 @@ const ProfileScreen = ({ navigation }) => {
   });
 
   // Calculate statistics
-  const completionRate = userData.stats.racesCompleted / (userData.stats.racesPlanned || 1);
-  
+  const completionRate =
+    userData.stats.racesCompleted / (userData.stats.racesPlanned || 1);
+
   // Update stats when races change
   useEffect(() => {
     // Only update if races array has content and is different from current data
     if (races && races.length > 0) {
-      setUserData(prevData => {
+      setUserData((prevData) => {
         // Calculate new values
         const racesPlanned = races.length;
-        const totalDistance = races.reduce((sum, race) => sum + (race.distance || 0), 0);
-        const longestRace = Math.max(...races.map(race => race.distance || 0), 0);
+        const totalDistance = races.reduce(
+          (sum, race) => sum + (race.distance || 0),
+          0
+        );
+        const longestRace = Math.max(
+          ...races.map((race) => race.distance || 0),
+          0
+        );
         const upcomingRace = races[0];
-        
+
         // Check if any values have actually changed to prevent unnecessary updates
         if (
           prevData.stats.racesPlanned !== racesPlanned ||
@@ -75,75 +113,92 @@ const ProfileScreen = ({ navigation }) => {
             upcomingRace,
           };
         }
-        
+
         // Return the previous state unchanged if nothing has changed
         return prevData;
       });
     }
   }, [races]);
 
-  const renderStatItem = (label, value, unit = '') => (
+  const renderStatItem = (label, value, unit = "") => (
     <View style={styles.statItem}>
-      <Text style={[
-        styles.statValue,
-        { color: theme.colors.primary }
-      ]}>{value}{unit}</Text>
-      <Text style={[
-        styles.statLabel,
-        { color: isDarkMode ? '#9e9e9e' : '#757575' }
-      ]}>{label}</Text>
+      <Text style={[styles.statValue, { color: theme.colors.primary }]}>
+        {value}
+        {unit}
+      </Text>
+      <Text
+        style={[
+          styles.statLabel,
+          { color: isDarkMode ? "#9e9e9e" : "#757575" },
+        ]}
+      >
+        {label}
+      </Text>
     </View>
   );
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[
         styles.container,
-        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+        { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" },
       ]}
       contentContainerStyle={{
         paddingTop: insets.top > 0 ? 0 : 16,
-        paddingBottom: insets.bottom + 16
+        paddingBottom: insets.bottom + 16,
       }}
     >
       {/* Profile Header */}
-      <View style={[
-        styles.profileHeader,
-        { 
-          backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
-          shadowColor: isDarkMode ? '#000000' : '#000000'
-        }
-      ]}>
-        <Avatar.Image 
-          size={100} 
-          source={userData.profileImage || require('../../assets/default-profile.png')} 
+      <View
+        style={[
+          styles.profileHeader,
+          {
+            backgroundColor: isDarkMode ? "#1e1e1e" : "white",
+            shadowColor: isDarkMode ? "#000000" : "#000000",
+          },
+        ]}
+      >
+        <Avatar.Image
+          size={100}
+          source={
+            userData.profileImage || require("../../assets/default-profile.png")
+          }
           style={[
             styles.profileImage,
-            { backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }
+            { backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" },
           ]}
         />
         <View style={styles.profileInfo}>
-          <Text style={[
-            styles.profileName,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>{userData.name}</Text>
-          <Text style={[
-            styles.profileLocation,
-            { color: isDarkMode ? '#9e9e9e' : '#757575' }
-          ]}>
-            <Ionicons name="location-outline" size={16} color={theme.colors.primary} />
-            {' '}{userData.location}
+          <Text
+            style={[
+              styles.profileName,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            {userData.name}
+          </Text>
+          <Text
+            style={[
+              styles.profileLocation,
+              { color: isDarkMode ? "#9e9e9e" : "#757575" },
+            ]}
+          >
+            <Ionicons
+              name="location-outline"
+              size={16}
+              color={theme.colors.primary}
+            />{" "}
+            {userData.location}
           </Text>
           <View style={styles.editButtonContainer}>
-            <Button 
-              mode="outlined" 
-              compact 
-              style={[
-                styles.editButton,
-                { borderColor: theme.colors.primary }
-              ]}
+            <Button
+              mode="outlined"
+              compact
+              style={[styles.editButton, { borderColor: theme.colors.primary }]}
               color={theme.colors.primary}
-              onPress={() => {/* Navigate to edit profile */}}
+              onPress={() => {
+                /* Navigate to edit profile */
+              }}
             >
               Edit Profile
             </Button>
@@ -152,55 +207,83 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       {/* Bio Section */}
-      <Card style={[
-        styles.bioCard,
-        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-      ]}>
+      <Card
+        style={[
+          styles.bioCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>About Me</Text>
-          <Text style={[
-            styles.bioText,
-            { color: isDarkMode ? '#e0e0e0' : '#333333' }
-          ]}>{userData.bio}</Text>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            About Me
+          </Text>
+          <Text
+            style={[
+              styles.bioText,
+              { color: isDarkMode ? "#e0e0e0" : "#333333" },
+            ]}
+          >
+            {userData.bio}
+          </Text>
         </Card.Content>
       </Card>
 
       {/* Stats Overview */}
-      <Card style={[
-        styles.statsCard,
-        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-      ]}>
+      <Card
+        style={[
+          styles.statsCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>Running Stats</Text>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Running Stats
+          </Text>
           <View style={styles.statsGrid}>
-            {renderStatItem('Races Planned', userData.stats.racesPlanned)}
-            {renderStatItem('Races Completed', userData.stats.racesCompleted)}
-            {renderStatItem('Total Distance', userData.stats.totalDistance, ' mi')}
-            {renderStatItem('Longest Race', userData.stats.longestRace, ' mi')}
-            {renderStatItem('App Usage', userData.stats.appUsage, ' times')}
+            {renderStatItem("Races Planned", userData.stats.racesPlanned)}
+            {renderStatItem("Races Completed", userData.stats.racesCompleted)}
+            {renderStatItem(
+              "Total Distance",
+              userData.stats.totalDistance,
+              " mi"
+            )}
+            {renderStatItem("Longest Race", userData.stats.longestRace, " mi")}
+            {renderStatItem("App Usage", userData.stats.appUsage, " times")}
           </View>
-          
+
           <View style={styles.completionContainer}>
             <View style={styles.completionHeader}>
-              <Text style={[
-                styles.completionLabel,
-                { color: isDarkMode ? '#9e9e9e' : '#757575' }
-              ]}>Race Completion Rate</Text>
-              <Text style={[
-                styles.completionValue,
-                { color: theme.colors.primary }
-              ]}>{Math.round(completionRate * 100)}%</Text>
+              <Text
+                style={[
+                  styles.completionLabel,
+                  { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                ]}
+              >
+                Race Completion Rate
+              </Text>
+              <Text
+                style={[
+                  styles.completionValue,
+                  { color: theme.colors.primary },
+                ]}
+              >
+                {Math.round(completionRate * 100)}%
+              </Text>
             </View>
-            <ProgressBar 
-              progress={completionRate} 
-              color={theme.colors.primary} 
-              style={styles.progressBar} 
+            <ProgressBar
+              progress={completionRate}
+              color={theme.colors.primary}
+              style={styles.progressBar}
             />
           </View>
         </Card.Content>
@@ -208,33 +291,50 @@ const ProfileScreen = ({ navigation }) => {
 
       {/* Upcoming Race */}
       {userData.upcomingRace && (
-        <Card style={[
-          styles.upcomingCard,
-          { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-        ]}>
+        <Card
+          style={[
+            styles.upcomingCard,
+            { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+          ]}
+        >
           <Card.Content>
-            <Text style={[
-              styles.sectionTitle,
-              { color: isDarkMode ? '#ffffff' : '#000000' }
-            ]}>Next Race</Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Next Race
+            </Text>
             <View style={styles.upcomingRaceContainer}>
               <View style={styles.upcomingRaceInfo}>
-                <Text style={[
-                  styles.upcomingRaceName,
-                  { color: isDarkMode ? '#ffffff' : '#000000' }
-                ]}>{userData.upcomingRace.name}</Text>
-                <Text style={[
-                  styles.upcomingRaceDetails,
-                  { color: isDarkMode ? '#9e9e9e' : '#757575' }
-                ]}>
-                  {userData.upcomingRace.distance} miles • {userData.upcomingRace.date}
+                <Text
+                  style={[
+                    styles.upcomingRaceName,
+                    { color: isDarkMode ? "#ffffff" : "#000000" },
+                  ]}
+                >
+                  {userData.upcomingRace.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.upcomingRaceDetails,
+                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                  ]}
+                >
+                  {userData.upcomingRace.distance} miles •{" "}
+                  {userData.upcomingRace.date}
                 </Text>
               </View>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 compact
                 color={theme.colors.primary}
-                onPress={() => navigation.navigate('RaceDetails', { id: userData.upcomingRace.id })}
+                onPress={() =>
+                  navigation.navigate("RaceDetails", {
+                    id: userData.upcomingRace.id,
+                  })
+                }
               >
                 View
               </Button>
@@ -244,33 +344,47 @@ const ProfileScreen = ({ navigation }) => {
       )}
 
       {/* Achievements */}
-      <Card style={[
-        styles.achievementsCard,
-        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-      ]}>
+      <Card
+        style={[
+          styles.achievementsCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>Achievements</Text>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Achievements
+          </Text>
           {userData.achievements.map((achievement) => (
             <View key={achievement.id} style={styles.achievementItem}>
-              <Avatar.Icon 
-                size={40} 
-                icon={achievement.icon} 
-                style={styles.achievementIcon} 
+              <Avatar.Icon
+                size={40}
+                icon={achievement.icon}
+                style={styles.achievementIcon}
                 color={theme.colors.primary}
-                backgroundColor={isDarkMode ? '#333333' : '#e8eaf6'}
+                backgroundColor={isDarkMode ? "#333333" : "#e8eaf6"}
               />
               <View style={styles.achievementInfo}>
-                <Text style={[
-                  styles.achievementName,
-                  { color: isDarkMode ? '#ffffff' : '#000000' }
-                ]}>{achievement.name}</Text>
-                <Text style={[
-                  styles.achievementDate,
-                  { color: isDarkMode ? '#9e9e9e' : '#757575' }
-                ]}>Earned on {achievement.date}</Text>
+                <Text
+                  style={[
+                    styles.achievementName,
+                    { color: isDarkMode ? "#ffffff" : "#000000" },
+                  ]}
+                >
+                  {achievement.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.achievementDate,
+                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                  ]}
+                >
+                  Earned on {achievement.date}
+                </Text>
               </View>
             </View>
           ))}
@@ -278,55 +392,87 @@ const ProfileScreen = ({ navigation }) => {
       </Card>
 
       {/* Training Summary */}
-      <Card style={[
-        styles.trainingCard,
-        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-      ]}>
+      <Card
+        style={[
+          styles.trainingCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>Training Summary</Text>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Training Summary
+          </Text>
           <View style={styles.trainingStats}>
             <View style={styles.trainingStatItem}>
-              <Text style={[
-                styles.trainingStatValue,
-                { color: theme.colors.primary }
-              ]}>120</Text>
-              <Text style={[
-                styles.trainingStatLabel,
-                { color: isDarkMode ? '#9e9e9e' : '#757575' }
-              ]}>Miles This Month</Text>
+              <Text
+                style={[
+                  styles.trainingStatValue,
+                  { color: theme.colors.primary },
+                ]}
+              >
+                120
+              </Text>
+              <Text
+                style={[
+                  styles.trainingStatLabel,
+                  { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                ]}
+              >
+                Miles This Month
+              </Text>
             </View>
             <View style={styles.trainingStatItem}>
-              <Text style={[
-                styles.trainingStatValue,
-                { color: theme.colors.primary }
-              ]}>24</Text>
-              <Text style={[
-                styles.trainingStatLabel,
-                { color: isDarkMode ? '#9e9e9e' : '#757575' }
-              ]}>Hours</Text>
+              <Text
+                style={[
+                  styles.trainingStatValue,
+                  { color: theme.colors.primary },
+                ]}
+              >
+                24
+              </Text>
+              <Text
+                style={[
+                  styles.trainingStatLabel,
+                  { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                ]}
+              >
+                Hours
+              </Text>
             </View>
             <View style={styles.trainingStatItem}>
-              <Text style={[
-                styles.trainingStatValue,
-                { color: theme.colors.primary }
-              ]}>15,000</Text>
-              <Text style={[
-                styles.trainingStatLabel,
-                { color: isDarkMode ? '#9e9e9e' : '#757575' }
-              ]}>Elevation (ft)</Text>
+              <Text
+                style={[
+                  styles.trainingStatValue,
+                  { color: theme.colors.primary },
+                ]}
+              >
+                15,000
+              </Text>
+              <Text
+                style={[
+                  styles.trainingStatLabel,
+                  { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                ]}
+              >
+                Elevation (ft)
+              </Text>
             </View>
           </View>
-          <Button 
-            mode="outlined" 
+          <Button
+            mode="outlined"
             style={[
               styles.trainingButton,
-              { borderColor: theme.colors.primary }
+              { borderColor: theme.colors.primary },
             ]}
             color={theme.colors.primary}
-            onPress={() => {/* Navigate to training log */}}
+            onPress={() => {
+              /* Navigate to training log */
+            }}
           >
             View Training Log
           </Button>
@@ -334,24 +480,34 @@ const ProfileScreen = ({ navigation }) => {
       </Card>
 
       {/* Account Settings Link */}
-      <Card style={[
-        styles.settingsCard,
-        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-      ]}>
+      <Card
+        style={[
+          styles.settingsCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
         <Card.Content>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.settingsLink}
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => navigation.navigate("Settings")}
           >
-            <Ionicons name="settings-outline" size={24} color={theme.colors.primary} />
-            <Text style={[
-              styles.settingsText,
-              { color: isDarkMode ? '#ffffff' : '#000000' }
-            ]}>Account Settings</Text>
-            <Ionicons 
-              name="chevron-forward" 
-              size={24} 
-              color={isDarkMode ? '#9e9e9e' : '#757575'} 
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
+            <Text
+              style={[
+                styles.settingsText,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Account Settings
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={24}
+              color={isDarkMode ? "#9e9e9e" : "#757575"}
             />
           </TouchableOpacity>
         </Card.Content>

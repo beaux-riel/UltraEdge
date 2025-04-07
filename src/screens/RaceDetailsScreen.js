@@ -144,7 +144,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 icon="account-group"
                 textStyle={{ color: isDarkMode ? '#ffffff' : undefined }}
               >
-                Crew Access
+                Crew Allowed
               </Chip>
             )}
           </View>

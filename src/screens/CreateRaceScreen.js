@@ -1,57 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
-import { Text, TextInput, Button, Divider, Switch, HelperText, useTheme as usePaperTheme, SegmentedButtons, IconButton, Portal, Modal, List } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRaces } from '../context/RaceContext';
-import { useAppTheme } from '../context/ThemeContext';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
+import {
+  Text,
+  TextInput,
+  Button,
+  Divider,
+  Switch,
+  HelperText,
+  useTheme as usePaperTheme,
+  SegmentedButtons,
+  IconButton,
+  Portal,
+  Modal,
+  List,
+} from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useRaces } from "../context/RaceContext";
+import { useAppTheme } from "../context/ThemeContext";
 
 const CreateRaceScreen = ({ route, navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { addRace, getRaceById, updateRace } = useRaces();
-  
+
   // Check if we're in edit mode
   const { editMode, raceData: existingRaceData } = route.params || {};
   const existingRace = editMode && existingRaceData ? existingRaceData : null;
-  
-  const [raceName, setRaceName] = useState('');
-  const [distance, setDistance] = useState('');
-  const [distanceUnit, setDistanceUnit] = useState('miles');
-  const [elevation, setElevation] = useState('');
-  const [elevationUnit, setElevationUnit] = useState('ft');
-  const [raceDate, setRaceDate] = useState('');
+
+  const [raceName, setRaceName] = useState("");
+  const [distance, setDistance] = useState("");
+  const [distanceUnit, setDistanceUnit] = useState("miles");
+  const [elevation, setElevation] = useState("");
+  const [elevationUnit, setElevationUnit] = useState("ft");
+  const [raceDate, setRaceDate] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [numAidStations, setNumAidStations] = useState('');
+  const [numAidStations, setNumAidStations] = useState("");
   const [dropBagsAllowed, setDropBagsAllowed] = useState(false);
   const [crewAllowed, setCrewAllowed] = useState(false);
-  
+
   // Mandatory equipment state
   const [mandatoryEquipment, setMandatoryEquipment] = useState([]);
   const [equipmentModalVisible, setEquipmentModalVisible] = useState(false);
-  const [newEquipmentItem, setNewEquipmentItem] = useState('');
-  
+  const [newEquipmentItem, setNewEquipmentItem] = useState("");
+
   // If in edit mode, populate the form with existing data
   useEffect(() => {
     if (existingRace) {
       setRaceName(existingRace.name);
       setDistance(existingRace.distance.toString());
-      setDistanceUnit(existingRace.distanceUnit || 'miles');
-      setElevation(existingRace.elevation ? existingRace.elevation.toString() : '');
-      setElevationUnit(existingRace.elevationUnit || 'ft');
+      setDistanceUnit(existingRace.distanceUnit || "miles");
+      setElevation(
+        existingRace.elevation ? existingRace.elevation.toString() : ""
+      );
+      setElevationUnit(existingRace.elevationUnit || "ft");
       setRaceDate(existingRace.date);
-      
+
       // Parse date from string if it exists
       if (existingRace.date) {
-        const parts = existingRace.date.split('/');
+        const parts = existingRace.date.split("/");
         if (parts.length === 3) {
           const newDate = new Date(parts[2], parts[0] - 1, parts[1]);
           setDate(newDate);
         }
       }
-      
+
       setNumAidStations(existingRace.numAidStations.toString());
       setDropBagsAllowed(existingRace.dropBagsAllowed);
       setCrewAllowed(existingRace.crewAllowed);
@@ -61,12 +82,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(Platform.OS === "ios");
     setDate(currentDate);
-    
+
     // Format date as MM/DD/YYYY
-    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = currentDate.getDate().toString().padStart(2, '0');
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = currentDate.getDate().toString().padStart(2, "0");
     const year = currentDate.getFullYear();
     setRaceDate(`${month}/${day}/${year}`);
   };
@@ -74,7 +95,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const addEquipmentItem = () => {
     if (newEquipmentItem.trim()) {
       setMandatoryEquipment([...mandatoryEquipment, newEquipmentItem.trim()]);
-      setNewEquipmentItem('');
+      setNewEquipmentItem("");
     }
   };
 
@@ -98,106 +119,122 @@ const CreateRaceScreen = ({ route, navigation }) => {
       crewAllowed,
       mandatoryEquipment,
     };
-    
+
     if (existingRace) {
       // Update existing race
       updateRace(existingRace.id, newRaceData);
-      navigation.navigate('RaceDetails', { id: existingRace.id });
+      navigation.navigate("RaceDetails", { id: existingRace.id });
     } else {
       // Create new race
       addRace(newRaceData);
-      navigation.navigate('AidStationSetup', { raceData: newRaceData });
+      navigation.navigate("AidStationSetup", { raceData: newRaceData });
     }
   };
 
+  // Define a common input theme that includes colors for text, placeholder, etc.
+  const inputTheme = {
+    colors: {
+      text: isDarkMode ? "#ffffff" : "#000000",
+      placeholder: isDarkMode ? "#ffffff" : "#000000",
+      primary: theme.colors.primary,
+    },
+  };
+
+  // Define a common label style for TextInput labels
+  const labelStyle = { color: isDarkMode ? "#ffffff" : "#000000" };
+
   return (
     <Portal.Host>
-      <ScrollView 
+      <ScrollView
         style={[
           styles.container,
-          { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+          { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" },
         ]}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 16
+          paddingBottom: insets.bottom + 16,
         }}
       >
         <View style={styles.content}>
-          <Text style={[
-            styles.title,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>{existingRace ? 'Edit Race Plan' : 'Create New Race Plan'}</Text>
-          
+          <Text
+            style={[
+              styles.title,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            {existingRace ? "Edit Race Plan" : "Create New Race Plan"}
+          </Text>
+
           <TextInput
             label="Race Name"
             value={raceName}
             onChangeText={setRaceName}
             style={[
               styles.input,
-              { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+              { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
             ]}
             mode="outlined"
-            theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-            outlineColor={isDarkMode ? '#333333' : undefined}
+            theme={inputTheme}
+            labelStyle={labelStyle}
+            outlineColor={isDarkMode ? "#333333" : undefined}
             activeOutlineColor={theme.colors.primary}
-            textColor={isDarkMode ? '#ffffff' : '#000000'}
           />
-          
+
           <View style={styles.inputRow}>
             <TextInput
               label="Distance"
               value={distance}
               onChangeText={setDistance}
               style={[
-                styles.input, 
+                styles.input,
                 styles.flexInput,
-                { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+                { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
               ]}
               keyboardType="numeric"
               mode="outlined"
-              theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-              outlineColor={isDarkMode ? '#333333' : undefined}
+              theme={inputTheme}
+              labelStyle={labelStyle}
+              outlineColor={isDarkMode ? "#333333" : undefined}
               activeOutlineColor={theme.colors.primary}
-              textColor={isDarkMode ? '#ffffff' : '#000000'}
             />
             <SegmentedButtons
               value={distanceUnit}
               onValueChange={setDistanceUnit}
               buttons={[
-                { value: 'miles', label: 'mi' },
-                { value: 'km', label: 'km' }
+                { value: "miles", label: "mi" },
+                { value: "km", label: "km" },
               ]}
               style={styles.segmentedButton}
             />
           </View>
-          
+
           <View style={styles.inputRow}>
             <TextInput
               label="Elevation Gain"
               value={elevation}
               onChangeText={setElevation}
               style={[
-                styles.input, 
+                styles.input,
                 styles.flexInput,
-                { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+                { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
               ]}
               keyboardType="numeric"
               mode="outlined"
-              theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-              outlineColor={isDarkMode ? '#333333' : undefined}
+              theme={inputTheme}
+              labelStyle={labelStyle}
+              outlineColor={isDarkMode ? "#333333" : undefined}
               activeOutlineColor={theme.colors.primary}
-              textColor={isDarkMode ? '#ffffff' : '#000000'}
             />
             <SegmentedButtons
               value={elevationUnit}
               onValueChange={setElevationUnit}
               buttons={[
-                { value: 'ft', label: 'ft' },
-                { value: 'm', label: 'm' }
+                { value: "ft", label: "ft" },
+                { value: "m", label: "m" },
               ]}
               style={styles.segmentedButton}
             />
           </View>
-          
+
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
             <View pointerEvents="none">
               <TextInput
@@ -205,51 +242,58 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 value={raceDate}
                 style={[
                   styles.input,
-                  { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+                  { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
                 ]}
                 mode="outlined"
-                theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-                outlineColor={isDarkMode ? '#333333' : undefined}
+                theme={inputTheme}
+                labelStyle={labelStyle}
+                outlineColor={isDarkMode ? "#333333" : undefined}
                 activeOutlineColor={theme.colors.primary}
-                textColor={isDarkMode ? '#ffffff' : '#000000'}
-                right={<TextInput.Icon icon="calendar" color={isDarkMode ? '#ffffff' : undefined} />}
+                right={
+                  <TextInput.Icon
+                    icon="calendar"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                }
               />
             </View>
           </TouchableOpacity>
-          
+
           {showDatePicker && (
             <DateTimePicker
               value={date}
               mode="date"
               display="default"
               onChange={onDateChange}
-              themeVariant={isDarkMode ? 'dark' : 'light'}
+              themeVariant={isDarkMode ? "dark" : "light"}
             />
           )}
-          
+
           <TextInput
             label="Number of Aid Stations"
             value={numAidStations}
             onChangeText={setNumAidStations}
             style={[
               styles.input,
-              { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+              { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
             ]}
             keyboardType="numeric"
             mode="outlined"
-            theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-            outlineColor={isDarkMode ? '#333333' : undefined}
+            theme={inputTheme}
+            labelStyle={labelStyle}
+            outlineColor={isDarkMode ? "#333333" : undefined}
             activeOutlineColor={theme.colors.primary}
-            textColor={isDarkMode ? '#ffffff' : '#000000'}
           />
-          
-          <Divider style={[
-            styles.divider,
-            { backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }
-          ]} />
-          
+
+          <Divider
+            style={[
+              styles.divider,
+              { backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" },
+            ]}
+          />
+
           <View style={styles.switchContainer}>
-            <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+            <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Drop Bags Allowed
             </Text>
             <Switch
@@ -258,9 +302,9 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           <View style={styles.switchContainer}>
-            <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+            <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Crew Access Allowed
             </Text>
             <Switch
@@ -269,20 +313,26 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
-          <Divider style={[
-            styles.divider,
-            { backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }
-          ]} />
-          
+
+          <Divider
+            style={[
+              styles.divider,
+              { backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" },
+            ]}
+          />
+
           <View style={styles.equipmentSection}>
             <View style={styles.sectionHeader}>
-              <Text style={[
-                styles.sectionTitle,
-                { color: isDarkMode ? '#ffffff' : '#000000' }
-              ]}>Mandatory Equipment</Text>
-              <Button 
-                mode="contained" 
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDarkMode ? "#ffffff" : "#000000" },
+                ]}
+              >
+                Mandatory Equipment
+              </Text>
+              <Button
+                mode="contained"
                 onPress={() => setEquipmentModalVisible(true)}
                 style={styles.addButton}
                 icon="plus"
@@ -291,37 +341,46 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 Add Item
               </Button>
             </View>
-            
+
             {mandatoryEquipment.length === 0 ? (
-              <Text style={[
-                styles.emptyText,
-                { color: isDarkMode ? '#9e9e9e' : undefined }
-              ]}>No mandatory equipment added yet.</Text>
+              <Text
+                style={[
+                  styles.emptyText,
+                  { color: isDarkMode ? "#9e9e9e" : undefined },
+                ]}
+              >
+                No mandatory equipment added yet.
+              </Text>
             ) : (
-              <View style={[
-                styles.equipmentList,
-                { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
-              ]}>
+              <View
+                style={[
+                  styles.equipmentList,
+                  { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+                ]}
+              >
                 {mandatoryEquipment.map((item, index) => (
-                  <View key={index} style={[
-                    styles.equipmentItem,
-                    { borderBottomColor: isDarkMode ? '#333333' : '#f0f0f0' }
-                  ]}>
-                    <Text style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                  <View
+                    key={index}
+                    style={[
+                      styles.equipmentItem,
+                      { borderBottomColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                    ]}
+                  >
+                    <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                       {item}
                     </Text>
                     <IconButton
                       icon="delete"
                       size={20}
                       onPress={() => removeEquipmentItem(index)}
-                      color={isDarkMode ? '#e0e0e0' : undefined}
+                      color={isDarkMode ? "#e0e0e0" : undefined}
                     />
                   </View>
                 ))}
               </View>
             )}
           </View>
-          
+
           <Button
             mode="contained"
             onPress={handleCreateRace}
@@ -329,15 +388,15 @@ const CreateRaceScreen = ({ route, navigation }) => {
             disabled={!raceName || !distance || !numAidStations}
             color={theme.colors.primary}
           >
-            {existingRace ? 'Save Changes' : 'Continue to Aid Station Setup'}
+            {existingRace ? "Save Changes" : "Continue to Aid Station Setup"}
           </Button>
-          
+
           {!existingRace && (
-            <HelperText 
-              type="info" 
+            <HelperText
+              type="info"
               style={[
                 styles.helperText,
-                { color: isDarkMode ? '#9e9e9e' : undefined }
+                { color: isDarkMode ? "#9e9e9e" : undefined },
               ]}
             >
               You'll be able to set up aid station details in the next step.
@@ -345,43 +404,47 @@ const CreateRaceScreen = ({ route, navigation }) => {
           )}
         </View>
       </ScrollView>
-      
+
       <Portal>
         <Modal
           visible={equipmentModalVisible}
           onDismiss={() => setEquipmentModalVisible(false)}
           contentContainerStyle={[
             styles.modalContainer,
-            { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+            { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
           ]}
         >
-          <Text style={[
-            styles.modalTitle,
-            { color: isDarkMode ? '#ffffff' : '#000000' }
-          ]}>Add Mandatory Equipment</Text>
+          <Text
+            style={[
+              styles.modalTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Add Mandatory Equipment
+          </Text>
           <TextInput
             label="Equipment Item"
             value={newEquipmentItem}
             onChangeText={setNewEquipmentItem}
             style={[
               styles.modalInput,
-              { backgroundColor: isDarkMode ? '#333333' : 'white' }
+              { backgroundColor: isDarkMode ? "#333333" : "white" },
             ]}
             mode="outlined"
-            theme={{ colors: { text: isDarkMode ? '#ffffff' : '#000000' } }}
-            outlineColor={isDarkMode ? '#555555' : undefined}
+            theme={inputTheme}
+            labelStyle={labelStyle}
+            outlineColor={isDarkMode ? "#555555" : undefined}
             activeOutlineColor={theme.colors.primary}
-            textColor={isDarkMode ? '#ffffff' : '#000000'}
           />
           <View style={styles.modalButtons}>
-            <Button 
+            <Button
               onPress={() => setEquipmentModalVisible(false)}
-              color={isDarkMode ? '#e0e0e0' : undefined}
+              color={isDarkMode ? "#e0e0e0" : undefined}
             >
               Cancel
             </Button>
-            <Button 
-              mode="contained" 
+            <Button
+              mode="contained"
               onPress={() => {
                 addEquipmentItem();
                 if (!newEquipmentItem.trim()) {
@@ -420,7 +483,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-    width : "85%",
+    width: "85%",
   },
   flexInput: {
     flex: 1,

@@ -7,7 +7,7 @@ const LightTheme = {
   ...DefaultTheme,
   dark: false,
   colors: {
-    ...DefaultTheme.colors,
+    ...DefaultTheme?.colors,
     primary: '#3f51b5',
     accent: '#f50057',
     background: '#f5f5f5',
@@ -28,7 +28,7 @@ const CustomDarkTheme = {
   ...DarkTheme,
   dark: true,
   colors: {
-    ...DarkTheme.colors,
+    ...DarkTheme?.colors,
     primary: '#5c6bc0',
     accent: '#ff4081',
     background: '#121212',

@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { Text, Card, Button, Avatar, Divider, List, useTheme, ProgressBar, Chip } from 'react-native-paper';
+import { Text, Card, Button, Avatar, Divider, List, useTheme as usePaperTheme, ProgressBar, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
+import { useAppTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const ProfileScreen = ({ navigation }) => {
-  const theme = useTheme();
+  const paperTheme = usePaperTheme();
+  const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRacesArray } = useRaces();
   
@@ -82,29 +84,53 @@ const ProfileScreen = ({ navigation }) => {
 
   const renderStatItem = (label, value, unit = '') => (
     <View style={styles.statItem}>
-      <Text style={styles.statValue}>{value}{unit}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[
+        styles.statValue,
+        { color: theme.colors.primary }
+      ]}>{value}{unit}</Text>
+      <Text style={[
+        styles.statLabel,
+        { color: isDarkMode ? '#9e9e9e' : '#757575' }
+      ]}>{label}</Text>
     </View>
   );
 
   return (
     <ScrollView 
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' }
+      ]}
       contentContainerStyle={{
         paddingTop: insets.top > 0 ? 0 : 16,
         paddingBottom: insets.bottom + 16
       }}
     >
       {/* Profile Header */}
-      <View style={styles.profileHeader}>
+      <View style={[
+        styles.profileHeader,
+        { 
+          backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
+          shadowColor: isDarkMode ? '#000000' : '#000000'
+        }
+      ]}>
         <Avatar.Image 
           size={100} 
           source={userData.profileImage || require('../../assets/default-profile.png')} 
-          style={styles.profileImage}
+          style={[
+            styles.profileImage,
+            { backgroundColor: isDarkMode ? '#333333' : '#e0e0e0' }
+          ]}
         />
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{userData.name}</Text>
-          <Text style={styles.profileLocation}>
+          <Text style={[
+            styles.profileName,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>{userData.name}</Text>
+          <Text style={[
+            styles.profileLocation,
+            { color: isDarkMode ? '#9e9e9e' : '#757575' }
+          ]}>
             <Ionicons name="location-outline" size={16} color={theme.colors.primary} />
             {' '}{userData.location}
           </Text>
@@ -112,7 +138,11 @@ const ProfileScreen = ({ navigation }) => {
             <Button 
               mode="outlined" 
               compact 
-              style={styles.editButton}
+              style={[
+                styles.editButton,
+                { borderColor: theme.colors.primary }
+              ]}
+              color={theme.colors.primary}
               onPress={() => {/* Navigate to edit profile */}}
             >
               Edit Profile
@@ -122,17 +152,32 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       {/* Bio Section */}
-      <Card style={styles.bioCard}>
+      <Card style={[
+        styles.bioCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>About Me</Text>
-          <Text style={styles.bioText}>{userData.bio}</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>About Me</Text>
+          <Text style={[
+            styles.bioText,
+            { color: isDarkMode ? '#e0e0e0' : '#333333' }
+          ]}>{userData.bio}</Text>
         </Card.Content>
       </Card>
 
       {/* Stats Overview */}
-      <Card style={styles.statsCard}>
+      <Card style={[
+        styles.statsCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Running Stats</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Running Stats</Text>
           <View style={styles.statsGrid}>
             {renderStatItem('Races Planned', userData.stats.racesPlanned)}
             {renderStatItem('Races Completed', userData.stats.racesCompleted)}
@@ -143,8 +188,14 @@ const ProfileScreen = ({ navigation }) => {
           
           <View style={styles.completionContainer}>
             <View style={styles.completionHeader}>
-              <Text style={styles.completionLabel}>Race Completion Rate</Text>
-              <Text style={styles.completionValue}>{Math.round(completionRate * 100)}%</Text>
+              <Text style={[
+                styles.completionLabel,
+                { color: isDarkMode ? '#9e9e9e' : '#757575' }
+              ]}>Race Completion Rate</Text>
+              <Text style={[
+                styles.completionValue,
+                { color: theme.colors.primary }
+              ]}>{Math.round(completionRate * 100)}%</Text>
             </View>
             <ProgressBar 
               progress={completionRate} 
@@ -157,19 +208,32 @@ const ProfileScreen = ({ navigation }) => {
 
       {/* Upcoming Race */}
       {userData.upcomingRace && (
-        <Card style={styles.upcomingCard}>
+        <Card style={[
+          styles.upcomingCard,
+          { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+        ]}>
           <Card.Content>
-            <Text style={styles.sectionTitle}>Next Race</Text>
+            <Text style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>Next Race</Text>
             <View style={styles.upcomingRaceContainer}>
               <View style={styles.upcomingRaceInfo}>
-                <Text style={styles.upcomingRaceName}>{userData.upcomingRace.name}</Text>
-                <Text style={styles.upcomingRaceDetails}>
+                <Text style={[
+                  styles.upcomingRaceName,
+                  { color: isDarkMode ? '#ffffff' : '#000000' }
+                ]}>{userData.upcomingRace.name}</Text>
+                <Text style={[
+                  styles.upcomingRaceDetails,
+                  { color: isDarkMode ? '#9e9e9e' : '#757575' }
+                ]}>
                   {userData.upcomingRace.distance} miles • {userData.upcomingRace.date}
                 </Text>
               </View>
               <Button 
                 mode="contained" 
                 compact
+                color={theme.colors.primary}
                 onPress={() => navigation.navigate('RaceDetails', { id: userData.upcomingRace.id })}
               >
                 View
@@ -180,9 +244,15 @@ const ProfileScreen = ({ navigation }) => {
       )}
 
       {/* Achievements */}
-      <Card style={styles.achievementsCard}>
+      <Card style={[
+        styles.achievementsCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Achievements</Text>
           {userData.achievements.map((achievement) => (
             <View key={achievement.id} style={styles.achievementItem}>
               <Avatar.Icon 
@@ -190,11 +260,17 @@ const ProfileScreen = ({ navigation }) => {
                 icon={achievement.icon} 
                 style={styles.achievementIcon} 
                 color={theme.colors.primary}
-                backgroundColor="#e8eaf6"
+                backgroundColor={isDarkMode ? '#333333' : '#e8eaf6'}
               />
               <View style={styles.achievementInfo}>
-                <Text style={styles.achievementName}>{achievement.name}</Text>
-                <Text style={styles.achievementDate}>Earned on {achievement.date}</Text>
+                <Text style={[
+                  styles.achievementName,
+                  { color: isDarkMode ? '#ffffff' : '#000000' }
+                ]}>{achievement.name}</Text>
+                <Text style={[
+                  styles.achievementDate,
+                  { color: isDarkMode ? '#9e9e9e' : '#757575' }
+                ]}>Earned on {achievement.date}</Text>
               </View>
             </View>
           ))}
@@ -202,26 +278,54 @@ const ProfileScreen = ({ navigation }) => {
       </Card>
 
       {/* Training Summary */}
-      <Card style={styles.trainingCard}>
+      <Card style={[
+        styles.trainingCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Training Summary</Text>
+          <Text style={[
+            styles.sectionTitle,
+            { color: isDarkMode ? '#ffffff' : '#000000' }
+          ]}>Training Summary</Text>
           <View style={styles.trainingStats}>
             <View style={styles.trainingStatItem}>
-              <Text style={styles.trainingStatValue}>120</Text>
-              <Text style={styles.trainingStatLabel}>Miles This Month</Text>
+              <Text style={[
+                styles.trainingStatValue,
+                { color: theme.colors.primary }
+              ]}>120</Text>
+              <Text style={[
+                styles.trainingStatLabel,
+                { color: isDarkMode ? '#9e9e9e' : '#757575' }
+              ]}>Miles This Month</Text>
             </View>
             <View style={styles.trainingStatItem}>
-              <Text style={styles.trainingStatValue}>24</Text>
-              <Text style={styles.trainingStatLabel}>Hours</Text>
+              <Text style={[
+                styles.trainingStatValue,
+                { color: theme.colors.primary }
+              ]}>24</Text>
+              <Text style={[
+                styles.trainingStatLabel,
+                { color: isDarkMode ? '#9e9e9e' : '#757575' }
+              ]}>Hours</Text>
             </View>
             <View style={styles.trainingStatItem}>
-              <Text style={styles.trainingStatValue}>15,000</Text>
-              <Text style={styles.trainingStatLabel}>Elevation (ft)</Text>
+              <Text style={[
+                styles.trainingStatValue,
+                { color: theme.colors.primary }
+              ]}>15,000</Text>
+              <Text style={[
+                styles.trainingStatLabel,
+                { color: isDarkMode ? '#9e9e9e' : '#757575' }
+              ]}>Elevation (ft)</Text>
             </View>
           </View>
           <Button 
             mode="outlined" 
-            style={styles.trainingButton}
+            style={[
+              styles.trainingButton,
+              { borderColor: theme.colors.primary }
+            ]}
+            color={theme.colors.primary}
             onPress={() => {/* Navigate to training log */}}
           >
             View Training Log
@@ -230,15 +334,25 @@ const ProfileScreen = ({ navigation }) => {
       </Card>
 
       {/* Account Settings Link */}
-      <Card style={styles.settingsCard}>
+      <Card style={[
+        styles.settingsCard,
+        { backgroundColor: isDarkMode ? '#1e1e1e' : 'white' }
+      ]}>
         <Card.Content>
           <TouchableOpacity 
             style={styles.settingsLink}
             onPress={() => navigation.navigate('Settings')}
           >
             <Ionicons name="settings-outline" size={24} color={theme.colors.primary} />
-            <Text style={styles.settingsText}>Account Settings</Text>
-            <Ionicons name="chevron-forward" size={24} color="#757575" />
+            <Text style={[
+              styles.settingsText,
+              { color: isDarkMode ? '#ffffff' : '#000000' }
+            ]}>Account Settings</Text>
+            <Ionicons 
+              name="chevron-forward" 
+              size={24} 
+              color={isDarkMode ? '#9e9e9e' : '#757575'} 
+            />
           </TouchableOpacity>
         </Card.Content>
       </Card>
@@ -249,24 +363,21 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
     marginTop: 50,
   },
   profileHeader: {
     flexDirection: "row",
     padding: 16,
-    backgroundColor: "white",
     borderRadius: 8,
     margin: 16,
     marginBottom: 8,
     elevation: 2,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
   },
   profileImage: {
-    backgroundColor: "#e0e0e0",
+    // backgroundColor handled dynamically
   },
   profileInfo: {
     marginLeft: 16,
@@ -280,8 +391,8 @@ const styles = StyleSheet.create({
   },
   profileLocation: {
     fontSize: 14,
-    color: "#757575",
     marginBottom: 8,
+    // color handled dynamically
   },
   editButtonContainer: {
     alignItems: "flex-start",
@@ -324,12 +435,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#3f51b5",
+    // color handled dynamically
   },
   statLabel: {
     fontSize: 12,
-    color: "#757575",
     textAlign: "center",
+    // color handled dynamically
   },
   completionContainer: {
     marginTop: 8,
@@ -342,12 +453,12 @@ const styles = StyleSheet.create({
   },
   completionLabel: {
     fontSize: 14,
-    color: "#757575",
+    // color handled dynamically
   },
   completionValue: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#3f51b5",
+    // color handled dynamically
   },
   progressBar: {
     height: 8,
@@ -373,7 +484,7 @@ const styles = StyleSheet.create({
   },
   upcomingRaceDetails: {
     fontSize: 14,
-    color: "#757575",
+    // color handled dynamically
   },
   achievementsCard: {
     margin: 16,
@@ -398,7 +509,7 @@ const styles = StyleSheet.create({
   },
   achievementDate: {
     fontSize: 12,
-    color: "#757575",
+    // color handled dynamically
   },
   trainingCard: {
     margin: 16,
@@ -418,12 +529,12 @@ const styles = StyleSheet.create({
   trainingStatValue: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#3f51b5",
+    // color handled dynamically
   },
   trainingStatLabel: {
     fontSize: 12,
-    color: "#757575",
     textAlign: "center",
+    // color handled dynamically
   },
   trainingButton: {
     borderRadius: 20,

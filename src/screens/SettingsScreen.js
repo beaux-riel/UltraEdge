@@ -709,7 +709,7 @@ const SettingsScreen = () => {
               />
             )}
             onPress={() => {
-              /* Show about info */
+              navigation.navigate('About');
             }}
           />
         </View>

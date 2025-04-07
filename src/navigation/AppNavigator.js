@@ -12,6 +12,7 @@ import AidStationSetupScreen from '../screens/AidStationSetupScreen';
 import RaceDetailsScreen from '../screens/RaceDetailsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import AboutScreen from '../screens/AboutScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -120,6 +121,11 @@ const AppNavigator = () => {
           name="RaceDetails" 
           component={RaceDetailsScreen} 
           options={{ title: 'Race Details' }}
+        />
+        <Stack.Screen 
+          name="About" 
+          component={AboutScreen} 
+          options={{ title: 'About Us' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

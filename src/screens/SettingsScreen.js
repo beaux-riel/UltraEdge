@@ -145,7 +145,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Notifications"
           description="Receive reminders about upcoming races"
-          left={props => <List.Icon {...props} icon="bell-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="bell-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           right={props => (
             <Switch
               value={notifications}
@@ -160,7 +162,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Dark Mode"
           description="Use dark theme throughout the app"
-          left={props => <List.Icon {...props} icon={isDarkMode ? "weather-night" : "weather-sunny"} />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon={isDarkMode ? "weather-night" : "weather-sunny"} color={isDarkMode ? '#ffffff' : undefined} />}
           right={props => (
             <Switch
               value={isDarkMode}
@@ -175,7 +179,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Auto Backup"
           description="Automatically backup your race plans"
-          left={props => <List.Icon {...props} icon="cloud-upload-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="cloud-upload-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           right={props => (
             <Switch
               value={autoBackup}
@@ -192,11 +198,19 @@ const SettingsScreen = () => {
         <Text style={dynamicStyles.subsectionTitle}>Distance</Text>
         <RadioButton.Group onValueChange={handleDistanceUnitChange} value={distanceUnit}>
           <View style={styles.radioOption}>
-            <RadioButton value="miles" color={paperTheme.colors.primary} />
+            <RadioButton 
+              value="miles" 
+              color={paperTheme.colors.primary} 
+              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
+            />
             <Text style={dynamicStyles.radioLabel}>Miles</Text>
           </View>
           <View style={styles.radioOption}>
-            <RadioButton value="km" color={paperTheme.colors.primary} />
+            <RadioButton 
+              value="km" 
+              color={paperTheme.colors.primary} 
+              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
+            />
             <Text style={dynamicStyles.radioLabel}>Kilometers</Text>
           </View>
         </RadioButton.Group>
@@ -206,11 +220,19 @@ const SettingsScreen = () => {
         <Text style={dynamicStyles.subsectionTitle}>Elevation</Text>
         <RadioButton.Group onValueChange={handleElevationUnitChange} value={elevationUnit}>
           <View style={styles.radioOption}>
-            <RadioButton value="ft" color={paperTheme.colors.primary} />
+            <RadioButton 
+              value="ft" 
+              color={paperTheme.colors.primary} 
+              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
+            />
             <Text style={dynamicStyles.radioLabel}>Feet</Text>
           </View>
           <View style={styles.radioOption}>
-            <RadioButton value="m" color={paperTheme.colors.primary} />
+            <RadioButton 
+              value="m" 
+              color={paperTheme.colors.primary} 
+              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
+            />
             <Text style={dynamicStyles.radioLabel}>Meters</Text>
           </View>
         </RadioButton.Group>
@@ -222,7 +244,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Sync with Strava"
           description="Connect your Strava account"
-          left={props => <List.Icon {...props} icon="run" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="run" color={isDarkMode ? '#ffffff' : undefined} />}
           right={props => (
             <Switch
               value={syncWithStrava}
@@ -237,7 +261,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Import GPX Files"
           description="Import race courses from GPX files"
-          left={props => <List.Icon {...props} icon="map-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="map-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Handle import */}}
         />
       </View>
@@ -248,7 +274,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Edit Profile"
           description="Change your name, email, and photo"
-          left={props => <List.Icon {...props} icon="account-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="account-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Navigate to edit profile */}}
         />
         
@@ -257,7 +285,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Change Password"
           description="Update your account password"
-          left={props => <List.Icon {...props} icon="lock-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="lock-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Handle password change */}}
         />
         
@@ -266,7 +296,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Privacy Settings"
           description="Manage your data and privacy"
-          left={props => <List.Icon {...props} icon="shield-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="shield-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Navigate to privacy settings */}}
         />
       </View>
@@ -277,7 +309,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Help & FAQ"
           description="Get answers to common questions"
-          left={props => <List.Icon {...props} icon="help-circle-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="help-circle-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Navigate to help */}}
         />
         
@@ -286,7 +320,9 @@ const SettingsScreen = () => {
         <List.Item
           title="Contact Support"
           description="Reach out to our support team"
-          left={props => <List.Icon {...props} icon="email-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="email-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Handle contact */}}
         />
         
@@ -295,7 +331,9 @@ const SettingsScreen = () => {
         <List.Item
           title="About"
           description="App version and information"
-          left={props => <List.Icon {...props} icon="information-outline" />}
+          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
+          left={props => <List.Icon {...props} icon="information-outline" color={isDarkMode ? '#ffffff' : undefined} />}
           onPress={() => {/* Show about info */}}
         />
       </View>
@@ -303,7 +341,11 @@ const SettingsScreen = () => {
       <View style={styles.buttonContainer}>
         <Button 
           mode="outlined" 
-          style={styles.logoutButton}
+          style={[
+            styles.logoutButton,
+            { borderColor: isDarkMode ? "#ff6b6b" : "#f44336" }
+          ]}
+          labelStyle={{ color: isDarkMode ? "#ff6b6b" : "#f44336" }}
           color={isDarkMode ? "#ff6b6b" : "#f44336"}
           onPress={() => {/* Handle logout */}}
         >

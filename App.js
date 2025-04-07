@@ -64,11 +64,11 @@ const PaperProviderWithTheme = () => {
   
   return (
     <PaperProvider theme={theme}>
-      <SupabaseProvider>
-        <RaceProvider>
+      <RaceProvider>
+        <SupabaseProvider>
           <AppContent />
-        </RaceProvider>
-      </SupabaseProvider>
+        </SupabaseProvider>
+      </RaceProvider>
     </PaperProvider>
   );
 }

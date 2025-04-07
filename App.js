@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
-import { View, Text, ActivityIndicator, useColorScheme } from 'react-native';
+import { View, Text, ActivityIndicator, useColorScheme, Button } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
+import TestDarkMode from './test-dark-mode';
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();

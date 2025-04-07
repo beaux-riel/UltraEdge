@@ -5,17 +5,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Create custom light theme
 const LightTheme = {
   ...DefaultTheme,
+  dark: false,
   colors: {
     ...DefaultTheme.colors,
     primary: '#3f51b5',
     accent: '#f50057',
     background: '#f5f5f5',
+    surface: '#ffffff',
+    text: '#000000',
+    onSurface: '#000000',
+    disabled: '#9e9e9e',
+    placeholder: '#757575',
+    backdrop: 'rgba(0, 0, 0, 0.3)',
+    notification: '#f50057',
+    card: '#ffffff',
+    border: '#e0e0e0',
   },
 };
 
 // Create custom dark theme
 const CustomDarkTheme = {
   ...DarkTheme,
+  dark: true,
   colors: {
     ...DarkTheme.colors,
     primary: '#5c6bc0',
@@ -23,8 +34,13 @@ const CustomDarkTheme = {
     background: '#121212',
     surface: '#1e1e1e',
     text: '#ffffff',
+    onSurface: '#ffffff',
     disabled: '#757575',
     placeholder: '#9e9e9e',
+    backdrop: 'rgba(0, 0, 0, 0.5)',
+    notification: '#ff4081',
+    card: '#1e1e1e',
+    border: '#333333',
   },
 };
 

@@ -1,8 +1,9 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useAppTheme } from '../context/ThemeContext';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -18,6 +19,8 @@ const Tab = createBottomTabNavigator();
 
 // Main tab navigator
 const MainTabNavigator = () => {
+  const { isDarkMode, theme } = useAppTheme();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -34,9 +37,13 @@ const MainTabNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#3f51b5',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: isDarkMode ? '#9e9e9e' : 'gray',
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+          borderTopColor: isDarkMode ? '#333333' : '#e0e0e0',
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -62,17 +69,35 @@ const PlaceholderScreen = () => {
 
 // Main app navigator
 const AppNavigator = () => {
+  const { isDarkMode, theme } = useAppTheme();
+  
+  // Create a custom navigation theme based on dark mode
+  const navigationTheme = {
+    ...(isDarkMode ? NavigationDarkTheme : DefaultTheme),
+    colors: {
+      ...(isDarkMode ? NavigationDarkTheme.colors : DefaultTheme.colors),
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: isDarkMode ? '#1e1e1e' : '#ffffff',
+      text: isDarkMode ? '#ffffff' : '#000000',
+      border: isDarkMode ? '#333333' : '#e0e0e0',
+    },
+  };
+  
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         initialRouteName="Main"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#3f51b5',
+            backgroundColor: theme.colors.primary,
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',
+          },
+          contentStyle: {
+            backgroundColor: theme.colors.background,
           },
         }}
       >

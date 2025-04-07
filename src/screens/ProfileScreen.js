@@ -249,41 +249,42 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
+    marginTop: 50,
   },
   profileHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
     margin: 16,
     marginBottom: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
   },
   profileImage: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
   },
   profileInfo: {
     marginLeft: 16,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   profileName: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   profileLocation: {
     fontSize: 14,
-    color: '#757575',
+    color: "#757575",
     marginBottom: 8,
   },
   editButtonContainer: {
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   editButton: {
     borderRadius: 20,
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
   },
   bioText: {
@@ -310,43 +311,43 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   statItem: {
-    width: '30%',
-    alignItems: 'center',
+    width: "30%",
+    alignItems: "center",
     marginBottom: 16,
   },
   statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3f51b5',
+    fontWeight: "bold",
+    color: "#3f51b5",
   },
   statLabel: {
     fontSize: 12,
-    color: '#757575',
-    textAlign: 'center',
+    color: "#757575",
+    textAlign: "center",
   },
   completionContainer: {
     marginTop: 8,
   },
   completionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   completionLabel: {
     fontSize: 14,
-    color: '#757575',
+    color: "#757575",
   },
   completionValue: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#3f51b5',
+    fontWeight: "bold",
+    color: "#3f51b5",
   },
   progressBar: {
     height: 8,
@@ -359,20 +360,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   upcomingRaceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   upcomingRaceInfo: {
     flex: 1,
   },
   upcomingRaceName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   upcomingRaceDetails: {
     fontSize: 14,
-    color: '#757575',
+    color: "#757575",
   },
   achievementsCard: {
     margin: 16,
@@ -381,8 +382,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   achievementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   achievementIcon: {
@@ -393,11 +394,11 @@ const styles = StyleSheet.create({
   },
   achievementName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   achievementDate: {
     fontSize: 12,
-    color: '#757575',
+    color: "#757575",
   },
   trainingCard: {
     margin: 16,
@@ -406,23 +407,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   trainingStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   trainingStatItem: {
-    alignItems: 'center',
-    width: '30%',
+    alignItems: "center",
+    width: "30%",
   },
   trainingStatValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3f51b5',
+    fontWeight: "bold",
+    color: "#3f51b5",
   },
   trainingStatLabel: {
     fontSize: 12,
-    color: '#757575',
-    textAlign: 'center',
+    color: "#757575",
+    textAlign: "center",
   },
   trainingButton: {
     borderRadius: 20,
@@ -434,8 +435,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   settingsLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8,
   },
   settingsText: {

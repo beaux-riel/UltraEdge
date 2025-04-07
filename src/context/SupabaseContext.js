@@ -8,8 +8,8 @@ import { useRaces } from './RaceContext';
 const SupabaseContext = createContext();
 
 // Default Supabase URL and anon key (these will be replaced with your actual values)
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 export const SupabaseProvider = ({ children }) => {
   const [supabase, setSupabase] = useState(null);

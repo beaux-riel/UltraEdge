@@ -305,395 +305,560 @@ const SettingsScreen = () => {
   };
 
   return (
-    <ScrollView 
-      style={dynamicStyles.container}
-      contentContainerStyle={{
-        paddingTop: insets.top > 0 ? 0 : 16,
-        paddingBottom: insets.bottom + 16
-      }}
-    >
-      <Text style={dynamicStyles.title}>Settings</Text>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>App Preferences</Text>
-        
-        <List.Item
-          title="Notifications"
-          description="Receive reminders about upcoming races"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="bell-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          right={props => (
-            <Switch
-              value={notifications}
-              onValueChange={handleNotificationsChange}
-              color={paperTheme.colors.primary}
-            />
-          )}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Dark Mode"
-          description="Use dark theme throughout the app"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon={isDarkMode ? "weather-night" : "weather-sunny"} color={isDarkMode ? '#ffffff' : undefined} />}
-          right={props => (
-            <Switch
-              value={isDarkMode}
-              onValueChange={handleDarkModeChange}
-              color={paperTheme.colors.primary}
-            />
-          )}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Auto Backup"
-          description="Automatically backup your race plans"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="cloud-upload-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          right={props => (
-            <Switch
-              value={autoBackup}
-              onValueChange={handleAutoBackupChange}
-              color={paperTheme.colors.primary}
-            />
-          )}
-        />
-      </View>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>Units</Text>
-        
-        <Text style={dynamicStyles.subsectionTitle}>Distance</Text>
-        <RadioButton.Group onValueChange={handleDistanceUnitChange} value={distanceUnit}>
-          <View style={styles.radioOption}>
-            <RadioButton 
-              value="miles" 
-              color={paperTheme.colors.primary} 
-              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
-            />
-            <Text style={dynamicStyles.radioLabel}>Miles</Text>
-          </View>
-          <View style={styles.radioOption}>
-            <RadioButton 
-              value="km" 
-              color={paperTheme.colors.primary} 
-              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
-            />
-            <Text style={dynamicStyles.radioLabel}>Kilometers</Text>
-          </View>
-        </RadioButton.Group>
-        
-        <Divider style={dynamicStyles.divider} />
-        
-        <Text style={dynamicStyles.subsectionTitle}>Elevation</Text>
-        <RadioButton.Group onValueChange={handleElevationUnitChange} value={elevationUnit}>
-          <View style={styles.radioOption}>
-            <RadioButton 
-              value="ft" 
-              color={paperTheme.colors.primary} 
-              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
-            />
-            <Text style={dynamicStyles.radioLabel}>Feet</Text>
-          </View>
-          <View style={styles.radioOption}>
-            <RadioButton 
-              value="m" 
-              color={paperTheme.colors.primary} 
-              uncheckedColor={isDarkMode ? '#e0e0e0' : undefined}
-            />
-            <Text style={dynamicStyles.radioLabel}>Meters</Text>
-          </View>
-        </RadioButton.Group>
-      </View>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>Cloud Backup</Text>
-        
-        <List.Item
-          title="Backup to Cloud"
-          description={lastBackupDate ? `Last backup: ${lastBackupDate.toLocaleDateString()}` : "Backup your race data to the cloud"}
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="cloud-upload-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={handleBackup}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Restore from Cloud"
-          description="Restore your race data from the cloud"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="cloud-download-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={handleRestore}
-        />
-        
-        {!isPremium && (
-          <>
-            <Divider />
-            <List.Item
-              title="Upgrade to Premium"
-              description="Get cloud backup and more features"
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="star" color={isDarkMode ? '#ffd700' : '#ffc107'} />}
-              onPress={handleUpgradeToPremium}
-            />
-          </>
-        )}
-      </View>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>Integrations</Text>
-        
-        <List.Item
-          title="Sync with Strava"
-          description="Connect your Strava account"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="run" color={isDarkMode ? '#ffffff' : undefined} />}
-          right={props => (
-            <Switch
-              value={syncWithStrava}
-              onValueChange={handleSyncWithStravaChange}
-              color={paperTheme.colors.primary}
-            />
-          )}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Import GPX Files"
-          description="Import race courses from GPX files"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="map-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Handle import */}}
-        />
-      </View>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>Account</Text>
-        
-        {user ? (
-          <>
-            <List.Item
-              title={user.user_metadata?.name || user.email}
-              description={isPremium ? "Premium Account" : "Free Account"}
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="account" color={isDarkMode ? '#ffffff' : undefined} />}
-            />
-            
-            <Divider />
-            
-            <List.Item
-              title="Edit Profile"
-              description="Change your name, email, and photo"
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="account-edit-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-              onPress={() => {/* Navigate to edit profile */}}
-            />
-            
-            <Divider />
-            
-            <List.Item
-              title="Change Password"
-              description="Update your account password"
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="lock-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-              onPress={() => {/* Handle password change */}}
-            />
-          </>
-        ) : (
-          <>
-            <List.Item
-              title="Sign In"
-              description="Log in to your account"
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="login" color={isDarkMode ? '#ffffff' : undefined} />}
-              onPress={() => setShowLoginDialog(true)}
-            />
-            
-            <Divider />
-            
-            <List.Item
-              title="Create Account"
-              description="Sign up for a new account"
-              titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-              descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-              left={props => <List.Icon {...props} icon="account-plus-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-              onPress={() => setShowSignupDialog(true)}
-            />
-          </>
-        )}
-        
-        <Divider />
-        
-        <List.Item
-          title="Privacy Settings"
-          description="Manage your data and privacy"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="shield-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Navigate to privacy settings */}}
-        />
-      </View>
-      
-      <View style={dynamicStyles.section}>
-        <Text style={dynamicStyles.sectionTitle}>Support</Text>
-        
-        <List.Item
-          title="Help & FAQ"
-          description="Get answers to common questions"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="help-circle-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Navigate to help */}}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="Contact Support"
-          description="Reach out to our support team"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="email-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Handle contact */}}
-        />
-        
-        <Divider />
-        
-        <List.Item
-          title="About"
-          description="App version and information"
-          titleStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-          descriptionStyle={{ color: isDarkMode ? '#e0e0e0' : '#757575' }}
-          left={props => <List.Icon {...props} icon="information-outline" color={isDarkMode ? '#ffffff' : undefined} />}
-          onPress={() => {/* Show about info */}}
-        />
-      </View>
-      
-      {user && (
-        <View style={styles.buttonContainer}>
-          <Button 
-            mode="outlined" 
-            style={[
-              styles.logoutButton,
-              { borderColor: isDarkMode ? "#ff6b6b" : "#f44336" }
-            ]}
-            labelStyle={{ color: isDarkMode ? "#ff6b6b" : "#f44336" }}
-            color={isDarkMode ? "#ff6b6b" : "#f44336"}
-            onPress={handleLogout}
-            loading={isLoading}
-            disabled={isLoading}
-          >
-            Log Out
-          </Button>
+    <>
+      <ScrollView
+        style={dynamicStyles.container}
+        contentContainerStyle={{
+          paddingTop: insets.top > 0 ? 0 : 16,
+          paddingBottom: insets.bottom + 16,
+        }}
+      >
+        <Text style={dynamicStyles.title}>Settings</Text>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>App Preferences</Text>
+
+          <List.Item
+            title="Notifications"
+            description="Receive reminders about upcoming races"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="bell-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            right={(props) => (
+              <Switch
+                value={notifications}
+                onValueChange={handleNotificationsChange}
+                color={paperTheme.colors.primary}
+              />
+            )}
+          />
+
+          <Divider />
+
+          <List.Item
+            title="Dark Mode"
+            description="Use dark theme throughout the app"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon={isDarkMode ? "weather-night" : "weather-sunny"}
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            right={(props) => (
+              <Switch
+                value={isDarkMode}
+                onValueChange={handleDarkModeChange}
+                color={paperTheme.colors.primary}
+              />
+            )}
+          />
+
+          <Divider />
+
+          <List.Item
+            title="Auto Backup"
+            description="Automatically backup your race plans"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="cloud-upload-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            right={(props) => (
+              <Switch
+                value={autoBackup}
+                onValueChange={handleAutoBackupChange}
+                color={paperTheme.colors.primary}
+              />
+            )}
+          />
         </View>
-      )}
-    </ScrollView>
-    
-    {/* Login Dialog */}
-    <Portal>
-      <Dialog visible={showLoginDialog} onDismiss={() => setShowLoginDialog(false)}>
-        <Dialog.Title>Sign In</Dialog.Title>
-        <Dialog.Content>
-          <TextInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            mode="outlined"
-            style={{ marginBottom: 12 }}
-            autoCapitalize="none"
-            keyboardType="email-address"
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Units</Text>
+
+          <Text style={dynamicStyles.subsectionTitle}>Distance</Text>
+          <RadioButton.Group
+            onValueChange={handleDistanceUnitChange}
+            value={distanceUnit}
+          >
+            <View style={styles.radioOption}>
+              <RadioButton
+                value="miles"
+                color={paperTheme.colors.primary}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : undefined}
+              />
+              <Text style={dynamicStyles.radioLabel}>Miles</Text>
+            </View>
+            <View style={styles.radioOption}>
+              <RadioButton
+                value="km"
+                color={paperTheme.colors.primary}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : undefined}
+              />
+              <Text style={dynamicStyles.radioLabel}>Kilometers</Text>
+            </View>
+          </RadioButton.Group>
+
+          <Divider style={dynamicStyles.divider} />
+
+          <Text style={dynamicStyles.subsectionTitle}>Elevation</Text>
+          <RadioButton.Group
+            onValueChange={handleElevationUnitChange}
+            value={elevationUnit}
+          >
+            <View style={styles.radioOption}>
+              <RadioButton
+                value="ft"
+                color={paperTheme.colors.primary}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : undefined}
+              />
+              <Text style={dynamicStyles.radioLabel}>Feet</Text>
+            </View>
+            <View style={styles.radioOption}>
+              <RadioButton
+                value="m"
+                color={paperTheme.colors.primary}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : undefined}
+              />
+              <Text style={dynamicStyles.radioLabel}>Meters</Text>
+            </View>
+          </RadioButton.Group>
+        </View>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Cloud Backup</Text>
+
+          <List.Item
+            title="Backup to Cloud"
+            description={
+              lastBackupDate
+                ? `Last backup: ${lastBackupDate.toLocaleDateString()}`
+                : "Backup your race data to the cloud"
+            }
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="cloud-upload-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={handleBackup}
           />
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            mode="outlined"
-            secureTextEntry
-            style={{ marginBottom: 12 }}
+
+          <Divider />
+
+          <List.Item
+            title="Restore from Cloud"
+            description="Restore your race data from the cloud"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="cloud-download-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={handleRestore}
           />
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button onPress={() => setShowLoginDialog(false)}>Cancel</Button>
-          <Button onPress={() => setShowSignupDialog(true) || setShowLoginDialog(false)}>Sign Up</Button>
-          <Button onPress={handleLogin} loading={isLoading} disabled={isLoading}>Login</Button>
-        </Dialog.Actions>
-      </Dialog>
-    </Portal>
-    
-    {/* Signup Dialog */}
-    <Portal>
-      <Dialog visible={showSignupDialog} onDismiss={() => setShowSignupDialog(false)}>
-        <Dialog.Title>Create Account</Dialog.Title>
-        <Dialog.Content>
-          <TextInput
-            label="Name"
-            value={name}
-            onChangeText={setName}
-            mode="outlined"
-            style={{ marginBottom: 12 }}
+
+          {!isPremium && (
+            <>
+              <Divider />
+              <List.Item
+                title="Upgrade to Premium"
+                description="Get cloud backup and more features"
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="star"
+                    color={isDarkMode ? "#ffd700" : "#ffc107"}
+                  />
+                )}
+                onPress={handleUpgradeToPremium}
+              />
+            </>
+          )}
+        </View>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Integrations</Text>
+
+          <List.Item
+            title="Sync with Strava"
+            description="Connect your Strava account"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="run"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            right={(props) => (
+              <Switch
+                value={syncWithStrava}
+                onValueChange={handleSyncWithStravaChange}
+                color={paperTheme.colors.primary}
+              />
+            )}
           />
-          <TextInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            mode="outlined"
-            style={{ marginBottom: 12 }}
-            autoCapitalize="none"
-            keyboardType="email-address"
+
+          <Divider />
+
+          <List.Item
+            title="Import GPX Files"
+            description="Import race courses from GPX files"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="map-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={() => {
+              /* Handle import */
+            }}
           />
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            mode="outlined"
-            secureTextEntry
-            style={{ marginBottom: 12 }}
+        </View>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Account</Text>
+
+          {user ? (
+            <>
+              <List.Item
+                title={user.user_metadata?.name || user.email}
+                description={isPremium ? "Premium Account" : "Free Account"}
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="account"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                )}
+              />
+
+              <Divider />
+
+              <List.Item
+                title="Edit Profile"
+                description="Change your name, email, and photo"
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="account-edit-outline"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                )}
+                onPress={() => {
+                  /* Navigate to edit profile */
+                }}
+              />
+
+              <Divider />
+
+              <List.Item
+                title="Change Password"
+                description="Update your account password"
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="lock-outline"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                )}
+                onPress={() => {
+                  /* Handle password change */
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <List.Item
+                title="Sign In"
+                description="Log in to your account"
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="login"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                )}
+                onPress={() => setShowLoginDialog(true)}
+              />
+
+              <Divider />
+
+              <List.Item
+                title="Create Account"
+                description="Sign up for a new account"
+                titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+                left={(props) => (
+                  <List.Icon
+                    {...props}
+                    icon="account-plus-outline"
+                    color={isDarkMode ? "#ffffff" : undefined}
+                  />
+                )}
+                onPress={() => setShowSignupDialog(true)}
+              />
+            </>
+          )}
+
+          <Divider />
+
+          <List.Item
+            title="Privacy Settings"
+            description="Manage your data and privacy"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="shield-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={() => {
+              /* Navigate to privacy settings */
+            }}
           />
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button onPress={() => setShowSignupDialog(false)}>Cancel</Button>
-          <Button onPress={() => setShowLoginDialog(true) || setShowSignupDialog(false)}>Sign In</Button>
-          <Button onPress={handleSignup} loading={isLoading} disabled={isLoading}>Sign Up</Button>
-        </Dialog.Actions>
-      </Dialog>
-    </Portal>
-    
-    {/* Premium Upgrade Dialog */}
-    <Portal>
-      <Dialog visible={showBackupDialog} onDismiss={() => setShowBackupDialog(false)}>
-        <Dialog.Title>Premium Feature</Dialog.Title>
-        <Dialog.Content>
-          <Text style={{ marginBottom: 12 }}>
-            Cloud backup and restore are premium features. Upgrade to premium to enable these features.
-          </Text>
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button onPress={() => setShowBackupDialog(false)}>Cancel</Button>
-          <Button onPress={() => {
-            setShowBackupDialog(false);
-            handleUpgradeToPremium();
-          }}>Upgrade</Button>
-        </Dialog.Actions>
-      </Dialog>
-    </Portal>
+        </View>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>Support</Text>
+
+          <List.Item
+            title="Help & FAQ"
+            description="Get answers to common questions"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="help-circle-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={() => {
+              /* Navigate to help */
+            }}
+          />
+
+          <Divider />
+
+          <List.Item
+            title="Contact Support"
+            description="Reach out to our support team"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="email-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={() => {
+              /* Handle contact */
+            }}
+          />
+
+          <Divider />
+
+          <List.Item
+            title="About"
+            description="App version and information"
+            titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+            descriptionStyle={{ color: isDarkMode ? "#e0e0e0" : "#757575" }}
+            left={(props) => (
+              <List.Icon
+                {...props}
+                icon="information-outline"
+                color={isDarkMode ? "#ffffff" : undefined}
+              />
+            )}
+            onPress={() => {
+              /* Show about info */
+            }}
+          />
+        </View>
+
+        {user && (
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="outlined"
+              style={[
+                styles.logoutButton,
+                { borderColor: isDarkMode ? "#ff6b6b" : "#f44336" },
+              ]}
+              labelStyle={{ color: isDarkMode ? "#ff6b6b" : "#f44336" }}
+              color={isDarkMode ? "#ff6b6b" : "#f44336"}
+              onPress={handleLogout}
+              loading={isLoading}
+              disabled={isLoading}
+            >
+              Log Out
+            </Button>
+          </View>
+        )}
+      </ScrollView>
+
+      <Portal>
+        <Dialog
+          visible={showLoginDialog}
+          onDismiss={() => setShowLoginDialog(false)}
+        >
+          <Dialog.Title>Sign In</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              mode="outlined"
+              secureTextEntry
+              style={{ marginBottom: 12 }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowLoginDialog(false)}>Cancel</Button>
+            <Button
+              onPress={() =>
+                setShowSignupDialog(true) || setShowLoginDialog(false)
+              }
+            >
+              Sign Up
+            </Button>
+            <Button
+              onPress={handleLogin}
+              loading={isLoading}
+              disabled={isLoading}
+            >
+              Login
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Signup Dialog */}
+      <Portal>
+        <Dialog
+          visible={showSignupDialog}
+          onDismiss={() => setShowSignupDialog(false)}
+        >
+          <Dialog.Title>Create Account</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Name"
+              value={name}
+              onChangeText={setName}
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+            />
+            <TextInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              mode="outlined"
+              secureTextEntry
+              style={{ marginBottom: 12 }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowSignupDialog(false)}>Cancel</Button>
+            <Button
+              onPress={() =>
+                setShowLoginDialog(true) || setShowSignupDialog(false)
+              }
+            >
+              Sign In
+            </Button>
+            <Button
+              onPress={handleSignup}
+              loading={isLoading}
+              disabled={isLoading}
+            >
+              Sign Up
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Premium Upgrade Dialog */}
+      <Portal>
+        <Dialog
+          visible={showBackupDialog}
+          onDismiss={() => setShowBackupDialog(false)}
+        >
+          <Dialog.Title>Premium Feature</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ marginBottom: 12 }}>
+              Cloud backup and restore are premium features. Upgrade to premium
+              to enable these features.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowBackupDialog(false)}>Cancel</Button>
+            <Button
+              onPress={() => {
+                setShowBackupDialog(false);
+                handleUpgradeToPremium();
+              }}
+            >
+              Upgrade
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 };
 

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, List, Switch, Divider, Button, RadioButton, useTheme as usePaperTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../context/ThemeContext';
+import { useAppTheme } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SettingsScreen = () => {
   const paperTheme = usePaperTheme();
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { isDarkMode, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
   
   // Settings state

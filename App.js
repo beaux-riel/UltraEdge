@@ -5,10 +5,10 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { View, Text, ActivityIndicator, useColorScheme } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { RaceProvider } from './src/context/RaceContext';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
 
 const AppContent = () => {
-  const { theme, isDarkMode } = useTheme();
+  const { theme, isDarkMode } = useAppTheme();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function App() {
 
 // Use a separate component to access the theme context
 const PaperProviderWithTheme = () => {
-  const { theme } = useTheme();
+  const { theme } = useAppTheme();
   
   return (
     <PaperProvider theme={theme}>

@@ -24,12 +24,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
+import { useSettings } from "../context/SettingsContext";
 
 const CreateRaceScreen = ({ route, navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { addRace, getRaceById, updateRace } = useRaces();
+  const { settings } = useSettings();
 
   // Check if we're in edit mode
   const { editMode, raceData: existingRaceData } = route.params || {};
@@ -37,9 +39,9 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
   const [raceName, setRaceName] = useState("");
   const [distance, setDistance] = useState("");
-  const [distanceUnit, setDistanceUnit] = useState("miles");
+  const [distanceUnit, setDistanceUnit] = useState(settings.distanceUnit);
   const [elevation, setElevation] = useState("");
-  const [elevationUnit, setElevationUnit] = useState("ft");
+  const [elevationUnit, setElevationUnit] = useState(settings.elevationUnit);
   const [raceDate, setRaceDate] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);

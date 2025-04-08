@@ -15,6 +15,7 @@ import { ThemeProvider, useAppTheme } from "./src/context/ThemeContext";
 import { SupabaseProvider } from "./src/context/SupabaseContext";
 import { UserProvider } from "./src/context/UserContext";
 import { RevenueCatProvider } from "./src/context/RevenueCatContext";
+import { SettingsProvider } from "./src/context/SettingsContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -76,15 +77,17 @@ const PaperProviderWithTheme = () => {
 
   return (
     <PaperProvider theme={theme}>
-      <SupabaseProvider>
-        <RevenueCatProvider>
-          <UserProvider>
-            <RaceProvider>
-              <AppContent />
-            </RaceProvider>
-          </UserProvider>
-        </RevenueCatProvider>
-      </SupabaseProvider>
+      <SettingsProvider>
+        <SupabaseProvider>
+          <RevenueCatProvider>
+            <UserProvider>
+              <RaceProvider>
+                <AppContent />
+              </RaceProvider>
+            </UserProvider>
+          </RevenueCatProvider>
+        </SupabaseProvider>
+      </SettingsProvider>
     </PaperProvider>
   );
 };

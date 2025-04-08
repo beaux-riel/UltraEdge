@@ -4,6 +4,7 @@ import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as use
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
+import { useSettings } from '../context/SettingsContext';
 
 const EditAidStationScreen = ({ route, navigation }) => {
   const { raceId, stationIndex } = route.params;
@@ -11,6 +12,7 @@ const EditAidStationScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, updateRace } = useRaces();
+  const { settings } = useSettings();
   
   const raceData = getRaceById(raceId) || {};
   const [station, setStation] = useState(null);

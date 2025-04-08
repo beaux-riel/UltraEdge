@@ -4,6 +4,7 @@ import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as use
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
+import { useSettings } from '../context/SettingsContext';
 
 const AidStationSetupScreen = ({ route, navigation }) => {
   const { raceData } = route.params;
@@ -11,6 +12,7 @@ const AidStationSetupScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { updateRace } = useRaces();
+  const { settings } = useSettings();
   
   const [aidStations, setAidStations] = useState([]);
   const [selectedStationIndex, setSelectedStationIndex] = useState(null);
@@ -26,7 +28,7 @@ const AidStationSetupScreen = ({ route, navigation }) => {
         id: index.toString(),
         name: `Aid Station ${index + 1}`,
         distance: '',
-        distanceUnit: raceData.distanceUnit || 'miles',
+        distanceUnit: raceData.distanceUnit || settings.distanceUnit,
         cutoffTime: '',
         supplies: {
           water: true,

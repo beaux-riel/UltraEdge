@@ -4,6 +4,7 @@ import { Text, List, Switch, Divider, Button, RadioButton, useTheme as usePaperT
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSupabase } from '../context/SupabaseContext';
+import { useSettings } from '../context/SettingsContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 
@@ -24,12 +25,8 @@ const SettingsScreen = () => {
     upgradeToPremium 
   } = useSupabase();
   
-  // Settings state
-  const [notifications, setNotifications] = useState(true);
-  const [distanceUnit, setDistanceUnit] = useState('miles');
-  const [elevationUnit, setElevationUnit] = useState('ft');
-  const [syncWithStrava, setSyncWithStrava] = useState(false);
-  const [autoBackup, setAutoBackup] = useState(true);
+  // Get settings from context
+  const { settings, saveSetting } = useSettings();
   
   // Auth state
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -42,62 +39,28 @@ const SettingsScreen = () => {
   // Backup state
   const [showBackupDialog, setShowBackupDialog] = useState(false);
   
-  // Load settings from AsyncStorage
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const storedNotifications = await AsyncStorage.getItem('notifications');
-        const storedDistanceUnit = await AsyncStorage.getItem('distanceUnit');
-        const storedElevationUnit = await AsyncStorage.getItem('elevationUnit');
-        const storedSyncWithStrava = await AsyncStorage.getItem('syncWithStrava');
-        const storedAutoBackup = await AsyncStorage.getItem('autoBackup');
-        
-        if (storedNotifications !== null) setNotifications(JSON.parse(storedNotifications));
-        if (storedDistanceUnit !== null) setDistanceUnit(storedDistanceUnit);
-        if (storedElevationUnit !== null) setElevationUnit(storedElevationUnit);
-        if (storedSyncWithStrava !== null) setSyncWithStrava(JSON.parse(storedSyncWithStrava));
-        if (storedAutoBackup !== null) setAutoBackup(JSON.parse(storedAutoBackup));
-      } catch (error) {
-        console.error('Failed to load settings from storage', error);
-      }
-    };
-    
-    loadSettings();
-  }, []);
+  // We no longer need to load settings from AsyncStorage directly
+  // as the SettingsContext handles this for us
   
-  // Save settings to AsyncStorage when they change
-  const saveSettings = async (key, value) => {
-    try {
-      await AsyncStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-    } catch (error) {
-      console.error(`Failed to save ${key} to storage`, error);
-    }
-  };
-  
-  // Handle setting changes with storage
+  // Handle setting changes using the SettingsContext
   const handleNotificationsChange = (value) => {
-    setNotifications(value);
-    saveSettings('notifications', value);
+    saveSetting('notifications', value);
   };
   
   const handleDistanceUnitChange = (value) => {
-    setDistanceUnit(value);
-    saveSettings('distanceUnit', value);
+    saveSetting('distanceUnit', value);
   };
   
   const handleElevationUnitChange = (value) => {
-    setElevationUnit(value);
-    saveSettings('elevationUnit', value);
+    saveSetting('elevationUnit', value);
   };
   
   const handleSyncWithStravaChange = (value) => {
-    setSyncWithStrava(value);
-    saveSettings('syncWithStrava', value);
+    saveSetting('syncWithStrava', value);
   };
   
   const handleAutoBackupChange = (value) => {
-    setAutoBackup(value);
-    saveSettings('autoBackup', value);
+    saveSetting('autoBackup', value);
   };
   
   // Handle dark mode toggle
@@ -312,7 +275,7 @@ const SettingsScreen = () => {
             )}
             right={(props) => (
               <Switch
-                value={notifications}
+                value={settings.notifications}
                 onValueChange={handleNotificationsChange}
                 color={paperTheme.colors.primary}
               />
@@ -358,7 +321,7 @@ const SettingsScreen = () => {
             )}
             right={(props) => (
               <Switch
-                value={autoBackup}
+                value={settings.autoBackup}
                 onValueChange={handleAutoBackupChange}
                 color={paperTheme.colors.primary}
               />
@@ -372,7 +335,7 @@ const SettingsScreen = () => {
           <Text style={dynamicStyles.subsectionTitle}>Distance</Text>
           <RadioButton.Group
             onValueChange={handleDistanceUnitChange}
-            value={distanceUnit}
+            value={settings.distanceUnit}
           >
             <View style={styles.radioOption}>
               <RadioButton
@@ -397,7 +360,7 @@ const SettingsScreen = () => {
           <Text style={dynamicStyles.subsectionTitle}>Elevation</Text>
           <RadioButton.Group
             onValueChange={handleElevationUnitChange}
-            value={elevationUnit}
+            value={settings.elevationUnit}
           >
             <View style={styles.radioOption}>
               <RadioButton
@@ -495,7 +458,7 @@ const SettingsScreen = () => {
             )}
             right={(props) => (
               <Switch
-                value={syncWithStrava}
+                value={settings.syncWithStrava}
                 onValueChange={handleSyncWithStravaChange}
                 color={paperTheme.colors.primary}
               />

@@ -27,7 +27,7 @@ const AboutScreen = ({ navigation }) => {
       style={[
         styles.container,
         { backgroundColor: paperTheme.colors.background },
-        { paddingTop: insets.top },
+        { paddingBottom: insets.bottom },
       ]}
       contentContainerStyle={styles.contentContainer}
     >
@@ -267,9 +267,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 16,
+    width: 140,
+    height: 140,
   },
   appName: {
     fontSize: 28,

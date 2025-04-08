@@ -109,7 +109,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       updateUserData(localUserData);
       
       // Navigate back to profile screen
-      navigation.navigate('Profile');
+      navigation.goBack();
       
       // Show a success message
       Alert.alert('Success', 'Your profile has been updated successfully.');

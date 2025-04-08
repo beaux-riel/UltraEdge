@@ -5,8 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSupabase } from '../context/SupabaseContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from "@react-navigation/native";
 
 const SettingsScreen = () => {
+    const navigation = useNavigation();
   const paperTheme = usePaperTheme();
   const { isDarkMode, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();

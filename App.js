@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { View, Text, ActivityIndicator, useColorScheme, Button } from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
-import { RaceProvider } from './src/context/RaceContext';
-import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
-import { SupabaseProvider } from './src/context/SupabaseContext';
+import React, { useState, useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Provider as PaperProvider } from "react-native-paper";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  useColorScheme,
+  Button,
+} from "react-native";
+import AppNavigator from "./src/navigation/AppNavigator";
+import { RaceProvider } from "./src/context/RaceContext";
+import { ThemeProvider, useAppTheme } from "./src/context/ThemeContext";
+import { SupabaseProvider } from "./src/context/SupabaseContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -22,19 +28,23 @@ const AppContent = () => {
 
   if (!isReady) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        backgroundColor: isDarkMode ? '#121212' : '#f5f5f5' 
-      }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: isDarkMode ? "#121212" : "#f5f5f5",
+        }}
+      >
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={{ 
-          marginTop: 16, 
-          fontSize: 16,
-          color: isDarkMode ? '#ffffff' : '#000000'
-        }}>
-          Loading Ultra Endurance Planner...
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 16,
+            color: isDarkMode ? "#ffffff" : "#000000",
+          }}
+        >
+          Loading UltraEdge...
         </Text>
       </View>
     );
@@ -61,7 +71,7 @@ export default function App() {
 // Use a separate component to access the theme context
 const PaperProviderWithTheme = () => {
   const { theme } = useAppTheme();
-  
+
   return (
     <PaperProvider theme={theme}>
       <RaceProvider>
@@ -71,4 +81,4 @@ const PaperProviderWithTheme = () => {
       </RaceProvider>
     </PaperProvider>
   );
-}
+};

@@ -183,10 +183,10 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               <Chip
                 style={[
                   styles.chip,
-                  { backgroundColor: isDarkMode ? "#333333" : undefined },
+                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
                 ]}
                 icon="bag-personal"
-                textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
+                textStyle={{ color: isDarkMode ? "#ffffff" : "#333333" }}
               >
                 Drop Bags
               </Chip>
@@ -195,7 +195,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               <Chip
                 style={[
                   styles.chip,
-                  { backgroundColor: isDarkMode ? "#333333" : undefined },
+                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
                 ]}
                 icon="account-group"
                 textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}

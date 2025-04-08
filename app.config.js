@@ -1,6 +1,6 @@
 module.exports = {
-  name: "Ultra Endurance Planner",
-  slug: "ultra-endurance-planner",
+  name: "UltraEdge",
+  slug: "ultraedge",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -8,19 +8,20 @@ module.exports = {
   splash: {
     image: "./assets/splash-icon.png",
     resizeMode: "contain",
-    backgroundColor: "#ffffff"
+    backgroundColor: "#ffffff",
   },
   ios: {
-    supportsTablet: true
+    supportsTablet: true,
+    bundleIdentifier: "com.beaux.ultraedge",
   },
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#ffffff"
-    }
+      backgroundColor: "#ffffff",
+    },
   },
   web: {
-    favicon: "./assets/favicon.png"
+    favicon: "./assets/favicon.png",
   },
   extra: {
     // Add any extra configuration here
@@ -28,6 +29,6 @@ module.exports = {
   // This will be used when running the app with Expo
   packagerOpts: {
     host: "0.0.0.0",
-    port: 12000
-  }
+    port: 12000,
+  },
 };

@@ -22,7 +22,7 @@ import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ navigation, route }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -77,6 +77,16 @@ const ProfileScreen = ({ navigation }) => {
   // Calculate statistics
   const completionRate =
     userData.stats.racesCompleted / (userData.stats.racesPlanned || 1);
+
+  // Handle updated user data from EditProfileScreen
+  useEffect(() => {
+    if (route.params?.updatedUserData) {
+      setUserData(prevData => ({
+        ...prevData,
+        ...route.params.updatedUserData
+      }));
+    }
+  }, [route.params?.updatedUserData]);
 
   // Update stats when races change
   useEffect(() => {
@@ -196,9 +206,7 @@ const ProfileScreen = ({ navigation }) => {
               compact
               style={[styles.editButton, { borderColor: theme.colors.primary }]}
               color={theme.colors.primary}
-              onPress={() => {
-                /* Navigate to edit profile */
-              }}
+              onPress={() => navigation.navigate('EditProfile', { userData })}
             >
               Edit Profile
             </Button>

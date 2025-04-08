@@ -139,17 +139,6 @@ export const RaceProvider = ({ children }) => {
           const racesToSave = JSON.stringify(races);
           await AsyncStorage.setItem('races', racesToSave);
           console.log('Races saved successfully to AsyncStorage');
-          
-          // If user is premium, also back up to Supabase
-          if (user && isPremium) {
-            console.log('User is premium, backing up to Supabase...');
-            const result = await backupRaces(races);
-            if (result.success) {
-              console.log('Races backed up to Supabase successfully');
-            } else {
-              console.error('Failed to back up races to Supabase:', result.error);
-            }
-          }
         } catch (error) {
           console.error('Failed to save races to storage', error);
         }
@@ -162,7 +151,30 @@ export const RaceProvider = ({ children }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [races, loading, user, isPremium, backupRaces]);
+  }, [races, loading]);
+  
+  // Function to manually backup races to Supabase
+  const backupRacesToSupabase = async () => {
+    if (!user || !isPremium) {
+      console.log('Cannot backup: User not logged in or not premium');
+      return { success: false, error: 'User not logged in or not premium' };
+    }
+    
+    try {
+      console.log('Manually backing up races to Supabase...');
+      const result = await backupRaces(races);
+      if (result.success) {
+        console.log('Races backed up to Supabase successfully');
+        return { success: true };
+      } else {
+        console.error('Failed to back up races to Supabase:', result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('Failed to back up races to Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // Add a new race
   const addRace = (raceData) => {
@@ -170,6 +182,14 @@ export const RaceProvider = ({ children }) => {
       ...prevRaces,
       [raceData.id]: raceData
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupRacesToSupabase();
+      }, 300);
+    }
   };
 
   // Update an existing race
@@ -181,6 +201,14 @@ export const RaceProvider = ({ children }) => {
         ...updatedData
       }
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupRacesToSupabase();
+      }, 300);
+    }
   };
 
   // Delete a race
@@ -190,6 +218,14 @@ export const RaceProvider = ({ children }) => {
       delete newRaces[raceId];
       return newRaces;
     });
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupRacesToSupabase();
+      }, 300);
+    }
   };
 
   // Get all races as an array
@@ -210,7 +246,8 @@ export const RaceProvider = ({ children }) => {
       updateRace,
       deleteRace,
       getRacesArray,
-      getRaceById
+      getRaceById,
+      backupRacesToSupabase
     }}>
       {children}
     </RaceContext.Provider>

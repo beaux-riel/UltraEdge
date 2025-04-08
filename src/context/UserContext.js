@@ -103,60 +103,6 @@ export const UserProvider = ({ children }) => {
           const userDataToSave = JSON.stringify(userData);
           await AsyncStorage.setItem('userData', userDataToSave);
           console.log('User data saved successfully to AsyncStorage');
-          
-          // If user is premium, also back up to Supabase
-          if (user && isPremium && supabase) {
-            console.log('User is premium, backing up user data to Supabase...');
-            try {
-              // First, check if a profile record exists
-              const { data: existingProfile, error: fetchError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', user.id)
-                .single();
-                
-              if (fetchError && fetchError.code !== 'PGRST116') {
-                throw fetchError;
-              }
-              
-              // Prepare user data for Supabase (excluding sensitive or redundant info)
-              const userDataForBackup = {
-                name: userData.name,
-                email: userData.email,
-                profile_image: userData.profileImage,
-                location: userData.location,
-                bio: userData.bio,
-                preferences: userData.preferences,
-                stats: userData.stats,
-                achievements: userData.achievements,
-                updated_at: new Date()
-              };
-              
-              let result;
-              if (existingProfile) {
-                // Update existing profile
-                result = await supabase
-                  .from('profiles')
-                  .update(userDataForBackup)
-                  .eq('id', user.id);
-              } else {
-                // Insert new profile
-                result = await supabase
-                  .from('profiles')
-                  .insert([{
-                    id: user.id,
-                    ...userDataForBackup,
-                    is_premium: isPremium,
-                    created_at: new Date()
-                  }]);
-              }
-              
-              if (result.error) throw result.error;
-              console.log('User data backed up to Supabase successfully');
-            } catch (backupError) {
-              console.error('Failed to back up user data to Supabase:', backupError);
-            }
-          }
         } catch (error) {
           console.error('Failed to save user data to storage', error);
         }
@@ -169,18 +115,88 @@ export const UserProvider = ({ children }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [userData, loading, user, isPremium, supabase]);
+  }, [userData, loading]);
+  
+  // Function to backup user data to Supabase
+  const backupUserDataToSupabase = async () => {
+    if (!user || !isPremium || !supabase) {
+      console.log('Cannot backup: User not logged in, not premium, or Supabase not initialized');
+      return { success: false, error: 'User not logged in, not premium, or Supabase not initialized' };
+    }
+    
+    try {
+      console.log('Backing up user data to Supabase...');
+      
+      // First, check if a profile record exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+        
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+      
+      // Prepare user data for Supabase (excluding sensitive or redundant info)
+      const userDataForBackup = {
+        name: userData.name,
+        email: userData.email,
+        profile_image: userData.profileImage,
+        location: userData.location,
+        bio: userData.bio,
+        preferences: userData.preferences,
+        stats: userData.stats,
+        achievements: userData.achievements,
+        updated_at: new Date()
+      };
+      
+      let result;
+      if (existingProfile) {
+        // Update existing profile
+        result = await supabase
+          .from('profiles')
+          .update(userDataForBackup)
+          .eq('id', user.id);
+      } else {
+        // Insert new profile
+        result = await supabase
+          .from('profiles')
+          .insert([{
+            id: user.id,
+            ...userDataForBackup,
+            is_premium: isPremium,
+            created_at: new Date()
+          }]);
+      }
+      
+      if (result.error) throw result.error;
+      console.log('User data backed up to Supabase successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to back up user data to Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // Update user data
-  const updateUserData = (updatedData) => {
+  const updateUserData = async (updatedData) => {
     setUserData(prevData => ({
       ...prevData,
       ...updatedData
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupUserDataToSupabase();
+      }, 300);
+    }
   };
 
   // Update user stats
-  const updateUserStats = (statsData) => {
+  const updateUserStats = async (statsData) => {
     setUserData(prevData => ({
       ...prevData,
       stats: {
@@ -188,18 +204,34 @@ export const UserProvider = ({ children }) => {
         ...statsData
       }
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupUserDataToSupabase();
+      }, 300);
+    }
   };
 
   // Add an achievement
-  const addAchievement = (achievement) => {
+  const addAchievement = async (achievement) => {
     setUserData(prevData => ({
       ...prevData,
       achievements: [...prevData.achievements, achievement]
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupUserDataToSupabase();
+      }, 300);
+    }
   };
 
   // Update preferences
-  const updatePreferences = (preferencesData) => {
+  const updatePreferences = async (preferencesData) => {
     setUserData(prevData => ({
       ...prevData,
       preferences: {
@@ -207,6 +239,14 @@ export const UserProvider = ({ children }) => {
         ...preferencesData
       }
     }));
+    
+    // Backup to Supabase if user is premium
+    if (user && isPremium) {
+      // Wait a bit to ensure state is updated
+      setTimeout(() => {
+        backupUserDataToSupabase();
+      }, 300);
+    }
   };
 
   return (
@@ -216,7 +256,8 @@ export const UserProvider = ({ children }) => {
       updateUserData,
       updateUserStats,
       addAchievement,
-      updatePreferences
+      updatePreferences,
+      backupUserDataToSupabase
     }}>
       {children}
     </UserContext.Provider>

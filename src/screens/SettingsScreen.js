@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSupabase } from '../context/SupabaseContext';
 import { useSettings } from '../context/SettingsContext';
+import { useUser } from '../context/UserContext';
+import { useRaces } from '../context/RaceContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 
@@ -27,6 +29,8 @@ const SettingsScreen = () => {
   
   // Get settings from context
   const { settings, saveSetting } = useSettings();
+  const { backupUserDataToSupabase } = useUser();
+  const { backupRacesToSupabase } = useRaces();
   
   // Auth state
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -137,13 +141,24 @@ const SettingsScreen = () => {
     }
     
     setIsLoading(true);
-    const { success, error } = await backupRaces();
-    setIsLoading(false);
     
-    if (success) {
-      Alert.alert('Success', 'Your race data has been backed up successfully');
-    } else {
-      Alert.alert('Error', error || 'Failed to backup data');
+    try {
+      // Backup both user data and races
+      const userResult = await backupUserDataToSupabase();
+      const racesResult = await backupRacesToSupabase();
+      
+      if (userResult.success && racesResult.success) {
+        Alert.alert('Success', 'Your data has been backed up to the cloud');
+      } else {
+        let errorMessage = 'Failed to backup data: ';
+        if (!userResult.success) errorMessage += userResult.error || 'User data backup failed. ';
+        if (!racesResult.success) errorMessage += racesResult.error || 'Race data backup failed.';
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
   

@@ -534,7 +534,7 @@ const SettingsScreen = () => {
                   />
                 )}
                 onPress={() => {
-                  /* Navigate to edit profile */
+                  navigation.navigate("EditProfile");
                 }}
               />
 

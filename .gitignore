@@ -38,3 +38,6 @@ yarn-error.*
 
 # History
 .history/
+
+# Temp
+.temp/

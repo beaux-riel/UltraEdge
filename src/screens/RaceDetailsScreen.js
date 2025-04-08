@@ -14,6 +14,7 @@ import {
   List,
   Divider,
   FAB,
+  IconButton,
   useTheme as usePaperTheme,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -272,7 +273,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 
   const renderAidStationsTab = () => (
     <View style={styles.tabContent}>
-      {raceData.aidStations?.map((station) => (
+      {raceData.aidStations?.map((station, index) => (
         <Card
           key={station.id}
           style={[
@@ -281,6 +282,14 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           ]}
         >
           <Card.Content>
+            <View style={styles.cardActions}>
+              <IconButton
+                icon="pencil"
+                color={theme.colors.primary}
+                size={20}
+                onPress={() => navigation.navigate('EditAidStation', { raceId: id, stationIndex: index })}
+              />
+            </View>
             <View style={styles.stationHeader}>
               <Text
                 style={[
@@ -435,16 +444,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             Crew Members
           </Text>
           <List.Item
-            title="Add Crew Member"
+            title="Manage Crew"
             titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
             left={(props) => (
               <List.Icon
                 {...props}
-                icon="plus-circle"
+                icon="account-group"
                 color={theme.colors.primary}
               />
             )}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('CrewManagement', { raceId: id })}
           />
           <Divider
             style={{ backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" }}
@@ -481,7 +490,12 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           </Text>
         </Card.Content>
         <Card.Actions>
-          <Button color={theme.colors.primary}>Add Instructions</Button>
+          <Button 
+            color={theme.colors.primary}
+            onPress={() => navigation.navigate('CrewManagement', { raceId: id })}
+          >
+            {raceData.crewInstructions ? 'Edit Instructions' : 'Add Instructions'}
+          </Button>
         </Card.Actions>
       </Card>
     </View>
@@ -656,6 +670,11 @@ const styles = StyleSheet.create({
   stationCard: {
     marginBottom: 12,
     borderRadius: 8,
+  },
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 4,
   },
   stationHeader: {
     flexDirection: "row",

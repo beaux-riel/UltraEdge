@@ -13,6 +13,8 @@ import RaceDetailsScreen from '../screens/RaceDetailsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
+import EditAidStationScreen from '../screens/EditAidStationScreen';
+import CrewManagementScreen from '../screens/CrewManagementScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -126,6 +128,16 @@ const AppNavigator = () => {
           name="About" 
           component={AboutScreen} 
           options={{ title: 'About Us' }}
+        />
+        <Stack.Screen 
+          name="EditAidStation" 
+          component={EditAidStationScreen} 
+          options={{ title: 'Edit Aid Station' }}
+        />
+        <Stack.Screen 
+          name="CrewManagement" 
+          component={CrewManagementScreen} 
+          options={{ title: 'Crew Management' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

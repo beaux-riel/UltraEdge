@@ -140,6 +140,23 @@ export const SupabaseProvider = ({ children }) => {
               name, 
               email,
               is_premium: false,
+              profile_image: null,
+              location: '',
+              bio: '',
+              preferences: {
+                distanceUnit: 'miles',
+                elevationUnit: 'ft',
+                notifications: true,
+                darkMode: false
+              },
+              stats: {
+                racesPlanned: 0,
+                racesCompleted: 0,
+                totalDistance: 0,
+                appUsage: 0,
+                longestRace: 0
+              },
+              achievements: [],
               created_at: new Date(),
             },
           ]);

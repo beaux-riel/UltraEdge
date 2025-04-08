@@ -4,6 +4,12 @@ CREATE TABLE profiles (
   name TEXT,
   email TEXT UNIQUE,
   is_premium BOOLEAN DEFAULT FALSE,
+  profile_image TEXT,
+  location TEXT,
+  bio TEXT,
+  preferences JSONB,
+  stats JSONB,
+  achievements JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -54,11 +60,27 @@ CREATE POLICY "Users can delete their own backups"
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, email)
+  INSERT INTO public.profiles (
+    id, 
+    name, 
+    email, 
+    profile_image, 
+    location, 
+    bio, 
+    preferences, 
+    stats, 
+    achievements
+  )
   VALUES (
     NEW.id, 
     COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
-    NEW.email
+    NEW.email,
+    NULL,
+    '',
+    '',
+    '{"distanceUnit": "miles", "elevationUnit": "ft", "notifications": true, "darkMode": false}'::jsonb,
+    '{"racesPlanned": 0, "racesCompleted": 0, "totalDistance": 0, "appUsage": 0, "longestRace": 0}'::jsonb,
+    '[]'::jsonb
   );
   RETURN NEW;
 END;

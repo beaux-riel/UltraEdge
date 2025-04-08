@@ -6,6 +6,10 @@
 
 > Created by an ultra runner, for ultra runners.
 
+## Recent Updates
+
+- **2025-04-08**: Fixed profile data backup issue by adding missing columns to the Supabase database schema
+
 ## Latest Features
 
 ### Race Planning & Management

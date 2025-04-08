@@ -270,9 +270,7 @@ export const SupabaseProvider = ({ children }) => {
       if (!supabase) throw new Error('Supabase client not initialized');
       if (!user) throw new Error('User not authenticated');
       
-      // In a real app, this would integrate with a payment processor
-      // For now, we'll just update the premium status directly
-      
+      // Update premium status in Supabase
       const { error } = await supabase
         .from('profiles')
         .update({ is_premium: true })

@@ -225,36 +225,14 @@ const SettingsScreen = () => {
   };
   
   // Handle upgrade to premium
-  const handleUpgradeToPremium = async () => {
+  const handleUpgradeToPremium = () => {
     if (!user) {
       setShowLoginDialog(true);
       return;
     }
     
-    Alert.alert(
-      'Upgrade to Premium',
-      'This will upgrade your account to premium, enabling cloud backup and restore features. In a real app, this would process payment.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Upgrade',
-          onPress: async () => {
-            setIsLoading(true);
-            const { success, error } = await upgradeToPremium();
-            setIsLoading(false);
-            
-            if (success) {
-              Alert.alert('Success', 'Your account has been upgraded to premium');
-            } else {
-              Alert.alert('Error', error || 'Failed to upgrade account');
-            }
-          },
-        },
-      ],
-    );
+    // Navigate to the Premium screen
+    navigation.navigate('Premium');
   };
   
   // Create dynamic styles based on theme

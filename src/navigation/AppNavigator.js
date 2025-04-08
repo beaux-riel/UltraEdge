@@ -16,6 +16,7 @@ import AboutScreen from '../screens/AboutScreen';
 import EditAidStationScreen from '../screens/EditAidStationScreen';
 import CrewManagementScreen from '../screens/CrewManagementScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import PremiumScreen from '../screens/PremiumScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -144,6 +145,11 @@ const AppNavigator = () => {
           name="EditProfile" 
           component={EditProfileScreen} 
           options={{ title: 'Edit Profile' }}
+        />
+        <Stack.Screen 
+          name="Premium" 
+          component={PremiumScreen} 
+          options={{ title: 'Premium Subscription' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

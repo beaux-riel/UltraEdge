@@ -1,25 +1,61 @@
-import React from "react";
-import { View, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import React, { useEffect } from "react";
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  ActivityIndicator, 
+  Image, 
+  Dimensions, 
+  Animated, 
+  TouchableOpacity 
+} from "react-native";
 import {
   Text,
   Button,
-  Card,
   Title,
   Paragraph,
+  Surface,
   useTheme as usePaperTheme,
 } from "react-native-paper";
 import {
-  SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
+
+// Import custom components
+import EmptyState from "../components/EmptyState";
+import RaceCard from "../components/RaceCard";
+import TipCard from "../components/TipCard";
+
+const { width } = Dimensions.get("window");
 
 const HomeScreen = ({ navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRacesArray, loading } = useRaces();
+
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    // Start animations when component mounts
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const races = getRacesArray();
 
@@ -31,7 +67,7 @@ const HomeScreen = ({ navigation }) => {
           {
             paddingTop: insets.top,
             paddingBottom: insets.bottom,
-            backgroundColor: isDarkMode ? "#121212" : "#f5f5f5",
+            backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa",
           },
         ]}
       >
@@ -39,7 +75,7 @@ const HomeScreen = ({ navigation }) => {
         <Text
           style={[
             styles.loadingText,
-            { color: isDarkMode ? "#ffffff" : "#000000" },
+            { color: isDarkMode ? theme.colors.text : theme.colors.text },
           ]}
         >
           Loading your races...
@@ -48,145 +84,162 @@ const HomeScreen = ({ navigation }) => {
     );
   }
 
+  // Define gradient colors based on theme
+  const headerGradientColors = isDarkMode 
+    ? ['#2c3e50', '#1a2a38'] 
+    : ['#4361ee', '#3a86ff'];
+
   return (
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" },
+        { backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa" },
       ]}
       contentContainerStyle={{
-        paddingTop: insets.top > 0 ? 0 : 16, // Only add padding if there's no notch
+        paddingTop: insets.top > 0 ? 0 : 16,
         paddingBottom: insets.bottom + 16,
       }}
+      showsVerticalScrollIndicator={false}
     >
-      <Card
-        style={[
-          styles.welcomeCard,
-          { backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff" },
-        ]}
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
       >
-        <Card.Content>
-          <Title
-            style={[
-              styles.title,
-              { color: isDarkMode ? "#ffffff" : "#000000" },
-            ]}
-          >
-            UltraEdge
-          </Title>
-          <Paragraph
-            style={[
-              styles.paragraph,
-              { color: isDarkMode ? "#e0e0e0" : "#333333" },
-            ]}
-          >
-            Plan, prepare, and conquer your next ultra marathon with confidence.
-          </Paragraph>
-        </Card.Content>
-        <Card.Actions style={styles.cardActions}>
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate("CreateRace")}
-            style={styles.button}
-            color={theme.colors.primary}
-          >
-            Create New Race Plan
-          </Button>
-        </Card.Actions>
-      </Card>
-
-      <View style={styles.sectionContainer}>
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? "#ffffff" : "#000000" },
-          ]}
+        <LinearGradient
+          colors={headerGradientColors}
+          style={styles.headerGradient}
         >
-          Upcoming Races
-        </Text>
+          <View style={styles.headerContent}>
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Title style={styles.headerTitle}>UltraEdge</Title>
+            <Paragraph style={styles.headerSubtitle}>
+              Your ultra marathon companion
+            </Paragraph>
+          </View>
+        </LinearGradient>
 
-        {races.length === 0 ? (
-          <Card
-            style={[
-              styles.emptyCard,
-              { backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff" },
-            ]}
-          >
-            <Card.Content>
-              <Paragraph
-                style={[
-                  styles.emptyText,
-                  { color: isDarkMode ? "#9e9e9e" : "#757575" },
-                ]}
-              >
-                You don't have any races planned yet. Create your first race
-                plan to get started!
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        ) : (
-          races.map((race) => (
-            <Card
-              key={race.id}
+        <Surface style={[
+          styles.actionCard,
+          { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" }
+        ]}>
+          <View style={styles.actionCardContent}>
+            <Text style={[
+              styles.actionTitle,
+              { color: isDarkMode ? theme.colors.text : theme.colors.text }
+            ]}>
+              Ready for your next challenge?
+            </Text>
+            <Paragraph style={[
+              styles.actionDescription,
+              { color: isDarkMode ? theme.colors.textSecondary : theme.colors.textSecondary }
+            ]}>
+              Plan, prepare, and conquer your next ultra marathon with confidence.
+            </Paragraph>
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate("CreateRace")}
+              style={styles.actionButton}
+              contentStyle={styles.actionButtonContent}
+              labelStyle={styles.actionButtonLabel}
+              color={theme.colors.primary}
+            >
+              Create New Race Plan
+            </Button>
+          </View>
+        </Surface>
+
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderContainer}>
+            <Text
               style={[
-                styles.raceCard,
-                { backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff" },
+                styles.sectionTitle,
+                { color: isDarkMode ? theme.colors.text : theme.colors.text },
               ]}
             >
-              <Card.Content>
-                <Title style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
-                  {race.name}
-                </Title>
-                <Paragraph
-                  style={{ color: isDarkMode ? "#e0e0e0" : "#333333" }}
-                >
-                  {race.distance} miles • {race.date}
-                </Paragraph>
-              </Card.Content>
-              <Card.Actions>
-                <Button
-                  onPress={() =>
-                    navigation.navigate("RaceDetails", { id: race.id })
-                  }
-                  color={theme.colors.primary}
-                >
-                  View Details
-                </Button>
-              </Card.Actions>
-            </Card>
-          ))
-        )}
-      </View>
+              Upcoming Races
+            </Text>
+            {races.length > 0 && (
+              <TouchableOpacity>
+                <Text style={{ color: theme.colors.primary }}>See All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-      <View style={styles.sectionContainer}>
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: isDarkMode ? "#ffffff" : "#000000" },
-          ]}
-        >
-          Training Tips
-        </Text>
-        <Card
-          style={[
-            styles.tipCard,
-            { backgroundColor: isDarkMode ? "#1e1e1e" : "#ffffff" },
-          ]}
-        >
-          <Card.Content>
-            <Title style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
-              Nutrition Strategy
-            </Title>
-            <Paragraph style={{ color: isDarkMode ? "#e0e0e0" : "#333333" }}>
-              Proper fueling can make or break your race. Learn how to calculate
-              your caloric needs.
-            </Paragraph>
-          </Card.Content>
-          <Card.Actions>
-            <Button color={theme.colors.primary}>Read More</Button>
-          </Card.Actions>
-        </Card>
-      </View>
+          {races.length === 0 ? (
+            <EmptyState
+              image={require("../../assets/logo.png")}
+              title="No races yet"
+              description="Track your upcoming ultra marathons and get personalized training plans."
+              buttonText="Add Your First Race"
+              onButtonPress={() => navigation.navigate("CreateRace")}
+            />
+          ) : (
+            races.map((race) => (
+              <RaceCard
+                key={race.id}
+                race={race}
+                progress={60}
+                onPress={() => navigation.navigate("RaceDetails", { id: race.id })}
+              />
+            ))
+          )}
+        </View>
+
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderContainer}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? theme.colors.text : theme.colors.text },
+              ]}
+            >
+              Training Tips
+            </Text>
+            <TouchableOpacity>
+              <Text style={{ color: theme.colors.primary }}>More</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tipsScrollContainer}
+          >
+            <TipCard
+              title="Nutrition Strategy"
+              description="Proper fueling can make or break your race. Learn how to calculate your caloric needs."
+              icon="food-apple"
+              iconBackgroundColor={theme.colors.success}
+              style={{ width: width * 0.7, marginRight: 16 }}
+              onPress={() => {}}
+            />
+
+            <TipCard
+              title="Gear Selection"
+              description="Choosing the right shoes and equipment for your ultra marathon."
+              icon="shoe-print"
+              iconBackgroundColor={theme.colors.secondary}
+              style={{ width: width * 0.7, marginRight: 16 }}
+              onPress={() => {}}
+            />
+
+            <TipCard
+              title="Training Schedule"
+              description="Build endurance with a progressive training plan tailored to your race."
+              icon="run-fast"
+              iconBackgroundColor={theme.colors.tertiary}
+              style={{ width: width * 0.7, marginRight: 16 }}
+              onPress={() => {}}
+            />
+          </ScrollView>
+        </View>
+      </Animated.View>
     </ScrollView>
   );
 };
@@ -194,7 +247,6 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 50,
   },
   loadingContainer: {
     flex: 1,
@@ -204,55 +256,84 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
+    fontWeight: "500",
   },
-  welcomeCard: {
-    margin: 16,
-    elevation: 4,
-    borderRadius: 12,
+  headerGradient: {
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  title: {
-    fontSize: 24,
+  headerContent: {
+    alignItems: "center",
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: "bold",
+    color: "#ffffff",
     textAlign: "center",
   },
-  paragraph: {
+  headerSubtitle: {
     fontSize: 16,
+    color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",
+    marginTop: 4,
+  },
+  actionCard: {
+    marginHorizontal: 16,
+    marginTop: -20,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  actionCardContent: {
+    padding: 20,
+  },
+  actionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  actionDescription: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  actionButton: {
+    borderRadius: 8,
     marginTop: 8,
   },
-  cardActions: {
-    justifyContent: "center",
-    paddingBottom: 16,
+  actionButtonContent: {
+    height: 48,
   },
-  button: {
-    marginTop: 8,
-    paddingHorizontal: 16,
+  actionButtonLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   sectionContainer: {
-    marginTop: 16,
+    marginTop: 24,
     paddingHorizontal: 16,
+  },
+  sectionHeaderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 12,
   },
-  raceCard: {
-    marginBottom: 12,
-    borderRadius: 8,
-  },
-  emptyCard: {
-    marginBottom: 12,
-    borderRadius: 8,
-    padding: 8,
-  },
-  emptyText: {
-    textAlign: "center",
-    opacity: 0.7,
-  },
-  tipCard: {
-    marginBottom: 16,
-    borderRadius: 8,
+  tipsScrollContainer: {
+    paddingBottom: 8,
+    paddingRight: 16,
   },
 });
 

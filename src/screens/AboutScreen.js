@@ -1,9 +1,15 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Image, Linking } from 'react-native';
-import { Text, Card, Button, Divider, useTheme as usePaperTheme } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppTheme } from '../context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { View, StyleSheet, ScrollView, Image, Linking } from "react-native";
+import {
+  Text,
+  Card,
+  Button,
+  Divider,
+  useTheme as usePaperTheme,
+} from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppTheme } from "../context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const AboutScreen = ({ navigation }) => {
   const paperTheme = usePaperTheme();
@@ -11,7 +17,9 @@ const AboutScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   const openLink = (url) => {
-    Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+    Linking.openURL(url).catch((err) =>
+      console.error("An error occurred", err)
+    );
   };
 
   return (
@@ -19,93 +27,205 @@ const AboutScreen = ({ navigation }) => {
       style={[
         styles.container,
         { backgroundColor: paperTheme.colors.background },
-        { paddingTop: insets.top }
+        { paddingTop: insets.top },
       ]}
       contentContainerStyle={styles.contentContainer}
     >
       <View style={styles.headerContainer}>
         <Image
-          source={require('../../assets/logo.png')}
+          source={require("../../assets/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
         <Text style={[styles.appName, { color: paperTheme.colors.primary }]}>
-          Ultra Endurance Planner
+          UltraEdge
         </Text>
-        <Text style={[styles.tagline, { color: isDarkMode ? '#e0e0e0' : '#757575' }]}>
+        <Text
+          style={[
+            styles.tagline,
+            { color: isDarkMode ? "#e0e0e0" : "#757575" },
+          ]}
+        >
           Go the distance. Plan with confidence.
         </Text>
       </View>
 
-      <Card style={[styles.card, { backgroundColor: isDarkMode ? '#2c2c2c' : '#ffffff' }]}>
+      <Card
+        style={[
+          styles.card,
+          { backgroundColor: isDarkMode ? "#2c2c2c" : "#ffffff" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}>
+          <Text
+            style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}
+          >
             The Story Behind the App
           </Text>
-          <Text style={[styles.paragraph, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            Ultra Endurance Planner was born from the trails and mountains that challenge ultra runners every day. As an ultra marathon runner myself, I've experienced firsthand how crucial meticulous planning is to success in these grueling events.
+          <Text
+            style={[
+              styles.paragraph,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            UltraEdge was born from the trails and mountains that challenge
+            ultra runners every day. As an ultra marathon runner myself, I've
+            experienced firsthand how crucial meticulous planning is to success
+            in these grueling events.
           </Text>
-          <Text style={[styles.paragraph, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            With my background working at Kintec, a Canadian footwear specialty company, and later as a Tech Rep for Western Canada at On, the Swiss running shoe brand, I've gained deep insights into what runners need to perform at their best.
+          <Text
+            style={[
+              styles.paragraph,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            With my background working at Kintec, a Canadian footwear specialty
+            company, and later as a Tech Rep for Western Canada at On, the Swiss
+            running shoe brand, I've gained deep insights into what runners need
+            to perform at their best.
           </Text>
-          <Text style={[styles.paragraph, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            This app combines my passion for ultra running with my technical expertise to create a tool that helps runners plan their events down to the smallest detail - from aid station strategies to crew coordination.
+          <Text
+            style={[
+              styles.paragraph,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            This app combines my passion for ultra running with my technical
+            expertise to create a tool that helps runners plan their events down
+            to the smallest detail - from aid station strategies to crew
+            coordination.
           </Text>
         </Card.Content>
       </Card>
 
-      <Card style={[styles.card, { backgroundColor: isDarkMode ? '#2c2c2c' : '#ffffff' }]}>
+      <Card
+        style={[
+          styles.card,
+          { backgroundColor: isDarkMode ? "#2c2c2c" : "#ffffff" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}>
+          <Text
+            style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}
+          >
             What Makes Us Different
           </Text>
           <View style={styles.featureRow}>
-            <Ionicons name="trail-sign-outline" size={24} color={paperTheme.colors.primary} />
-            <Text style={[styles.featureText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            <Ionicons
+              name="trail-sign-outline"
+              size={24}
+              color={paperTheme.colors.primary}
+            />
+            <Text
+              style={[
+                styles.featureText,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
               Created by ultra runners, for ultra runners
             </Text>
           </View>
           <View style={styles.featureRow}>
-            <Ionicons name="people-outline" size={24} color={paperTheme.colors.primary} />
-            <Text style={[styles.featureText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            <Ionicons
+              name="people-outline"
+              size={24}
+              color={paperTheme.colors.primary}
+            />
+            <Text
+              style={[
+                styles.featureText,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
               Comprehensive crew management tools
             </Text>
           </View>
           <View style={styles.featureRow}>
-            <Ionicons name="analytics-outline" size={24} color={paperTheme.colors.primary} />
-            <Text style={[styles.featureText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            <Ionicons
+              name="analytics-outline"
+              size={24}
+              color={paperTheme.colors.primary}
+            />
+            <Text
+              style={[
+                styles.featureText,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
               Detailed aid station planning and analytics
             </Text>
           </View>
           <View style={styles.featureRow}>
-            <Ionicons name="time-outline" size={24} color={paperTheme.colors.primary} />
-            <Text style={[styles.featureText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            <Ionicons
+              name="time-outline"
+              size={24}
+              color={paperTheme.colors.primary}
+            />
+            <Text
+              style={[
+                styles.featureText,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
               Real-time race day execution tools
             </Text>
           </View>
         </Card.Content>
       </Card>
 
-      <Card style={[styles.card, { backgroundColor: isDarkMode ? '#2c2c2c' : '#ffffff' }]}>
+      <Card
+        style={[
+          styles.card,
+          { backgroundColor: isDarkMode ? "#2c2c2c" : "#ffffff" },
+        ]}
+      >
         <Card.Content>
-          <Text style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}>
+          <Text
+            style={[styles.sectionTitle, { color: paperTheme.colors.primary }]}
+          >
             Meet the Creator
           </Text>
-          <Text style={[styles.paragraph, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            Hi, I'm Beaux! When I'm not coding, you'll find me on mountain trails pushing my limits in ultra marathons. My experiences in both the tech and running worlds have shaped this app into what I believe is the ultimate planning tool for endurance athletes.
+          <Text
+            style={[
+              styles.paragraph,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Hi, I'm Beaux! When I'm not coding, you'll find me on mountain
+            trails pushing my limits in ultra marathons. My experiences in both
+            the tech and running worlds have shaped this app into what I believe
+            is the ultimate planning tool for endurance athletes.
           </Text>
-          <Text style={[styles.paragraph, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            I believe that with the right planning and support, anyone can achieve their ultra running goals. This app is my contribution to the ultra running community - a tool to help you focus on what matters: the journey and the finish line.
+          <Text
+            style={[
+              styles.paragraph,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            I believe that with the right planning and support, anyone can
+            achieve their ultra running goals. This app is my contribution to
+            the ultra running community - a tool to help you focus on what
+            matters: the journey and the finish line.
           </Text>
         </Card.Content>
       </Card>
 
       <View style={styles.versionContainer}>
-        <Text style={[styles.version, { color: isDarkMode ? '#e0e0e0' : '#757575' }]}>
+        <Text
+          style={[
+            styles.version,
+            { color: isDarkMode ? "#e0e0e0" : "#757575" },
+          ]}
+        >
           Version 1.0.0
         </Text>
-        <Text style={[styles.copyright, { color: isDarkMode ? '#e0e0e0' : '#757575' }]}>
-          © 2025 Ultra Endurance Planner
+        <Text
+          style={[
+            styles.copyright,
+            { color: isDarkMode ? "#e0e0e0" : "#757575" },
+          ]}
+        >
+          © 2025 UltraEdge
         </Text>
       </View>
 
@@ -113,7 +233,9 @@ const AboutScreen = ({ navigation }) => {
         <Button
           mode="text"
           icon="instagram"
-          onPress={() => openLink('https://instagram.com/ultraenduranceplanner')}
+          onPress={() =>
+            openLink("https://instagram.com/ultraenduranceplanner")
+          }
           style={styles.socialButton}
           labelStyle={{ color: paperTheme.colors.primary }}
         >
@@ -122,7 +244,7 @@ const AboutScreen = ({ navigation }) => {
         <Button
           mode="text"
           icon="email-outline"
-          onPress={() => openLink('mailto:contact@ultraenduranceplanner.com')}
+          onPress={() => openLink("mailto:contact@ultraenduranceplanner.com")}
           style={styles.socialButton}
           labelStyle={{ color: paperTheme.colors.primary }}
         >
@@ -141,7 +263,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   logo: {
@@ -151,13 +273,13 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   card: {
@@ -166,7 +288,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
   },
   paragraph: {
@@ -175,8 +297,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   featureText: {
@@ -185,7 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   versionContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
     marginBottom: 16,
   },
@@ -197,8 +319,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 24,
   },
   socialButton: {

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Clean white background -->
+  <rect x="0" y="0" width="200" height="200" fill="none" />
+  
+  <!-- Simplified mountain silhouette - slightly different peaks -->
+  <path d="M40,140 L70,70 L100,100 L130,60 L160,140" 
+        fill="none" 
+        stroke="#6c5ce7" 
+        stroke-width="6" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+  
+  <!-- Route line with gentle curve -->
+  <path d="M40,150 C80,130 120,145 160,150" 
+        fill="none" 
+        stroke="#00b894" 
+        stroke-width="3" 
+        stroke-linecap="round" />
+  
+  <!-- Three minimal markers -->
+  <circle cx="40" cy="150" r="4" fill="#00b894" />
+  <circle cx="100" cy="140" r="4" fill="#00b894" />
+  <circle cx="160" cy="150" r="4" fill="#00b894" />
+</svg>

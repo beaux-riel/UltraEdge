@@ -1,6 +1,6 @@
-# Ultra Endurance Planner
+# UltraEdge
 
-A React Native application for planning and managing ultra marathon races and endurance events.
+An Open Source React Native application for planning and managing ultra marathon races and endurance events.
 
 ## Features
 

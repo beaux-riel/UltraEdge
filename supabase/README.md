@@ -1,6 +1,6 @@
-# Supabase Integration for Ultra Endurance Planner
+# Supabase Integration for UltraEdge
 
-This directory contains the necessary files to set up Supabase for the Ultra Endurance Planner app, enabling cloud backup functionality for premium users.
+This directory contains the necessary files to set up Supabase for the UltraEdge app, enabling cloud backup functionality for premium users.
 
 ## Setup Instructions
 
@@ -28,8 +28,8 @@ This directory contains the necessary files to set up Supabase for the Ultra End
 2. Replace the placeholder values with your actual Supabase URL and anon key:
 
 ```javascript
-const SUPABASE_URL = 'https://your-project-url.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+const SUPABASE_URL = "https://your-project-url.supabase.co";
+const SUPABASE_ANON_KEY = "your-anon-key";
 ```
 
 ## Database Structure

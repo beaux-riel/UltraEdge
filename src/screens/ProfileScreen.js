@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
 import { Ionicons } from "@expo/vector-icons";
 
 const ProfileScreen = ({ navigation, route }) => {
@@ -27,52 +28,10 @@ const ProfileScreen = ({ navigation, route }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRacesArray } = useRaces();
+  const { userData, updateUserData, updateUserStats } = useUser();
 
   // Use useMemo to prevent recalculation on every render
   const races = useMemo(() => getRacesArray(), [getRacesArray]);
-
-  // Mock user data - in a real app, this would come from a user context or API
-  const [userData, setUserData] = useState({
-    name: "Alex Runner",
-    email: "alex.runner@example.com",
-    profileImage: null, // We'll use a placeholder
-    location: "Boulder, CO",
-    bio: "Ultra runner passionate about mountain trails and pushing limits. Completed 10+ ultras including Western States and UTMB.",
-    stats: {
-      racesPlanned: races.length,
-      racesCompleted: 3,
-      totalDistance: races.reduce((sum, race) => sum + race.distance, 0),
-      appUsage: 15, // Number of times app used for planning
-      longestRace: Math.max(...races.map((race) => race.distance), 0),
-    },
-    achievements: [
-      {
-        id: "1",
-        name: "First Race Plan",
-        icon: "flag-outline",
-        date: "2024-03-15",
-      },
-      {
-        id: "2",
-        name: "Mountain Master",
-        icon: "pyramid",
-        date: "2024-04-01",
-      },
-      {
-        id: "3",
-        name: "Nutrition Expert",
-        icon: "food-apple",
-        date: "2024-04-10",
-      },
-    ],
-    preferences: {
-      distanceUnit: "miles",
-      elevationUnit: "ft",
-      notifications: true,
-      darkMode: false,
-    },
-    upcomingRace: races.length > 0 ? races[0] : null,
-  });
 
   // Calculate statistics
   const completionRate =
@@ -81,54 +40,47 @@ const ProfileScreen = ({ navigation, route }) => {
   // Handle updated user data from EditProfileScreen
   useEffect(() => {
     if (route.params?.updatedUserData) {
-      setUserData(prevData => ({
-        ...prevData,
-        ...route.params.updatedUserData
-      }));
+      updateUserData(route.params.updatedUserData);
     }
-  }, [route.params?.updatedUserData]);
+  }, [route.params?.updatedUserData, updateUserData]);
 
   // Update stats when races change
   useEffect(() => {
     // Only update if races array has content and is different from current data
     if (races && races.length > 0) {
-      setUserData((prevData) => {
-        // Calculate new values
-        const racesPlanned = races.length;
-        const totalDistance = races.reduce(
-          (sum, race) => sum + (race.distance || 0),
-          0
-        );
-        const longestRace = Math.max(
-          ...races.map((race) => race.distance || 0),
-          0
-        );
-        const upcomingRace = races[0];
+      // Calculate new values
+      const racesPlanned = races.length;
+      const totalDistance = races.reduce(
+        (sum, race) => sum + (race.distance || 0),
+        0
+      );
+      const longestRace = Math.max(
+        ...races.map((race) => race.distance || 0),
+        0
+      );
+      const upcomingRace = races[0];
 
-        // Check if any values have actually changed to prevent unnecessary updates
-        if (
-          prevData.stats.racesPlanned !== racesPlanned ||
-          prevData.stats.totalDistance !== totalDistance ||
-          prevData.stats.longestRace !== longestRace ||
-          prevData.upcomingRace?.id !== upcomingRace?.id
-        ) {
-          return {
-            ...prevData,
-            stats: {
-              ...prevData.stats,
-              racesPlanned,
-              totalDistance,
-              longestRace,
-            },
-            upcomingRace,
-          };
-        }
-
-        // Return the previous state unchanged if nothing has changed
-        return prevData;
-      });
+      // Check if any values have actually changed to prevent unnecessary updates
+      if (
+        userData.stats.racesPlanned !== racesPlanned ||
+        userData.stats.totalDistance !== totalDistance ||
+        userData.stats.longestRace !== longestRace ||
+        userData.upcomingRace?.id !== upcomingRace?.id
+      ) {
+        // Update stats
+        updateUserStats({
+          racesPlanned,
+          totalDistance,
+          longestRace,
+        });
+        
+        // Update upcoming race
+        updateUserData({
+          upcomingRace,
+        });
+      }
     }
-  }, [races]);
+  }, [races, userData.stats, userData.upcomingRace, updateUserStats, updateUserData]);
 
   const renderStatItem = (label, value, unit = "") => (
     <View style={styles.statItem}>

@@ -3,33 +3,31 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 're
 import { Text, TextInput, Button, Avatar, Divider, useTheme as usePaperTheme, Switch, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../context/ThemeContext';
+import { useUser } from '../context/UserContext';
+import { useSupabase } from '../context/SupabaseContext';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
-// In a real app, we would have a user context to manage user data
-// For now, we'll simulate this with a mock function
-const saveUserData = async (userData) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return true;
-};
+// This function is no longer needed as we're using the UserContext
 
 const EditProfileScreen = ({ route, navigation }) => {
-  const { userData: initialUserData } = route.params;
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { userData: contextUserData, updateUserData } = useUser();
+  const { user, isPremium } = useSupabase();
   
-  const [userData, setUserData] = useState({
-    name: initialUserData.name || '',
-    email: initialUserData.email || '',
-    profileImage: initialUserData.profileImage || null,
-    location: initialUserData.location || '',
-    bio: initialUserData.bio || '',
+  // Create a local copy of the user data for editing
+  const [localUserData, setLocalUserData] = useState({
+    name: contextUserData.name || '',
+    email: contextUserData.email || '',
+    profileImage: contextUserData.profileImage || null,
+    location: contextUserData.location || '',
+    bio: contextUserData.bio || '',
     preferences: {
-      distanceUnit: initialUserData.preferences?.distanceUnit || 'miles',
-      elevationUnit: initialUserData.preferences?.elevationUnit || 'ft',
-      notifications: initialUserData.preferences?.notifications || true,
+      distanceUnit: contextUserData.preferences?.distanceUnit || 'miles',
+      elevationUnit: contextUserData.preferences?.elevationUnit || 'ft',
+      notifications: contextUserData.preferences?.notifications || true,
     }
   });
   
@@ -39,7 +37,7 @@ const EditProfileScreen = ({ route, navigation }) => {
     if (field.includes('.')) {
       // Handle nested fields like preferences.distanceUnit
       const [parent, child] = field.split('.');
-      setUserData(prev => ({
+      setLocalUserData(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -47,7 +45,7 @@ const EditProfileScreen = ({ route, navigation }) => {
         }
       }));
     } else {
-      setUserData(prev => ({
+      setLocalUserData(prev => ({
         ...prev,
         [field]: value
       }));
@@ -74,7 +72,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
         // Update the profile image
-        setUserData(prev => ({
+        setLocalUserData(prev => ({
           ...prev,
           profileImage: result.assets[0].uri
         }));
@@ -87,19 +85,19 @@ const EditProfileScreen = ({ route, navigation }) => {
   
   const handleSaveProfile = async () => {
     // Validate required fields
-    if (!userData.name.trim()) {
+    if (!localUserData.name.trim()) {
       Alert.alert('Missing Information', 'Please enter your name.');
       return;
     }
     
-    if (!userData.email.trim()) {
+    if (!localUserData.email.trim()) {
       Alert.alert('Missing Information', 'Please enter your email address.');
       return;
     }
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(userData.email)) {
+    if (!emailRegex.test(localUserData.email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.');
       return;
     }
@@ -107,15 +105,14 @@ const EditProfileScreen = ({ route, navigation }) => {
     setLoading(true);
     
     try {
-      // In a real app, this would save to a backend or local storage
-      const success = await saveUserData(userData);
+      // Update user data in the context (this will trigger the automatic backup for premium users)
+      updateUserData(localUserData);
       
-      if (success) {
-        // Navigate back to profile screen with updated data
-        navigation.navigate('Profile', { updatedUserData: userData });
-      } else {
-        Alert.alert('Error', 'Failed to save profile. Please try again.');
-      }
+      // Navigate back to profile screen
+      navigation.navigate('Profile');
+      
+      // Show a success message
+      Alert.alert('Success', 'Your profile has been updated successfully.');
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
@@ -208,9 +205,9 @@ const EditProfileScreen = ({ route, navigation }) => {
       {/* Profile Image */}
       <View style={dynamicStyles.profileImageContainer}>
         <TouchableOpacity onPress={handlePickImage}>
-          {userData.profileImage ? (
+          {localUserData.profileImage ? (
             <Image 
-              source={{ uri: userData.profileImage }} 
+              source={{ uri: localUserData.profileImage }} 
               style={dynamicStyles.profileImage}
             />
           ) : (
@@ -236,7 +233,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       <Text style={dynamicStyles.sectionLabel}>Basic Information</Text>
       <TextInput
         label="Full Name"
-        value={userData.name}
+        value={localUserData.name}
         onChangeText={(text) => handleInputChange('name', text)}
         style={dynamicStyles.input}
         mode="outlined"
@@ -245,7 +242,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       
       <TextInput
         label="Email"
-        value={userData.email}
+        value={localUserData.email}
         onChangeText={(text) => handleInputChange('email', text)}
         style={dynamicStyles.input}
         mode="outlined"
@@ -255,7 +252,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       
       <TextInput
         label="Location"
-        value={userData.location}
+        value={localUserData.location}
         onChangeText={(text) => handleInputChange('location', text)}
         style={dynamicStyles.input}
         mode="outlined"
@@ -264,7 +261,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       
       <TextInput
         label="Bio"
-        value={userData.bio}
+        value={localUserData.bio}
         onChangeText={(text) => handleInputChange('bio', text)}
         style={[dynamicStyles.input, { height: 120 }]}
         mode="outlined"
@@ -281,15 +278,15 @@ const EditProfileScreen = ({ route, navigation }) => {
       <View style={dynamicStyles.switchRow}>
         <Text style={dynamicStyles.switchLabel}>Distance Unit</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={[dynamicStyles.switchLabel, { marginRight: 8, opacity: userData.preferences.distanceUnit === 'miles' ? 1 : 0.5 }]}>
+          <Text style={[dynamicStyles.switchLabel, { marginRight: 8, opacity: localUserData.preferences.distanceUnit === 'miles' ? 1 : 0.5 }]}>
             Miles
           </Text>
           <Switch
-            value={userData.preferences.distanceUnit === 'km'}
+            value={localUserData.preferences.distanceUnit === 'km'}
             onValueChange={(value) => handleInputChange('preferences.distanceUnit', value ? 'km' : 'miles')}
             color={theme.colors.primary}
           />
-          <Text style={[dynamicStyles.switchLabel, { marginLeft: 8, opacity: userData.preferences.distanceUnit === 'km' ? 1 : 0.5 }]}>
+          <Text style={[dynamicStyles.switchLabel, { marginLeft: 8, opacity: localUserData.preferences.distanceUnit === 'km' ? 1 : 0.5 }]}>
             Kilometers
           </Text>
         </View>
@@ -298,15 +295,15 @@ const EditProfileScreen = ({ route, navigation }) => {
       <View style={dynamicStyles.switchRow}>
         <Text style={dynamicStyles.switchLabel}>Elevation Unit</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={[dynamicStyles.switchLabel, { marginRight: 8, opacity: userData.preferences.elevationUnit === 'ft' ? 1 : 0.5 }]}>
+          <Text style={[dynamicStyles.switchLabel, { marginRight: 8, opacity: localUserData.preferences.elevationUnit === 'ft' ? 1 : 0.5 }]}>
             Feet
           </Text>
           <Switch
-            value={userData.preferences.elevationUnit === 'm'}
+            value={localUserData.preferences.elevationUnit === 'm'}
             onValueChange={(value) => handleInputChange('preferences.elevationUnit', value ? 'm' : 'ft')}
             color={theme.colors.primary}
           />
-          <Text style={[dynamicStyles.switchLabel, { marginLeft: 8, opacity: userData.preferences.elevationUnit === 'm' ? 1 : 0.5 }]}>
+          <Text style={[dynamicStyles.switchLabel, { marginLeft: 8, opacity: localUserData.preferences.elevationUnit === 'm' ? 1 : 0.5 }]}>
             Meters
           </Text>
         </View>
@@ -315,7 +312,7 @@ const EditProfileScreen = ({ route, navigation }) => {
       <View style={dynamicStyles.switchRow}>
         <Text style={dynamicStyles.switchLabel}>Notifications</Text>
         <Switch
-          value={userData.preferences.notifications}
+          value={localUserData.preferences.notifications}
           onValueChange={(value) => handleInputChange('preferences.notifications', value)}
           color={theme.colors.primary}
         />

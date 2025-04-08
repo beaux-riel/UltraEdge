@@ -13,6 +13,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { RaceProvider } from "./src/context/RaceContext";
 import { ThemeProvider, useAppTheme } from "./src/context/ThemeContext";
 import { SupabaseProvider } from "./src/context/SupabaseContext";
+import { UserProvider } from "./src/context/UserContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -74,11 +75,13 @@ const PaperProviderWithTheme = () => {
 
   return (
     <PaperProvider theme={theme}>
-      <RaceProvider>
-        <SupabaseProvider>
-          <AppContent />
-        </SupabaseProvider>
-      </RaceProvider>
+      <SupabaseProvider>
+        <UserProvider>
+          <RaceProvider>
+            <AppContent />
+          </RaceProvider>
+        </UserProvider>
+      </SupabaseProvider>
     </PaperProvider>
   );
 };

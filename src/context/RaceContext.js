@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { useSupabase } from './SupabaseContext';
 
 // Create the context
 const RaceContext = createContext();
@@ -87,6 +88,7 @@ const initialRaces = {
 export const RaceProvider = ({ children }) => {
   const [races, setRaces] = useState({});
   const [loading, setLoading] = useState(true);
+  const { user, isPremium, backupRaces } = useSupabase();
 
   // Load races from AsyncStorage on mount
   useEffect(() => {
@@ -133,9 +135,21 @@ export const RaceProvider = ({ children }) => {
     const saveRaces = async () => {
       if (!loading && Object.keys(races).length > 0) {
         try {
+          // Save to AsyncStorage
           const racesToSave = JSON.stringify(races);
           await AsyncStorage.setItem('races', racesToSave);
-          console.log('Races saved successfully');
+          console.log('Races saved successfully to AsyncStorage');
+          
+          // If user is premium, also back up to Supabase
+          if (user && isPremium) {
+            console.log('User is premium, backing up to Supabase...');
+            const result = await backupRaces(races);
+            if (result.success) {
+              console.log('Races backed up to Supabase successfully');
+            } else {
+              console.error('Failed to back up races to Supabase:', result.error);
+            }
+          }
         } catch (error) {
           console.error('Failed to save races to storage', error);
         }
@@ -148,7 +162,7 @@ export const RaceProvider = ({ children }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [races, loading]);
+  }, [races, loading, user, isPremium, backupRaces]);
 
   // Add a new race
   const addRace = (raceData) => {

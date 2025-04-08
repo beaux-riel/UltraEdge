@@ -2,7 +2,6 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, Platform } from 'react-native';
-import { useRaces } from './RaceContext';
 
 // Create context
 const SupabaseContext = createContext();
@@ -20,7 +19,6 @@ export const SupabaseProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [lastBackupDate, setLastBackupDate] = useState(null);
-  const { races, loading: racesLoading } = useRaces();
 
   // Initialize Supabase client
   useEffect(() => {
@@ -172,14 +170,26 @@ export const SupabaseProvider = ({ children }) => {
   };
 
   // Backup races data to Supabase
-  const backupRaces = async () => {
+  const backupRaces = async (racesData = null) => {
     try {
       if (!supabase) throw new Error('Supabase client not initialized');
       if (!user) throw new Error('User not authenticated');
       if (!isPremium) throw new Error('Premium subscription required for backup');
       
-      // Convert races object to array
-      const racesArray = Object.values(races);
+      // If no races data is provided, try to get it from AsyncStorage
+      let racesArray;
+      if (racesData) {
+        // Use provided races data
+        racesArray = Object.values(racesData);
+      } else {
+        // Get races data from AsyncStorage
+        const storedRaces = await AsyncStorage.getItem('races');
+        if (!storedRaces) {
+          throw new Error('No races data found in storage');
+        }
+        const parsedRaces = JSON.parse(storedRaces);
+        racesArray = Object.values(parsedRaces);
+      }
       
       // First, delete existing backup data for this user
       const { error: deleteError } = await supabase

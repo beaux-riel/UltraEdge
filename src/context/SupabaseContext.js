@@ -232,6 +232,92 @@ export const SupabaseProvider = ({ children }) => {
       setLastBackupDate(now);
       await AsyncStorage.setItem('lastBackupDate', now.toISOString());
       
+      // If we're using the new schema, also save crew members to the crew_members table
+      if (isPremium) {
+        try {
+          // For each race, save crew members
+          for (const race of racesArray) {
+            if (race.crewMembers && race.crewMembers.length > 0) {
+              // First, get existing crew members for this user
+              const { data: existingCrewMembers, error: fetchError } = await supabase
+                .from('crew_members')
+                .select('id, name, email')
+                .eq('user_id', user.id);
+                
+              if (fetchError) throw fetchError;
+              
+              // Process each crew member
+              for (const crewMember of race.crewMembers) {
+                // Check if this crew member already exists in the database
+                const existingMember = existingCrewMembers?.find(
+                  m => m.email === crewMember.email && crewMember.email
+                );
+                
+                if (existingMember) {
+                  // Update existing crew member
+                  const { error: updateError } = await supabase
+                    .from('crew_members')
+                    .update({
+                      name: crewMember.name,
+                      phone: crewMember.phone,
+                      email: crewMember.email,
+                      role: crewMember.role,
+                      responsibilities: crewMember.responsibilities?.join(', ') || '',
+                      notes: crewMember.notes || '',
+                      updated_at: new Date()
+                    })
+                    .eq('id', existingMember.id);
+                    
+                  if (updateError) throw updateError;
+                  
+                  // Add to race_crew junction table
+                  await supabase
+                    .from('race_crew')
+                    .upsert({
+                      race_id: race.id,
+                      crew_member_id: existingMember.id,
+                      created_at: new Date()
+                    }, { onConflict: ['race_id', 'crew_member_id'] });
+                    
+                } else {
+                  // Insert new crew member
+                  const { data: newMember, error: insertMemberError } = await supabase
+                    .from('crew_members')
+                    .insert({
+                      user_id: user.id,
+                      name: crewMember.name,
+                      phone: crewMember.phone,
+                      email: crewMember.email,
+                      role: crewMember.role,
+                      responsibilities: crewMember.responsibilities?.join(', ') || '',
+                      notes: crewMember.notes || '',
+                      created_at: new Date(),
+                      updated_at: new Date()
+                    })
+                    .select();
+                    
+                  if (insertMemberError) throw insertMemberError;
+                  
+                  if (newMember && newMember.length > 0) {
+                    // Add to race_crew junction table
+                    await supabase
+                      .from('race_crew')
+                      .insert({
+                        race_id: race.id,
+                        crew_member_id: newMember[0].id,
+                        created_at: new Date()
+                      });
+                  }
+                }
+              }
+            }
+          }
+        } catch (crewError) {
+          console.error('Error saving crew members:', crewError);
+          // Don't fail the entire backup if crew member saving fails
+        }
+      }
+      
       return { success: true };
     } catch (error) {
       console.error('Error backing up races:', error);
@@ -265,6 +351,70 @@ export const SupabaseProvider = ({ children }) => {
       data.races_data.forEach(race => {
         racesObject[race.id] = race;
       });
+      
+      // If we're using the new schema, also fetch crew members from the crew_members table
+      try {
+        // Get all crew members for this user
+        const { data: crewMembers, error: crewError } = await supabase
+          .from('crew_members')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (crewError) throw crewError;
+        
+        if (crewMembers && crewMembers.length > 0) {
+          // Get race_crew relationships
+          const { data: raceCrewRelations, error: relError } = await supabase
+            .from('race_crew')
+            .select('race_id, crew_member_id')
+            .in('crew_member_id', crewMembers.map(cm => cm.id));
+            
+          if (relError) throw relError;
+          
+          // For each race, add its crew members
+          Object.values(racesObject).forEach(race => {
+            // Find crew members for this race
+            const crewIdsForRace = raceCrewRelations
+              .filter(rel => rel.race_id === race.id)
+              .map(rel => rel.crew_member_id);
+              
+            // Add crew members to race
+            if (crewIdsForRace.length > 0) {
+              const raceCrewMembers = crewMembers
+                .filter(cm => crewIdsForRace.includes(cm.id))
+                .map(cm => ({
+                  id: cm.id,
+                  name: cm.name,
+                  phone: cm.phone,
+                  email: cm.email,
+                  role: cm.role,
+                  customRole: '',
+                  responsibilities: cm.responsibilities ? cm.responsibilities.split(', ') : [],
+                  notes: cm.notes || '',
+                  assignedStations: []
+                }));
+                
+              // Add or merge with existing crew members
+              if (!race.crewMembers) {
+                race.crewMembers = raceCrewMembers;
+              } else {
+                // Merge with existing crew members
+                const existingEmails = race.crewMembers.map(cm => cm.email).filter(Boolean);
+                
+                // Add new crew members that don't exist in the race yet
+                raceCrewMembers.forEach(cm => {
+                  if (cm.email && !existingEmails.includes(cm.email)) {
+                    race.crewMembers.push(cm);
+                  }
+                });
+              }
+            }
+          });
+        }
+      } catch (crewError) {
+        console.error('Error fetching crew members:', crewError);
+        // Don't fail the entire restore if crew member fetching fails
+      }
       
       // Save to AsyncStorage
       await AsyncStorage.setItem('races', JSON.stringify(racesObject));

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Avatar, FAB } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, Share } from 'react-native';
+import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Avatar, FAB, Menu } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
+import { useSupabase } from '../context/SupabaseContext';
+import CrewRoleSelector from '../components/CrewRoleSelector';
+import CrewNotes from '../components/CrewNotes';
+import ShareEventPlan from '../components/ShareEventPlan';
 
 const CrewManagementScreen = ({ route, navigation }) => {
   const { raceId } = route.params;
@@ -22,8 +26,12 @@ const CrewManagementScreen = ({ route, navigation }) => {
     phone: '',
     email: '',
     role: '',
+    customRole: '',
+    responsibilities: [],
+    notes: '',
     assignedStations: []
   });
+  const [shareModalVisible, setShareModalVisible] = useState(false);
   const [stationModalVisible, setStationModalVisible] = useState(false);
   const [instructionsModalVisible, setInstructionsModalVisible] = useState(false);
   
@@ -44,6 +52,9 @@ const CrewManagementScreen = ({ route, navigation }) => {
       phone: '',
       email: '',
       role: '',
+      customRole: '',
+      responsibilities: [],
+      notes: '',
       assignedStations: []
     });
     setEditingCrewIndex(null);
@@ -136,6 +147,68 @@ const CrewManagementScreen = ({ route, navigation }) => {
   
   const handleSaveInstructions = () => {
     setInstructionsModalVisible(false);
+  };
+  
+  const openShareModal = (index) => {
+    setEditingCrewIndex(index);
+    setShareModalVisible(true);
+  };
+  
+  const handleSharePlan = async (crewMember, shareOptions) => {
+    try {
+      // Create a formatted message with the selected information
+      let message = `Event Plan for ${raceData.name}\n\n`;
+      
+      if (shareOptions.raceDetails) {
+        message += `RACE DETAILS:\n`;
+        message += `Name: ${raceData.name}\n`;
+        message += `Distance: ${raceData.distance} ${raceData.distanceUnit || 'miles'}\n`;
+        message += `Elevation: ${raceData.elevation} ${raceData.elevationUnit || 'ft'}\n`;
+        message += `Date: ${raceData.date}\n\n`;
+      }
+      
+      if (shareOptions.aidStations && raceData.aidStations) {
+        message += `AID STATIONS:\n`;
+        raceData.aidStations.forEach((station, index) => {
+          message += `${index + 1}. ${station.name} - ${station.distance} ${station.distanceUnit || 'miles'}\n`;
+          if (station.cutoffTime) message += `   Cutoff: ${station.cutoffTime}\n`;
+          if (station.crewAllowed) message += `   Crew Access: Yes\n`;
+          message += `\n`;
+        });
+      }
+      
+      if (shareOptions.crewInstructions && crewInstructions) {
+        message += `CREW INSTRUCTIONS:\n${crewInstructions}\n\n`;
+      }
+      
+      // Add crew member specific responsibilities
+      if (crewMember.responsibilities && crewMember.responsibilities.length > 0) {
+        message += `YOUR RESPONSIBILITIES:\n`;
+        crewMember.responsibilities.forEach(resp => {
+          message += `- ${resp}\n`;
+        });
+        message += `\n`;
+      }
+      
+      // Add crew member specific notes
+      if (crewMember.notes) {
+        message += `NOTES:\n${crewMember.notes}\n\n`;
+      }
+      
+      // Share the message
+      const result = await Share.share({
+        message: message,
+        title: `Event Plan for ${raceData.name}`,
+      });
+      
+      if (result.action === Share.sharedAction) {
+        Alert.alert('Success', `Event plan shared with ${crewMember.name}`);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share event plan: ' + error.message);
+    } finally {
+      setShareModalVisible(false);
+    }
   };
   
   const handleSaveAll = () => {
@@ -255,29 +328,85 @@ const CrewManagementScreen = ({ route, navigation }) => {
                       key={crew.id || index}
                       title={crew.name}
                       titleStyle={dynamicStyles.listItemTitle}
-                      description={crew.role || 'No role specified'}
+                      description={
+                        <>
+                          <Text style={dynamicStyles.listItemDescription}>
+                            {crew.customRole || crew.role || 'No role specified'}
+                          </Text>
+                          {crew.responsibilities && crew.responsibilities.length > 0 && (
+                            <Text style={dynamicStyles.listItemDescription}>
+                              Responsibilities: {crew.responsibilities.join(', ')}
+                            </Text>
+                          )}
+                        </>
+                      }
+                      descriptionNumberOfLines={3}
                       descriptionStyle={dynamicStyles.listItemDescription}
                       left={props => <Avatar.Text {...props} size={40} label={crew.name.substring(0, 2).toUpperCase()} />}
                       right={props => (
                         <View style={styles.actionButtons}>
-                          <IconButton
-                            {...props}
-                            icon="map-marker"
-                            color={theme.colors.primary}
-                            onPress={() => openStationAssignmentModal(index)}
-                          />
-                          <IconButton
-                            {...props}
-                            icon="pencil"
-                            color={theme.colors.primary}
-                            onPress={() => openEditCrewModal(index)}
-                          />
-                          <IconButton
-                            {...props}
-                            icon="delete"
-                            color="red"
-                            onPress={() => handleDeleteCrew(index)}
-                          />
+                          <Menu
+                            visible={crew.menuVisible}
+                            onDismiss={() => {
+                              const updatedCrewMembers = [...crewMembers];
+                              updatedCrewMembers[index].menuVisible = false;
+                              setCrewMembers(updatedCrewMembers);
+                            }}
+                            anchor={
+                              <IconButton
+                                {...props}
+                                icon="dots-vertical"
+                                color={theme.colors.primary}
+                                onPress={() => {
+                                  const updatedCrewMembers = [...crewMembers];
+                                  updatedCrewMembers[index].menuVisible = true;
+                                  setCrewMembers(updatedCrewMembers);
+                                }}
+                              />
+                            }
+                          >
+                            <Menu.Item
+                              onPress={() => {
+                                const updatedCrewMembers = [...crewMembers];
+                                updatedCrewMembers[index].menuVisible = false;
+                                setCrewMembers(updatedCrewMembers);
+                                openStationAssignmentModal(index);
+                              }}
+                              title="Assign to Stations"
+                              leadingIcon="map-marker"
+                            />
+                            <Menu.Item
+                              onPress={() => {
+                                const updatedCrewMembers = [...crewMembers];
+                                updatedCrewMembers[index].menuVisible = false;
+                                setCrewMembers(updatedCrewMembers);
+                                openShareModal(index);
+                              }}
+                              title="Share Event Plan"
+                              leadingIcon="share"
+                            />
+                            <Menu.Item
+                              onPress={() => {
+                                const updatedCrewMembers = [...crewMembers];
+                                updatedCrewMembers[index].menuVisible = false;
+                                setCrewMembers(updatedCrewMembers);
+                                openEditCrewModal(index);
+                              }}
+                              title="Edit"
+                              leadingIcon="pencil"
+                            />
+                            <Menu.Item
+                              onPress={() => {
+                                const updatedCrewMembers = [...crewMembers];
+                                updatedCrewMembers[index].menuVisible = false;
+                                setCrewMembers(updatedCrewMembers);
+                                handleDeleteCrew(index);
+                              }}
+                              title="Delete"
+                              leadingIcon="delete"
+                              titleStyle={{ color: 'red' }}
+                            />
+                          </Menu>
                         </View>
                       )}
                       style={dynamicStyles.listItem}
@@ -375,13 +504,18 @@ const CrewManagementScreen = ({ route, navigation }) => {
               theme={paperTheme}
             />
             
-            <TextInput
-              label="Role (e.g., Pacer, Driver, Support)"
-              value={currentCrew.role}
-              onChangeText={(text) => setCurrentCrew({...currentCrew, role: text})}
-              style={dynamicStyles.input}
-              mode="outlined"
-              theme={paperTheme}
+            <CrewRoleSelector
+              selectedRole={currentCrew.role}
+              onRoleChange={(role) => setCurrentCrew({...currentCrew, role})}
+              selectedResponsibilities={currentCrew.responsibilities || []}
+              onResponsibilitiesChange={(responsibilities) => setCurrentCrew({...currentCrew, responsibilities})}
+              customRole={currentCrew.customRole || ''}
+              onCustomRoleChange={(customRole) => setCurrentCrew({...currentCrew, customRole})}
+            />
+            
+            <CrewNotes
+              notes={currentCrew.notes || ''}
+              onNotesChange={(notes) => setCurrentCrew({...currentCrew, notes})}
             />
           </ScrollView>
           
@@ -477,6 +611,33 @@ const CrewManagementScreen = ({ route, navigation }) => {
             style={styles.modalButton}
           >
             Save Instructions
+          </Button>
+        </Modal>
+      </Portal>
+      
+      {/* Share Event Plan Modal */}
+      <Portal>
+        <Modal
+          visible={shareModalVisible}
+          onDismiss={() => setShareModalVisible(false)}
+          contentContainerStyle={dynamicStyles.modalContainer}
+        >
+          <Text style={dynamicStyles.modalTitle}>Share Event Plan</Text>
+          
+          {editingCrewIndex !== null && (
+            <ShareEventPlan
+              crewMember={crewMembers[editingCrewIndex]}
+              onShare={handleSharePlan}
+            />
+          )}
+          
+          <Button 
+            mode="outlined" 
+            onPress={() => setShareModalVisible(false)}
+            style={styles.modalButton}
+            color={theme.colors.primary}
+          >
+            Cancel
           </Button>
         </Modal>
       </Portal>

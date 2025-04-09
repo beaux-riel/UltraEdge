@@ -192,7 +192,7 @@ const HomeScreen = ({ navigation }) => {
               style={styles.actionButton}
               contentStyle={styles.actionButtonContent}
               labelStyle={styles.actionButtonLabel}
-              color={theme.colors.primary}
+              buttonColor={theme.colors.primary}
             >
               Create New Race Plan
             </Button>

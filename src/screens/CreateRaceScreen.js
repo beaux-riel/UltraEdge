@@ -66,7 +66,6 @@ const CreateRaceScreen = ({ route, navigation }) => {
   
   const [hikingPolesAllowed, setHikingPolesAllowed] = useState(false);
   const [pacerAllowed, setPacerAllowed] = useState(false);
-  const [pacerStartPoint, setPacerStartPoint] = useState("");
   
   const [autoStartTimer, setAutoStartTimer] = useState(true);
   
@@ -155,9 +154,8 @@ const CreateRaceScreen = ({ route, navigation }) => {
           : true
       );
 
-      // Set pacer allowed and start point
+      // Set pacer allowed
       setPacerAllowed(existingRace.pacerAllowed || false);
-      setPacerStartPoint(existingRace.pacerStartPoint || "");
 
       // Set auto start timer
       setAutoStartTimer(
@@ -326,7 +324,6 @@ const CreateRaceScreen = ({ route, navigation }) => {
       goalTime: goalTime ? { value: parseFloat(goalTime), unit: goalTimeUnit } : null,
       hikingPolesAllowed,
       pacerAllowed,
-      pacerStartPoint: pacerAllowed ? pacerStartPoint : "",
       pacerGear: pacerAllowed ? pacerGear : [],
       autoStartTimer,
       raceStatus,
@@ -717,24 +714,6 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
-          {pacerAllowed && (
-            <TextInput
-              label="Pacer Start Point"
-              value={pacerStartPoint}
-              onChangeText={setPacerStartPoint}
-              style={[
-                styles.input,
-                { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
-              ]}
-              mode="outlined"
-              theme={inputTheme}
-              labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : undefined}
-              activeOutlineColor={theme.colors.primary}
-              placeholder="e.g., Mile 50, Aid Station Name"
-            />
-          )}
           
           <View style={styles.switchContainer}>
             <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>

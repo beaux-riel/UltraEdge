@@ -17,6 +17,7 @@ import EditAidStationScreen from '../screens/EditAidStationScreen';
 import CrewManagementScreen from '../screens/CrewManagementScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import PremiumScreen from '../screens/PremiumScreen';
+import RacePrepScreen from '../screens/RacePrepScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator();
@@ -34,6 +35,8 @@ const MainTabNavigator = () => {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'RacePrep') {
+            iconName = focused ? 'fitness' : 'fitness-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Settings') {
@@ -52,7 +55,11 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      {/* We'll add more tabs later */}
+      <Tab.Screen 
+        name="RacePrep" 
+        component={RacePrepScreen} 
+        options={{ tabBarLabel: 'Race Prep' }}
+      />
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen} 
@@ -150,6 +157,11 @@ const AppNavigator = () => {
           name="Premium" 
           component={PremiumScreen} 
           options={{ title: 'Premium Subscription' }}
+        />
+        <Stack.Screen 
+          name="RacePrep" 
+          component={RacePrepScreen} 
+          options={{ title: 'Race Preparation' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

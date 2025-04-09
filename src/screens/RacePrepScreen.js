@@ -654,59 +654,56 @@ const RacePrepScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* FAB for quick actions */}
-      <Portal.Host>
-        <Portal>
-          <FAB.Group
-            open={fabOpen}
-            icon={fabOpen ? "close" : "plus"}
-            actions={[
-              {
-                icon: "bag-personal",
-                label: "Add Drop Bag",
-                onPress: () => {
-                  setEditingBagIndex(null);
-                  setDropBagName("");
-                  setDropBagItems([]);
-                  setIsTemplate(false);
-                  setShowDropBagDialog(true);
-                  setFabOpen(false);
-                },
-                color: theme.colors.primary,
-              },
-              {
-                icon: "food-apple",
-                label: "Add Nutrition Plan",
-                onPress: () => {
-                  setEditingNutritionIndex(null);
-                  setNutritionName("");
-                  setNutritionTiming("");
-                  setNutritionCalories("");
-                  setNutritionType("");
-                  setShowNutritionDialog(true);
-                  setFabOpen(false);
-                },
-                color: theme.colors.success,
-              },
-              {
-                icon: "water",
-                label: "Add Hydration Plan",
-                onPress: () => {
-                  setEditingHydrationIndex(null);
-                  setHydrationName("");
-                  setHydrationTiming("");
-                  setHydrationQuantity("");
-                  setHydrationType("");
-                  setShowHydrationDialog(true);
-                  setFabOpen(false);
-                },
-                color: theme.colors.tertiary,
-              },
-            ]}
-            onStateChange={({ open }) => setFabOpen(open)}
-            color="white"
-            fabStyle={{ backgroundColor: theme.colors.primary }}
-          />
-        </Portal>
+      <FAB.Group
+        open={fabOpen}
+        icon={fabOpen ? "close" : "plus"}
+        actions={[
+          {
+            icon: "bag-personal",
+            label: "Add Drop Bag",
+            onPress: () => {
+              setEditingBagIndex(null);
+              setDropBagName("");
+              setDropBagItems([]);
+              setIsTemplate(false);
+              setShowDropBagDialog(true);
+              setFabOpen(false);
+            },
+            color: theme.colors.primary,
+          },
+          {
+            icon: "food-apple",
+            label: "Add Nutrition Plan",
+            onPress: () => {
+              setEditingNutritionIndex(null);
+              setNutritionName("");
+              setNutritionTiming("");
+              setNutritionCalories("");
+              setNutritionType("");
+              setShowNutritionDialog(true);
+              setFabOpen(false);
+            },
+            color: theme.colors.success,
+          },
+          {
+            icon: "water",
+            label: "Add Hydration Plan",
+            onPress: () => {
+              setEditingHydrationIndex(null);
+              setHydrationName("");
+              setHydrationTiming("");
+              setHydrationQuantity("");
+              setHydrationType("");
+              setShowHydrationDialog(true);
+              setFabOpen(false);
+            },
+            color: theme.colors.tertiary,
+          },
+        ]}
+        onStateChange={({ open }) => setFabOpen(open)}
+        color="white"
+        fabStyle={{ backgroundColor: theme.colors.primary }}
+      />
 
       {/* Drop Bag Dialog */}
       <Portal>
@@ -919,7 +916,6 @@ const RacePrepScreen = ({ navigation }) => {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-      </Portal.Host>
     </View>
   );
 };

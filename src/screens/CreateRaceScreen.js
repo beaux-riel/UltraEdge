@@ -64,7 +64,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [goalTime, setGoalTime] = useState("");
   const [goalTimeUnit, setGoalTimeUnit] = useState("hours");
   
-  const [hikingPolesAllowed, setHikingPolesAllowed] = useState(true);
+  const [hikingPolesAllowed, setHikingPolesAllowed] = useState(false);
   const [pacerAllowed, setPacerAllowed] = useState(false);
   const [pacerStartPoint, setPacerStartPoint] = useState("");
   

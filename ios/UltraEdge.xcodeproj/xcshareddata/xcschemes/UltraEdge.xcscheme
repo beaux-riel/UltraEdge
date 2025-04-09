@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "UltraEndurancePlanner.app"
+               BuildableName = "UltraEdge.app"
                BlueprintName = "UltraEdge"
-               ReferencedContainer = "container:UltraEndurancePlanner.xcodeproj">
+               ReferencedContainer = "container:UltraEdge.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "UltraEndurancePlannerTests.xctest"
-               BlueprintName = "UltraEndurancePlannerTests"
-               ReferencedContainer = "container:UltraEndurancePlanner.xcodeproj">
+               BuildableName = "UltraEdgeTests.xctest"
+               BlueprintName = "UltraEdgeTests"
+               ReferencedContainer = "container:UltraEdge.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "UltraEndurancePlanner.app"
+            BuildableName = "UltraEdge.app"
             BlueprintName = "UltraEdge"
-            ReferencedContainer = "container:UltraEndurancePlanner.xcodeproj">
+            ReferencedContainer = "container:UltraEdge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "UltraEndurancePlanner.app"
+            BuildableName = "UltraEdge.app"
             BlueprintName = "UltraEdge"
-            ReferencedContainer = "container:UltraEndurancePlanner.xcodeproj">
+            ReferencedContainer = "container:UltraEdge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

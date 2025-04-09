@@ -85,9 +85,9 @@ const HomeScreen = ({ navigation }) => {
   }
 
   // Define gradient colors based on theme
-  const headerGradientColors = isDarkMode 
-    ? ['#2c3e50', '#1a2a38'] 
-    : ['#4361ee', '#3a86ff'];
+  const headerGradientColors = isDarkMode
+    ? ["#0a2e25", "#1e1a42"]
+    : ["#e8f8f4", "#f3f1ff"];
 
   return (
     <ScrollView
@@ -96,7 +96,7 @@ const HomeScreen = ({ navigation }) => {
         { backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa" },
       ]}
       contentContainerStyle={{
-        paddingTop: insets.top > 0 ? 0 : 16,
+        paddingTop: insets.top > 0 ? 18 : 26,
         paddingBottom: insets.bottom + 16,
       }}
       showsVerticalScrollIndicator={false}
@@ -117,8 +117,8 @@ const HomeScreen = ({ navigation }) => {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Title style={styles.headerTitle}>UltraEdge</Title>
-            <Paragraph style={styles.headerSubtitle}>
+            <Title style={[styles.headerTitle, {color: isDarkMode ? "#ffffff" : "#000"}]}>UltraEdge</Title>
+            <Paragraph style={[styles.headerSubtitle, {color: isDarkMode ? "#ffffff" : "#000"}]}>
               Your ultra marathon companion
             </Paragraph>
           </View>
@@ -275,12 +275,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#ffffff",
     textAlign: "center",
   },
   headerSubtitle: {
     fontSize: 16,
-    color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",
     marginTop: 4,
   },

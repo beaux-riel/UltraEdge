@@ -233,9 +233,7 @@ const AboutScreen = ({ navigation }) => {
         <Button
           mode="text"
           icon="instagram"
-          onPress={() =>
-            openLink("https://instagram.com/ultraenduranceplanner")
-          }
+          onPress={() => openLink("https://instagram.com/UltraEdge")}
           style={styles.socialButton}
           labelStyle={{ color: paperTheme.colors.primary }}
         >
@@ -244,7 +242,7 @@ const AboutScreen = ({ navigation }) => {
         <Button
           mode="text"
           icon="email-outline"
-          onPress={() => openLink("mailto:contact@ultraenduranceplanner.com")}
+          onPress={() => openLink("mailto:contact@UltraEdge.com")}
           style={styles.socialButton}
           labelStyle={{ color: paperTheme.colors.primary }}
         >

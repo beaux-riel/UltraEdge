@@ -201,7 +201,19 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 icon="account-group"
                 textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
               >
-                Crew Allowed
+                Crew Access
+              </Chip>
+            )}
+            {raceData.hikingPolesAllowed && (
+              <Chip
+                style={[
+                  styles.chip,
+                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
+                ]}
+                icon="ski-cross-country"
+                textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
+              >
+                Poles Allowed
               </Chip>
             )}
           </View>

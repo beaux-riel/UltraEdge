@@ -28,7 +28,7 @@ const AidStationSetupScreen = ({ route, navigation }) => {
       // Create new aid stations based on the number specified
       const initialAidStations = Array(raceData.numAidStations).fill().map((_, index) => ({
         id: Date.now().toString() + index,
-        name: `Aid Station ${index + 1}`,
+        name: `Aid Station #${index + 1}`,
         distance: '',
         distanceUnit: raceData.distanceUnit || settings.distanceUnit,
         cutoffTime: '',

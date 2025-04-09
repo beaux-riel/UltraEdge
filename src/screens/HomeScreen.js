@@ -96,7 +96,7 @@ const HomeScreen = ({ navigation }) => {
         { backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa" },
       ]}
       contentContainerStyle={{
-        paddingTop: insets.top > 0 ? 18 : 26,
+        paddingTop: insets.top > 0 ? 0 : 16,
         paddingBottom: insets.bottom + 16,
       }}
       showsVerticalScrollIndicator={false}
@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     alignItems: "center",
+    paddingTop: 32,
   },
   logo: {
     width: 60,

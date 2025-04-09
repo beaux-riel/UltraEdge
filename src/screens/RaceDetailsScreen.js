@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyStateText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
     opacity: 0.7,
     padding: 16,

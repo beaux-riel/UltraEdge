@@ -120,6 +120,8 @@ const ProfileScreen = ({ navigation, route }) => {
     getUpcomingRace,
   ]);
 
+  console.log("userData:", userData);
+
   const renderStatItem = (label, value, unit = "") => (
     <View style={styles.statItem}>
       <Text
@@ -188,8 +190,6 @@ const ProfileScreen = ({ navigation, route }) => {
               styles.profileImage,
               {
                 backgroundColor: isDarkMode ? "#333333" : "#e0e0e0",
-                borderWidth: 4,
-                borderColor: isDarkMode ? theme.colors.primary : "#ffffff",
               },
             ]}
           />
@@ -803,11 +803,13 @@ const ProfileScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 0, // Removed top margin for a more modern edge-to-edge look
+    marginTop: 0,
   },
   profileHeader: {
     flexDirection: "column",
-    padding: 20,
+    paddingTop: 70,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     margin: 0,

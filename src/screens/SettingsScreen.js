@@ -205,7 +205,7 @@ const SettingsScreen = () => {
   // Handle upgrade to premium
   const handleUpgradeToPremium = () => {
     if (!user) {
-      setShowLoginDialog(true);
+      navigation.navigate("Premium");
       return;
     }
     

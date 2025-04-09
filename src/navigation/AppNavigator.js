@@ -61,7 +61,7 @@ const MainTabNavigator = () => {
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen} 
-        options={{ tabBarLabel: 'Settings' }}
+        options={{ tabBarLabel: 'Setting' }}
       />
     </Tab.Navigator>
   );

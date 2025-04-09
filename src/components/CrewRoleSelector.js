@@ -102,7 +102,6 @@ const CrewRoleSelector = ({
   return (
     <View>
       <Text style={dynamicStyles.sectionLabel}>Role</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={dynamicStyles.chipContainer}>
           {commonRoles.map((role) => (
             <Chip
@@ -117,7 +116,6 @@ const CrewRoleSelector = ({
             </Chip>
           ))}
         </View>
-      </ScrollView>
       
       <TextInput
         label="Custom Role"

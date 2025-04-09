@@ -1,13 +1,13 @@
 import React, { useEffect } from "react";
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  ActivityIndicator, 
-  Image, 
-  Dimensions, 
-  Animated, 
-  TouchableOpacity 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Dimensions,
+  Animated,
+  TouchableOpacity,
 } from "react-native";
 import {
   Text,
@@ -17,9 +17,7 @@ import {
   Surface,
   useTheme as usePaperTheme,
 } from "react-native-paper";
-import {
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -57,7 +55,29 @@ const HomeScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
-  const races = getRacesArray();
+  // Get races and sort them by date (closest date first)
+  const races = getRacesArray().sort((a, b) => {
+    // Parse MM/DD/YYYY dates
+    const partsA = a.date.split("/");
+    const partsB = b.date.split("/");
+
+    // Create date objects (months are 0-based in JavaScript Date)
+    const dateA = new Date(
+      parseInt(partsA[2]), // year
+      parseInt(partsA[0]) - 1, // month (0-based)
+      parseInt(partsA[1]), // day
+      ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+    );
+
+    const dateB = new Date(
+      parseInt(partsB[2]), // year
+      parseInt(partsB[0]) - 1, // month (0-based)
+      parseInt(partsB[1]), // day
+      ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+    );
+
+    return dateA - dateB;
+  });
 
   if (loading) {
     return (
@@ -89,6 +109,8 @@ const HomeScreen = ({ navigation }) => {
     ? ["#0a2e25", "#1e1a42"]
     : ["#e8f8f4", "#f3f1ff"];
 
+  console.log("Sorted Races:", races);
+
   return (
     <ScrollView
       style={[
@@ -117,29 +139,52 @@ const HomeScreen = ({ navigation }) => {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Title style={[styles.headerTitle, {color: isDarkMode ? "#ffffff" : "#000"}]}>UltraEdge</Title>
-            <Paragraph style={[styles.headerSubtitle, {color: isDarkMode ? "#ffffff" : "#000"}]}>
+            <Title
+              style={[
+                styles.headerTitle,
+                { color: isDarkMode ? "#ffffff" : "#000" },
+              ]}
+            >
+              UltraEdge
+            </Title>
+            <Paragraph
+              style={[
+                styles.headerSubtitle,
+                { color: isDarkMode ? "#ffffff" : "#000" },
+              ]}
+            >
               Your ultra marathon companion
             </Paragraph>
           </View>
         </LinearGradient>
 
-        <Surface style={[
-          styles.actionCard,
-          { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" }
-        ]}>
+        <Surface
+          style={[
+            styles.actionCard,
+            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
+          ]}
+        >
           <View style={styles.actionCardContent}>
-            <Text style={[
-              styles.actionTitle,
-              { color: isDarkMode ? theme.colors.text : theme.colors.text }
-            ]}>
+            <Text
+              style={[
+                styles.actionTitle,
+                { color: isDarkMode ? theme.colors.text : theme.colors.text },
+              ]}
+            >
               Ready for your next challenge?
             </Text>
-            <Paragraph style={[
-              styles.actionDescription,
-              { color: isDarkMode ? theme.colors.textSecondary : theme.colors.textSecondary }
-            ]}>
-              Plan, prepare, and conquer your next ultra marathon with confidence.
+            <Paragraph
+              style={[
+                styles.actionDescription,
+                {
+                  color: isDarkMode
+                    ? theme.colors.textSecondary
+                    : theme.colors.textSecondary,
+                },
+              ]}
+            >
+              Plan, prepare, and conquer your next ultra marathon with
+              confidence.
             </Paragraph>
             <Button
               mode="contained"
@@ -147,7 +192,7 @@ const HomeScreen = ({ navigation }) => {
               style={styles.actionButton}
               contentStyle={styles.actionButtonContent}
               labelStyle={styles.actionButtonLabel}
-              color={theme.colors.primary}
+              buttonColor={theme.colors.primary}
             >
               Create New Race Plan
             </Button>
@@ -185,7 +230,11 @@ const HomeScreen = ({ navigation }) => {
                 key={race.id}
                 race={race}
                 progress={60}
-                onPress={() => navigation.navigate("RaceDetails", { id: race.id })}
+                date={race.date}
+                time={race.startTime}
+                onPress={() =>
+                  navigation.navigate("RaceDetails", { id: race.id })
+                }
               />
             ))
           )}

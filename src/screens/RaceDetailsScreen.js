@@ -995,13 +995,6 @@ const RaceDetailsScreen = ({ route, navigation }) => {
       </ScrollView>
       <View style={[styles.fabContainer, { bottom: insets.bottom }]}>
         <FAB
-          style={[styles.fab, styles.fabDelete]}
-          icon="delete"
-          onPress={handleDeleteRace}
-          small
-          color="#ffffff"
-        />
-        <FAB
           style={[styles.fab, { backgroundColor: theme.colors.primary }]}
           icon="pencil"
           onPress={() =>

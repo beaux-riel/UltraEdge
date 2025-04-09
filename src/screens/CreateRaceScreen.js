@@ -6,6 +6,7 @@ import {
   Platform,
   TouchableOpacity,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import {
   Text,
@@ -34,7 +35,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { addRace, getRaceById, updateRace } = useRaces();
+  const { addRace, getRaceById, updateRace, deleteRace } = useRaces();
   const { settings } = useSettings();
 
   // Check if we're in edit mode
@@ -308,6 +309,26 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const removePacerGearItem = (id) => {
     const updatedPacerGear = pacerGear.filter(item => item.id !== id);
     setPacerGear(updatedPacerGear);
+  };
+
+  const handleDeleteRace = () => {
+    if (!existingRace) return;
+    
+    Alert.alert(
+      "Delete Race",
+      `Are you sure you want to delete "${existingRace.name}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            deleteRace(existingRace.id);
+            navigation.navigate("Main");
+          },
+        },
+      ]
+    );
   };
 
   const handleCreateRace = () => {
@@ -887,6 +908,17 @@ const CreateRaceScreen = ({ route, navigation }) => {
           >
             {existingRace ? "Save Changes" : "Continue to Aid Station Setup"}
           </Button>
+
+          {existingRace && (
+            <Button
+              mode="outlined"
+              onPress={handleDeleteRace}
+              style={[styles.button, { marginTop: 10 }]}
+              color={theme.colors.error}
+            >
+              Delete Race
+            </Button>
+          )}
 
           {!existingRace && (
             <HelperText

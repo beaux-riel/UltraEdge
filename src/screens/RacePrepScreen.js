@@ -223,8 +223,7 @@ const RacePrepScreen = ({ navigation }) => {
         styles.container,
         {
           backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa",
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
+          paddingTop: insets.top
         },
       ]}
     >
@@ -259,19 +258,6 @@ const RacePrepScreen = ({ navigation }) => {
                 Drop Bags
               </Title>
             </View>
-            <Button
-              mode="text"
-              onPress={() => {
-                setEditingBagIndex(null);
-                setDropBagName("");
-                setDropBagItems([]);
-                setIsTemplate(false);
-                setShowDropBagDialog(true);
-              }}
-              color={theme.colors.primary}
-            >
-              Add New
-            </Button>
           </View>
           <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
             Create and manage your drop bags for aid stations.
@@ -399,20 +385,6 @@ const RacePrepScreen = ({ navigation }) => {
                 Nutrition Plans
               </Title>
             </View>
-            <Button
-              mode="text"
-              onPress={() => {
-                setEditingNutritionIndex(null);
-                setNutritionName("");
-                setNutritionTiming("");
-                setNutritionCalories("");
-                setNutritionType("");
-                setShowNutritionDialog(true);
-              }}
-              color={theme.colors.primary}
-            >
-              Add New
-            </Button>
           </View>
           <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
             Plan your race nutrition strategy.
@@ -535,20 +507,6 @@ const RacePrepScreen = ({ navigation }) => {
                 Hydration Plans
               </Title>
             </View>
-            <Button
-              mode="text"
-              onPress={() => {
-                setEditingHydrationIndex(null);
-                setHydrationName("");
-                setHydrationTiming("");
-                setHydrationQuantity("");
-                setHydrationType("");
-                setShowHydrationDialog(true);
-              }}
-              color={theme.colors.primary}
-            >
-              Add New
-            </Button>
           </View>
           <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
             Plan your race hydration strategy.
@@ -654,58 +612,56 @@ const RacePrepScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* FAB for quick actions */}
-      <Portal>
-        <FAB.Group
-          open={fabOpen}
-          icon={fabOpen ? "close" : "plus"}
-          actions={[
-            {
-              icon: "bag-personal",
-              label: "Add Drop Bag",
-              onPress: () => {
-                setEditingBagIndex(null);
-                setDropBagName("");
-                setDropBagItems([]);
-                setIsTemplate(false);
-                setShowDropBagDialog(true);
-                setFabOpen(false);
-              },
-              color: theme.colors.primary,
+      <FAB.Group
+        open={fabOpen}
+        icon={fabOpen ? "close" : "plus"}
+        actions={[
+          {
+            icon: "bag-personal",
+            label: "Add Drop Bag",
+            onPress: () => {
+              setEditingBagIndex(null);
+              setDropBagName("");
+              setDropBagItems([]);
+              setIsTemplate(false);
+              setShowDropBagDialog(true);
+              setFabOpen(false);
             },
-            {
-              icon: "food-apple",
-              label: "Add Nutrition Plan",
-              onPress: () => {
-                setEditingNutritionIndex(null);
-                setNutritionName("");
-                setNutritionTiming("");
-                setNutritionCalories("");
-                setNutritionType("");
-                setShowNutritionDialog(true);
-                setFabOpen(false);
-              },
-              color: theme.colors.success,
+            color: theme.colors.primary,
+          },
+          {
+            icon: "food-apple",
+            label: "Add Nutrition Plan",
+            onPress: () => {
+              setEditingNutritionIndex(null);
+              setNutritionName("");
+              setNutritionTiming("");
+              setNutritionCalories("");
+              setNutritionType("");
+              setShowNutritionDialog(true);
+              setFabOpen(false);
             },
-            {
-              icon: "water",
-              label: "Add Hydration Plan",
-              onPress: () => {
-                setEditingHydrationIndex(null);
-                setHydrationName("");
-                setHydrationTiming("");
-                setHydrationQuantity("");
-                setHydrationType("");
-                setShowHydrationDialog(true);
-                setFabOpen(false);
-              },
-              color: theme.colors.tertiary,
+            color: theme.colors.success,
+          },
+          {
+            icon: "water",
+            label: "Add Hydration Plan",
+            onPress: () => {
+              setEditingHydrationIndex(null);
+              setHydrationName("");
+              setHydrationTiming("");
+              setHydrationQuantity("");
+              setHydrationType("");
+              setShowHydrationDialog(true);
+              setFabOpen(false);
             },
-          ]}
-          onStateChange={({ open }) => setFabOpen(open)}
-          color="white"
-          fabStyle={{ backgroundColor: theme.colors.primary }}
-        />
-      </Portal>
+            color: theme.colors.tertiary,
+          },
+        ]}
+        onStateChange={({ open }) => setFabOpen(open)}
+        color="white"
+        fabStyle={{ backgroundColor: theme.colors.primary }}
+      />
 
       {/* Drop Bag Dialog */}
       <Portal>
@@ -932,7 +888,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingBottom: 100, // Extra padding for FAB
+    paddingBottom: 10, // Extra padding for FAB
   },
   screenTitle: {
     fontSize: 28,

@@ -334,7 +334,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       dropBagsAllowed,
       crewAllowed,
       mandatoryEquipment,
-      // Keep any existing aid stations if we're editing
+      // Keep any existing aid stations if we're editing, otherwise initialize with empty array
       aidStations: existingRace?.aidStations || [],
     };
 
@@ -343,9 +343,10 @@ const CreateRaceScreen = ({ route, navigation }) => {
       updateRace(existingRace.id, newRaceData);
       navigation.navigate("RaceDetails", { id: existingRace.id });
     } else {
-      // Create new race
+      // Create new race and navigate directly to race details
+      const newRaceId = newRaceData.id;
       addRace(newRaceData);
-      navigation.navigate("AidStationSetup", { raceData: newRaceData });
+      navigation.navigate("RaceDetails", { id: newRaceId, isNew: true });
     }
   };
 

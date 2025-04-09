@@ -22,10 +22,12 @@ const AidStationSetupScreen = ({ route, navigation }) => {
     // Initialize aid stations based on the number specified
     // If race already has aid stations, use those, otherwise create new ones
     if (raceData.aidStations && raceData.aidStations.length > 0) {
+      // If we're adding to existing aid stations, don't overwrite them
       setAidStations(raceData.aidStations);
     } else {
+      // Create new aid stations based on the number specified
       const initialAidStations = Array(raceData.numAidStations).fill().map((_, index) => ({
-        id: index.toString(),
+        id: Date.now().toString() + index,
         name: `Aid Station ${index + 1}`,
         distance: '',
         distanceUnit: raceData.distanceUnit || settings.distanceUnit,
@@ -109,7 +111,7 @@ const AidStationSetupScreen = ({ route, navigation }) => {
     updateRace(raceData.id, completePlan);
     
     // Navigate to the race details screen
-    navigation.navigate('RaceDetails', { id: completePlan.id, isNew: true });
+    navigation.navigate('RaceDetails', { id: completePlan.id });
   };
   
   // Create dynamic styles based on theme

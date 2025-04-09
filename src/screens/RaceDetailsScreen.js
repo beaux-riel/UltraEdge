@@ -285,23 +285,33 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 
   const renderAidStationsTab = () => (
     <View style={styles.tabContent}>
-      {raceData.aidStations?.map((station, index) => (
-        <Card
-          key={station.id}
-          style={[
-            styles.stationCard,
-            { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
-          ]}
-        >
-          <Card.Content>
-            <View style={styles.cardActions}>
-              <IconButton
-                icon="pencil"
-                color={theme.colors.primary}
-                size={20}
-                onPress={() => navigation.navigate('EditAidStation', { raceId: id, stationIndex: index })}
-              />
-            </View>
+      <Button
+        mode="contained"
+        icon="plus"
+        onPress={() => navigation.navigate('AidStationSetup', { raceData })}
+        style={styles.addButton}
+      >
+        Add Aid Stations
+      </Button>
+      
+      {raceData.aidStations?.length > 0 ? (
+        raceData.aidStations.map((station, index) => (
+          <Card
+            key={station.id}
+            style={[
+              styles.stationCard,
+              { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+            ]}
+          >
+            <Card.Content>
+              <View style={styles.cardActions}>
+                <IconButton
+                  icon="pencil"
+                  color={theme.colors.primary}
+                  size={20}
+                  onPress={() => navigation.navigate('EditAidStation', { raceId: id, stationIndex: index })}
+                />
+              </View>
             <View style={styles.stationHeader}>
               <Text
                 style={[
@@ -434,7 +444,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             </View>
           </Card.Content>
         </Card>
-      ))}
+      ))
+      ) : (
+        <Card style={[styles.stationCard, { backgroundColor: isDarkMode ? "#1e1e1e" : "white" }]}>
+          <Card.Content>
+            <Text style={[styles.emptyStateText, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+              No aid stations have been added yet. Click the button above to set up aid stations for your race.
+            </Text>
+          </Card.Content>
+        </Card>
+      )}
     </View>
   );
 
@@ -606,6 +625,15 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  addButton: {
+    marginBottom: 16,
+  },
+  emptyStateText: {
+    textAlign: 'center',
+    fontSize: 16,
+    opacity: 0.7,
+    padding: 16,
   },
   loadingContainer: {
     flex: 1,

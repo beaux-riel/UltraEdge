@@ -5,6 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  ImageBackground,
 } from "react-native";
 import {
   Text,
@@ -16,10 +17,13 @@ import {
   FAB,
   IconButton,
   useTheme as usePaperTheme,
+  Surface,
+  Avatar,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 const RaceDetailsScreen = ({ route, navigation }) => {
   // All hooks must be declared at the top.
@@ -28,8 +32,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
-    const didMountRef = useRef(false);
-
+  const didMountRef = useRef(false);
 
   useEffect(() => {
     // Skip on the first render
@@ -100,184 +103,316 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   // Render functions for each tab.
   const renderOverviewTab = () => (
     <View style={styles.tabContent}>
+      {/* Race Stats Card */}
       <Card
         style={[
           styles.infoCard,
           { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
         ]}
       >
+        <Card.Title 
+          title="Race Statistics" 
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => <Avatar.Icon {...props} icon="chart-bar" color="#ffffff" style={{backgroundColor: theme.colors.primary}} />}
+        />
         <Card.Content>
-          <View style={styles.infoRow}>
-            <Text
-              style={[
-                styles.infoLabel,
-                { color: isDarkMode ? "#9e9e9e" : "#000000" },
-              ]}
-            >
-              Distance:
-            </Text>
-            <Text
-              style={[
-                styles.infoValue,
-                { color: isDarkMode ? "#ffffff" : "#000000" },
-              ]}
-            >
-              {raceData.distance} {raceData.distanceUnit || "miles"}
-            </Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Avatar.Icon 
+                size={40} 
+                icon="map-marker-distance" 
+                style={{backgroundColor: isDarkMode ? "#333333" : "#e0e0e0"}}
+                color={isDarkMode ? "#ffffff" : theme.colors.primary}
+              />
+              <Text style={styles.statLabel}>Distance</Text>
+              <Text style={[styles.statValue, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+                {raceData.distance} {raceData.distanceUnit || "miles"}
+              </Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Avatar.Icon 
+                size={40} 
+                icon="terrain" 
+                style={{backgroundColor: isDarkMode ? "#333333" : "#e0e0e0"}}
+                color={isDarkMode ? "#ffffff" : theme.colors.primary}
+              />
+              <Text style={styles.statLabel}>Elevation</Text>
+              <Text style={[styles.statValue, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+                {raceData.elevation} {raceData.elevationUnit || "ft"}
+              </Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Avatar.Icon 
+                size={40} 
+                icon="calendar" 
+                style={{backgroundColor: isDarkMode ? "#333333" : "#e0e0e0"}}
+                color={isDarkMode ? "#ffffff" : theme.colors.primary}
+              />
+              <Text style={styles.statLabel}>Date</Text>
+              <Text style={[styles.statValue, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+                {raceData.date}
+              </Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Avatar.Icon 
+                size={40} 
+                icon="water" 
+                style={{backgroundColor: isDarkMode ? "#333333" : "#e0e0e0"}}
+                color={isDarkMode ? "#ffffff" : theme.colors.primary}
+              />
+              <Text style={styles.statLabel}>Aid Stations</Text>
+              <Text style={[styles.statValue, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+                {raceData.numAidStations}
+              </Text>
+            </View>
           </View>
-          <View style={styles.infoRow}>
-            <Text
+
+          <Divider style={[styles.divider, { marginVertical: 16 }]} />
+          
+          <Text style={[styles.sectionSubtitle, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+            Race Features
+          </Text>
+          <View style={styles.featuresContainer}>
+            <Chip
               style={[
-                styles.infoLabel,
-                { color: isDarkMode ? "#9e9e9e" : "#000000" },
+                styles.featureChip,
+                { 
+                  backgroundColor: raceData.dropBagsAllowed 
+                    ? (isDarkMode ? "#1b5e20" : "#c8e6c9") 
+                    : (isDarkMode ? "#333333" : "#EEEEEE"),
+                  opacity: raceData.dropBagsAllowed ? 1 : 0.5
+                },
               ]}
+              icon="bag-personal"
+              textStyle={{ 
+                color: raceData.dropBagsAllowed 
+                  ? (isDarkMode ? "#ffffff" : "#1b5e20") 
+                  : (isDarkMode ? "#9e9e9e" : "#757575") 
+              }}
             >
-              Elevation Gain:
-            </Text>
-            <Text
+              Drop Bags {raceData.dropBagsAllowed ? "Yes" : "No"}
+            </Chip>
+            
+            <Chip
               style={[
-                styles.infoValue,
-                { color: isDarkMode ? "#ffffff" : "#000000" },
+                styles.featureChip,
+                { 
+                  backgroundColor: raceData.crewAllowed 
+                    ? (isDarkMode ? "#1a237e" : "#c5cae9") 
+                    : (isDarkMode ? "#333333" : "#EEEEEE"),
+                  opacity: raceData.crewAllowed ? 1 : 0.5
+                },
               ]}
+              icon="account-group"
+              textStyle={{ 
+                color: raceData.crewAllowed 
+                  ? (isDarkMode ? "#ffffff" : "#1a237e") 
+                  : (isDarkMode ? "#9e9e9e" : "#757575") 
+              }}
             >
-              {raceData.elevation} {raceData.elevationUnit || "ft"}
-            </Text>
+              Crew Access {raceData.crewAllowed ? "Yes" : "No"}
+            </Chip>
+            
+            <Chip
+              style={[
+                styles.featureChip,
+                { 
+                  backgroundColor: raceData.hikingPolesAllowed 
+                    ? (isDarkMode ? "#4a148c" : "#d1c4e9") 
+                    : (isDarkMode ? "#333333" : "#EEEEEE"),
+                  opacity: raceData.hikingPolesAllowed ? 1 : 0.5
+                },
+              ]}
+              icon="ski-cross-country"
+              textStyle={{ 
+                color: raceData.hikingPolesAllowed 
+                  ? (isDarkMode ? "#ffffff" : "#4a148c") 
+                  : (isDarkMode ? "#9e9e9e" : "#757575") 
+              }}
+            >
+              Poles Allowed {raceData.hikingPolesAllowed ? "Yes" : "No"}
+            </Chip>
           </View>
-          <View style={styles.infoRow}>
-            <Text
-              style={[
-                styles.infoLabel,
-                { color: isDarkMode ? "#9e9e9e" : "#000000" },
-              ]}
-            >
-              Race Date:
-            </Text>
-            <Text
-              style={[
-                styles.infoValue,
-                { color: isDarkMode ? "#ffffff" : "#000000" },
-              ]}
-            >
-              {raceData.date}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text
-              style={[
-                styles.infoLabel,
-                { color: isDarkMode ? "#9e9e9e" : "#000000" },
-              ]}
-            >
-              Aid Stations:
-            </Text>
-            <Text
-              style={[
-                styles.infoValue,
-                { color: isDarkMode ? "#ffffff" : "#000000" },
-              ]}
-            >
-              {raceData.numAidStations}
-            </Text>
-          </View>
-          <View style={styles.chipContainer}>
-            {raceData.dropBagsAllowed && (
-              <Chip
-                style={[
-                  styles.chip,
-                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
-                ]}
-                icon="bag-personal"
-                textStyle={{ color: isDarkMode ? "#ffffff" : "#333333" }}
-              >
-                Drop Bags
-              </Chip>
-            )}
-            {raceData.crewAllowed && (
-              <Chip
-                style={[
-                  styles.chip,
-                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
-                ]}
-                icon="account-group"
-                textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
-              >
-                Crew Access
-              </Chip>
-            )}
-            {raceData.hikingPolesAllowed && (
-              <Chip
-                style={[
-                  styles.chip,
-                  { backgroundColor: isDarkMode ? "#333333" : "#EEEEEE" },
-                ]}
-                icon="ski-cross-country"
-                textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
-              >
-                Poles Allowed
-              </Chip>
+        </Card.Content>
+      </Card>
+
+      {/* Race Description Card */}
+      <Card
+        style={[
+          styles.descriptionCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
+        <Card.Title 
+          title="Race Description" 
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => <Avatar.Icon {...props} icon="information-outline" color="#ffffff" style={{backgroundColor: theme.colors.primary}} />}
+        />
+        <Card.Content>
+          <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", lineHeight: 22 }}>
+            {raceData.description || 
+              `${raceData.name} is a ${raceData.distance} ${raceData.distanceUnit || "mile"} race with approximately ${raceData.elevation} ${raceData.elevationUnit || "ft"} of elevation gain. The race features ${raceData.numAidStations} aid stations along the course.`
+            }
+          </Text>
+          
+          <Divider style={[styles.divider, { marginVertical: 16 }]} />
+          
+          <Text style={[styles.sectionSubtitle, { color: isDarkMode ? "#ffffff" : "#000000" }]}>
+            Course Terrain
+          </Text>
+          <View style={styles.terrainContainer}>
+            {raceData.terrain ? (
+              raceData.terrain.map((item, index) => (
+                <Chip
+                  key={index}
+                  style={[
+                    styles.terrainChip,
+                    { backgroundColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                  ]}
+                  icon="mountain"
+                  textStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
+                  {item}
+                </Chip>
+              ))
+            ) : (
+              <>
+                <Chip
+                  style={[
+                    styles.terrainChip,
+                    { backgroundColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                  ]}
+                  icon="mountain"
+                  textStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
+                  Trail
+                </Chip>
+                <Chip
+                  style={[
+                    styles.terrainChip,
+                    { backgroundColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                  ]}
+                  icon="tree"
+                  textStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
+                  Forest
+                </Chip>
+              </>
             )}
           </View>
         </Card.Content>
       </Card>
 
-      {raceData.mandatoryEquipment &&
-        raceData.mandatoryEquipment.length > 0 && (
-          <Card
-            style={[
-              styles.equipmentCard,
-              { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
-            ]}
-          >
-            <Card.Content>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: isDarkMode ? "#ffffff" : "#000000" },
-                ]}
-              >
-                Mandatory Equipment
-              </Text>
-              <View style={styles.equipmentList}>
-                {raceData.mandatoryEquipment.map((item, index) => (
-                  <Chip
-                    key={index}
-                    style={[
-                      styles.equipmentChip,
-                      { backgroundColor: isDarkMode ? "#333333" : undefined },
-                    ]}
-                    icon="check"
-                    textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
-                  >
-                    {item}
-                  </Chip>
-                ))}
-              </View>
-            </Card.Content>
-          </Card>
-        )}
+      {/* Mandatory Equipment Card */}
+      <Card
+        style={[
+          styles.equipmentCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
+        <Card.Title 
+          title="Mandatory Equipment" 
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => <Avatar.Icon {...props} icon="toolbox" color="#ffffff" style={{backgroundColor: theme.colors.primary}} />}
+        />
+        <Card.Content>
+          {raceData.mandatoryEquipment && raceData.mandatoryEquipment.length > 0 ? (
+            <View style={styles.equipmentList}>
+              {raceData.mandatoryEquipment.map((item, index) => (
+                <Chip
+                  key={index}
+                  style={[
+                    styles.equipmentChip,
+                    { backgroundColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                  ]}
+                  icon="check-circle"
+                  textStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
+                  {item}
+                </Chip>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontStyle: 'italic' }}>
+              No mandatory equipment specified for this race. Check the race website for the most up-to-date requirements.
+            </Text>
+          )}
+        </Card.Content>
+      </Card>
 
+      {/* Race Notes Card */}
       <Card
         style={[
           styles.notesCard,
           { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
         ]}
       >
+        <Card.Title 
+          title="Race Notes" 
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => <Avatar.Icon {...props} icon="note-text" color="#ffffff" style={{backgroundColor: theme.colors.primary}} />}
+        />
         <Card.Content>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: isDarkMode ? "#ffffff" : "#000000" },
-            ]}
-          >
-            Race Notes
-          </Text>
-          <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000" }}>
-            Tap to add notes about race strategy, gear requirements, or other
-            important details.
+          <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", marginBottom: 10 }}>
+            {raceData.notes || "Tap to add notes about race strategy, gear requirements, or other important details."}
           </Text>
         </Card.Content>
         <Card.Actions>
-          <Button color={theme.colors.primary}>Add Notes</Button>
+          <Button 
+            mode="contained" 
+            icon="pencil" 
+            color={theme.colors.primary}
+            style={{ borderRadius: 20 }}
+          >
+            {raceData.notes ? "Edit Notes" : "Add Notes"}
+          </Button>
+        </Card.Actions>
+      </Card>
+
+      {/* Weather Forecast Card */}
+      <Card
+        style={[
+          styles.weatherCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
+        <Card.Title 
+          title="Weather Forecast" 
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => <Avatar.Icon {...props} icon="weather-partly-cloudy" color="#ffffff" style={{backgroundColor: theme.colors.primary}} />}
+        />
+        <Card.Content>
+          <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontStyle: 'italic' }}>
+            Weather data will be available closer to race day.
+          </Text>
+        </Card.Content>
+        <Card.Actions>
+          <Button 
+            mode="outlined" 
+            icon="refresh" 
+            color={theme.colors.primary}
+            style={{ borderRadius: 20 }}
+          >
+            Check Forecast
+          </Button>
         </Card.Actions>
       </Card>
     </View>
@@ -542,6 +677,30 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         },
       ]}
     >
+      {/* Race Header with Name */}
+      <Surface style={styles.headerContainer}>
+        <LinearGradient
+          colors={isDarkMode ? 
+            ['#1a237e', '#283593'] : 
+            ['#3949ab', '#5c6bc0']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <Avatar.Icon 
+              size={50} 
+              icon="run-fast" 
+              style={styles.headerIcon}
+              color="#ffffff"
+            />
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.raceName}>{raceData.name}</Text>
+              <Text style={styles.raceDate}>{raceData.date}</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </Surface>
+
+      {/* Tab Navigation */}
       <View
         style={[
           styles.tabBar,
@@ -664,6 +823,7 @@ const styles = StyleSheet.create({
   infoCard: {
     marginBottom: 16,
     borderRadius: 8,
+    elevation: 4,
   },
   infoRow: {
     flexDirection: "row",
@@ -689,6 +849,7 @@ const styles = StyleSheet.create({
   equipmentCard: {
     marginBottom: 16,
     borderRadius: 8,
+    elevation: 4,
   },
   equipmentList: {
     flexDirection: "row",
@@ -701,6 +862,7 @@ const styles = StyleSheet.create({
   notesCard: {
     marginBottom: 16,
     borderRadius: 8,
+    elevation: 4,
   },
   sectionTitle: {
     fontSize: 18,
@@ -710,6 +872,7 @@ const styles = StyleSheet.create({
   stationCard: {
     marginBottom: 12,
     borderRadius: 8,
+    elevation: 4,
   },
   cardActions: {
     flexDirection: "row",
@@ -784,6 +947,7 @@ const styles = StyleSheet.create({
   crewCard: {
     marginBottom: 16,
     borderRadius: 8,
+    elevation: 4,
   },
   emptyState: {
     textAlign: "center",
@@ -799,6 +963,91 @@ const styles = StyleSheet.create({
   },
   fabDelete: {
     backgroundColor: "#f44336",
+  },
+  // New styles for the enhanced UI
+  headerContainer: {
+    elevation: 4,
+    marginBottom: 8,
+  },
+  headerGradient: {
+    borderRadius: 0,
+    padding: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginRight: 16,
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  raceName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  raceDate: {
+    fontSize: 16,
+    color: '#ffffff',
+    opacity: 0.9,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  statItem: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 8,
+    borderRadius: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    marginTop: 8,
+    opacity: 0.7,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  featuresContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  featureChip: {
+    marginRight: 8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  descriptionCard: {
+    marginBottom: 16,
+    borderRadius: 8,
+    elevation: 4,
+  },
+  terrainContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  terrainChip: {
+    margin: 4,
+  },
+  weatherCard: {
+    marginBottom: 16,
+    borderRadius: 8,
+    elevation: 4,
   },
 });
 

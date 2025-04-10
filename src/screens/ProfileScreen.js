@@ -248,11 +248,11 @@ const ProfileScreen = ({ navigation, route }) => {
             style={[
               styles.editButton,
               {
-                backgroundColor: isDarkMode ? theme.colors.primary : "#ffffff",
+                backgroundColor: isDarkMode ? theme.colors.primary : "#000",
                 elevation: 2,
               },
             ]}
-            color={isDarkMode ? "#ffffff" : theme.colors.primary}
+            color={isDarkMode ? "#fffff" : theme.colors.primary }
             onPress={() => navigation.navigate("EditProfile", { userData })}
             icon="pencil"
           >

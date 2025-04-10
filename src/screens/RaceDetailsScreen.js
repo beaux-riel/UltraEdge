@@ -27,20 +27,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSettings } from "../context/SettingsContext";
 
 // Define feature colors for aid station chips
-const featureColors = {
-  dropBags: {
-    lightBg: "#e8f5e9",
-    lightText: "#2e7d32",
-    darkBg: "#2e7d32",
-    darkText: "#ffffff"
-  },
-  crew: {
-    lightBg: "#e3f2fd",
-    lightText: "#1565c0",
-    darkBg: "#1565c0",
-    darkText: "#ffffff"
-  }
-};
+// const featureColors = {
+//   dropBags: {
+//     lightBg: "#e8f5e9",
+//     lightText: "#2e7d32",
+//     darkBg: "#2e7d32",
+//     darkText: "#ffffff"
+//   },
+//   crew: {
+//     lightBg: "#e3f2fd",
+//     lightText: "#1565c0",
+//     darkBg: "#1565c0",
+//     darkText: "#ffffff"
+//   }
+// };
 
 // Function to format date from MM/DD/YYYY to "Apr 7, 2025"
 const formatDate = (dateString) => {
@@ -659,12 +659,12 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             key={station.id}
             style={[
               styles.stationCard,
-              { 
+              {
                 backgroundColor: isDarkMode ? "#1e1e1e" : "white",
                 borderLeftWidth: 4,
                 borderLeftColor: theme.colors.primary,
                 elevation: 4,
-                shadowColor: '#000',
+                shadowColor: "#000",
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: isDarkMode ? 0.3 : 0.1,
                 shadowRadius: 4,
@@ -674,7 +674,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             <Card.Content>
               <View style={styles.cardActions}>
                 <IconButton
-                  icon="pencil"
+                  icon="dots-vertical"
                   color={theme.colors.primary}
                   size={20}
                   onPress={() =>
@@ -690,7 +690,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                   <Text
                     style={[
                       styles.stationNumber,
-                      { backgroundColor: theme.colors.primary }
+                      { backgroundColor: theme.colors.primary },
                     ]}
                   >
                     {station.number || index + 1}
@@ -738,9 +738,11 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                       { color: isDarkMode ? "#ffffff" : "#000000" },
                     ]}
                   >
-                    {station.cutoffTime && station.cutoffTimeSpecific 
+                    {station.cutoffTime && station.cutoffTimeSpecific
                       ? `${station.cutoffTime} (${station.cutoffTimeSpecific})`
-                      : station.cutoffTime || station.cutoffTimeSpecific || 'None'}
+                      : station.cutoffTime ||
+                        station.cutoffTimeSpecific ||
+                        "None"}
                   </Text>
                 </View>
               </View>
@@ -793,7 +795,9 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                           style={[
                             styles.equipmentCheckChip,
                             {
-                              backgroundColor: isDarkMode ? "#333333" : "#f0f0f0",
+                              backgroundColor: isDarkMode
+                                ? "#333333"
+                                : "#f0f0f0",
                               borderRadius: 16,
                             },
                           ]}
@@ -815,17 +819,17 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                     icon="bag-personal"
                     style={[
                       styles.accessChip,
-                      { 
-                        backgroundColor: isDarkMode 
-                          ? featureColors.dropBags.darkBg 
-                          : featureColors.dropBags.lightBg 
+                      {
+                        backgroundColor: isDarkMode
+                          ? featureColors.dropBags.darkBg
+                          : featureColors.dropBags.lightBg,
                       },
                     ]}
                     small
-                    textStyle={{ 
-                      color: isDarkMode 
-                        ? featureColors.dropBags.darkText 
-                        : featureColors.dropBags.lightText 
+                    textStyle={{
+                      color: isDarkMode
+                        ? featureColors.dropBags.darkText
+                        : featureColors.dropBags.lightText,
                     }}
                   >
                     Drop Bag
@@ -836,17 +840,17 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                     icon="account-group"
                     style={[
                       styles.accessChip,
-                      { 
-                        backgroundColor: isDarkMode 
-                          ? featureColors.crew.darkBg 
-                          : featureColors.crew.lightBg 
+                      {
+                        backgroundColor: isDarkMode
+                          ? featureColors.crew.darkBg
+                          : featureColors.crew.lightBg,
                       },
                     ]}
                     small
-                    textStyle={{ 
-                      color: isDarkMode 
-                        ? featureColors.crew.darkText 
-                        : featureColors.crew.lightText 
+                    textStyle={{
+                      color: isDarkMode
+                        ? featureColors.crew.darkText
+                        : featureColors.crew.lightText,
                     }}
                   >
                     Crew
@@ -857,17 +861,13 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                     icon="toilet"
                     style={[
                       styles.accessChip,
-                      { 
-                        backgroundColor: isDarkMode 
-                          ? "#1a237e" 
-                          : "#c5cae9" 
+                      {
+                        backgroundColor: isDarkMode ? "#1a237e" : "#c5cae9",
                       },
                     ]}
                     small
-                    textStyle={{ 
-                      color: isDarkMode 
-                        ? "#ffffff" 
-                        : "#1a237e" 
+                    textStyle={{
+                      color: isDarkMode ? "#ffffff" : "#1a237e",
                     }}
                   >
                     Washroom

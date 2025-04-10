@@ -386,13 +386,10 @@ const EditAidStationScreen = ({ route, navigation }) => {
               <View style={styles.sectionHeader}>
                 <Text style={dynamicStyles.sectionLabel}>Available Supplies:</Text>
                 <Button 
-                  mode="outlined" 
                   onPress={() => setSuppliesModalVisible(true)}
                   style={styles.equipmentButton}
-                  icon="pencil"
-                >
-                  Edit
-                </Button>
+                  icon="dots-vertical"
+                />
               </View>
               
               <View style={styles.suppliesContainer}>

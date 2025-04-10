@@ -550,6 +550,7 @@ export const SupabaseProvider = ({ children }) => {
         weight_unit: item.weightUnit || 'g',
         is_nutrition: item.isNutrition || false,
         is_hydration: item.isHydration || false,
+        category: item.isNutrition ? 'Nutrition' : (item.isHydration ? 'Hydration' : 'General'), // Add default category
         created_at: new Date(),
       }));
       
@@ -600,6 +601,7 @@ export const SupabaseProvider = ({ children }) => {
         weightUnit: item.weight_unit,
         isNutrition: item.is_nutrition,
         isHydration: item.is_hydration,
+        category: item.category || (item.is_nutrition ? 'Nutrition' : (item.is_hydration ? 'Hydration' : 'General')),
       }));
       
       return { success: true, data: gearItems };

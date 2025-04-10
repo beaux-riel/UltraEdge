@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.gear_items (
  weight_unit TEXT DEFAULT 'g',
  is_nutrition BOOLEAN DEFAULT FALSE,
  is_hydration BOOLEAN DEFAULT FALSE,
+ category TEXT NOT NULL DEFAULT 'General',
  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -56,6 +57,12 @@ BEGIN
     
     BEGIN
         ALTER TABLE public.gear_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    EXCEPTION WHEN duplicate_column THEN
+        -- Do nothing, column already exists
+    END;
+    
+    BEGIN
+        ALTER TABLE public.gear_items ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General' NOT NULL;
     EXCEPTION WHEN duplicate_column THEN
         -- Do nothing, column already exists
     END;

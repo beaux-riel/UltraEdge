@@ -1649,6 +1649,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               theme={{ colors: { primary: theme.colors.primary } }}
               multiline={true}
               numberOfLines={3}
+              editable={true}
             />
             <View style={styles.weightInputContainer}>
               <TextInput

@@ -19,6 +19,8 @@ import {
   Dialog,
   TextInput,
   Chip,
+  Switch,
+  Menu,
   useTheme as usePaperTheme,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -58,6 +60,18 @@ const RacePrepScreen = ({ navigation }) => {
   const [hydrationQuantity, setHydrationQuantity] = useState("");
   const [hydrationType, setHydrationType] = useState("");
   const [editingHydrationIndex, setEditingHydrationIndex] = useState(null);
+
+  // State for gear list
+  const [gearItems, setGearItems] = useState([]);
+  const [showGearDialog, setShowGearDialog] = useState(false);
+  const [gearName, setGearName] = useState("");
+  const [gearBrand, setGearBrand] = useState("");
+  const [gearWeight, setGearWeight] = useState("");
+  const [gearWeightUnit, setGearWeightUnit] = useState("g"); // Default unit is grams
+  const [showWeightUnitMenu, setShowWeightUnitMenu] = useState(false);
+  const [isNutrition, setIsNutrition] = useState(false);
+  const [isHydration, setIsHydration] = useState(false);
+  const [editingGearIndex, setEditingGearIndex] = useState(null);
 
   // State for FAB
   const [fabOpen, setFabOpen] = useState(false);
@@ -215,6 +229,60 @@ const RacePrepScreen = ({ navigation }) => {
     const updatedPlans = [...hydrationPlans];
     updatedPlans.splice(index, 1);
     setHydrationPlans(updatedPlans);
+  };
+
+  // Handle gear item creation/editing
+  const handleAddGearItem = () => {
+    if (gearName.trim() === "") return;
+
+    const newGearItem = {
+      name: gearName,
+      brand: gearBrand,
+      weight: gearWeight,
+      weightUnit: gearWeightUnit,
+      isNutrition: isNutrition,
+      isHydration: isHydration,
+    };
+
+    if (editingGearIndex !== null) {
+      // Edit existing gear item
+      const updatedGearItems = [...gearItems];
+      updatedGearItems[editingGearIndex] = newGearItem;
+      setGearItems(updatedGearItems);
+    } else {
+      // Add new gear item
+      setGearItems([...gearItems, newGearItem]);
+    }
+
+    // Reset form
+    setGearName("");
+    setGearBrand("");
+    setGearWeight("");
+    setGearWeightUnit("g"); // Reset to default unit
+    setIsNutrition(false);
+    setIsHydration(false);
+    setEditingGearIndex(null);
+    setShowGearDialog(false);
+  };
+
+  // Handle editing a gear item
+  const handleEditGearItem = (index) => {
+    const item = gearItems[index];
+    setGearName(item.name);
+    setGearBrand(item.brand);
+    setGearWeight(item.weight);
+    setGearWeightUnit(item.weightUnit || "g"); // Default to "g" if not set
+    setIsNutrition(item.isNutrition);
+    setIsHydration(item.isHydration);
+    setEditingGearIndex(index);
+    setShowGearDialog(true);
+  };
+
+  // Handle deleting a gear item
+  const handleDeleteGearItem = (index) => {
+    const updatedGearItems = [...gearItems];
+    updatedGearItems.splice(index, 1);
+    setGearItems(updatedGearItems);
   };
 
   return (
@@ -609,6 +677,140 @@ const RacePrepScreen = ({ navigation }) => {
             ))
           )}
         </Surface>
+
+        {/* Gear List Section */}
+        <Surface
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialCommunityIcons
+                name="hiking"
+                size={24}
+                color={theme.colors.tertiary}
+                style={styles.sectionIcon}
+              />
+              <Title style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Gear List
+              </Title>
+            </View>
+          </View>
+          <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
+            Manage your ultra marathon gear inventory.
+          </Paragraph>
+
+          {gearItems.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="hiking"
+                size={48}
+                color={theme.colors.disabled}
+              />
+              <Text style={[styles.emptyStateText, { color: theme.colors.textSecondary }]}>
+                No gear items added yet
+              </Text>
+              <Button
+                mode="outlined"
+                onPress={() => {
+                  setEditingGearIndex(null);
+                  setGearName("");
+                  setGearBrand("");
+                  setGearWeight("");
+                  setGearWeightUnit("g"); // Reset to default unit
+                  setIsNutrition(false);
+                  setIsHydration(false);
+                  setShowGearDialog(true);
+                }}
+                style={styles.emptyStateButton}
+                color={theme.colors.primary}
+              >
+                Add Gear Item
+              </Button>
+            </View>
+          ) : (
+            gearItems.map((item, index) => (
+              <Surface
+                key={index}
+                style={[
+                  styles.itemCard,
+                  {
+                    backgroundColor: isDarkMode
+                      ? theme.colors.surfaceVariant
+                      : theme.colors.surfaceVariant,
+                  },
+                ]}
+              >
+                <View style={styles.itemCardHeader}>
+                  <Text style={[styles.itemCardTitle, { color: theme.colors.text }]}>
+                    {item.name}
+                  </Text>
+                  <View style={styles.itemCardActions}>
+                    <TouchableOpacity
+                      onPress={() => handleEditGearItem(index)}
+                      style={styles.itemCardAction}
+                    >
+                      <MaterialCommunityIcons
+                        name="pencil"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteGearItem(index)}
+                      style={styles.itemCardAction}
+                    >
+                      <MaterialCommunityIcons
+                        name="delete"
+                        size={20}
+                        color={theme.colors.error}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <Divider style={styles.itemCardDivider} />
+                <View style={styles.itemCardContent}>
+                  <View style={styles.planDetailRow}>
+                    <Text style={[styles.planDetailLabel, { color: theme.colors.textSecondary }]}>
+                      Brand:
+                    </Text>
+                    <Text style={[styles.planDetailValue, { color: theme.colors.text }]}>
+                      {item.brand || "Not specified"}
+                    </Text>
+                  </View>
+                  <View style={styles.planDetailRow}>
+                    <Text style={[styles.planDetailLabel, { color: theme.colors.textSecondary }]}>
+                      Weight:
+                    </Text>
+                    <Text style={[styles.planDetailValue, { color: theme.colors.text }]}>
+                      {item.weight ? `${item.weight} ${item.weightUnit || 'g'}` : "Not specified"}
+                    </Text>
+                  </View>
+                  <View style={styles.itemTags}>
+                    {item.isNutrition && (
+                      <Chip
+                        style={[styles.tagChip, { backgroundColor: theme.colors.success + '20' }]}
+                        textStyle={{ color: theme.colors.success }}
+                      >
+                        Nutrition
+                      </Chip>
+                    )}
+                    {item.isHydration && (
+                      <Chip
+                        style={[styles.tagChip, { backgroundColor: theme.colors.info + '20' }]}
+                        textStyle={{ color: theme.colors.info }}
+                      >
+                        Hydration
+                      </Chip>
+                    )}
+                  </View>
+                </View>
+              </Surface>
+            ))
+          )}
+        </Surface>
       </ScrollView>
 
       {/* FAB for quick actions */}
@@ -616,6 +818,22 @@ const RacePrepScreen = ({ navigation }) => {
         open={fabOpen}
         icon={fabOpen ? "close" : "plus"}
         actions={[
+          {
+            icon: "hiking",
+            label: "Add Gear Item",
+            onPress: () => {
+              setEditingGearIndex(null);
+              setGearName("");
+              setGearBrand("");
+              setGearWeight("");
+              setGearWeightUnit("g"); // Reset to default unit
+              setIsNutrition(false);
+              setIsHydration(false);
+              setShowGearDialog(true);
+              setFabOpen(false);
+            },
+            color: theme.colors.tertiary,
+          },
           {
             icon: "bag-personal",
             label: "Add Drop Bag",
@@ -873,6 +1091,96 @@ const RacePrepScreen = ({ navigation }) => {
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        {/* Gear Item Dialog */}
+        <Dialog
+          visible={showGearDialog}
+          onDismiss={() => setShowGearDialog(false)}
+          style={{ backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" }}
+        >
+          <Dialog.Title style={{ color: theme.colors.text }}>
+            {editingGearIndex !== null ? "Edit Gear Item" : "Add Gear Item"}
+          </Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Item Name"
+              value={gearName}
+              onChangeText={setGearName}
+              style={styles.dialogInput}
+              mode="outlined"
+              theme={{ colors: { primary: theme.colors.primary } }}
+            />
+            <TextInput
+              label="Brand"
+              value={gearBrand}
+              onChangeText={setGearBrand}
+              style={styles.dialogInput}
+              mode="outlined"
+              theme={{ colors: { primary: theme.colors.primary } }}
+            />
+            <View style={styles.weightInputContainer}>
+              <TextInput
+                label="Weight"
+                value={gearWeight}
+                onChangeText={setGearWeight}
+                style={styles.weightInput}
+                mode="outlined"
+                keyboardType="numeric"
+                theme={{ colors: { primary: theme.colors.primary } }}
+              />
+              <Menu
+                visible={showWeightUnitMenu}
+                onDismiss={() => setShowWeightUnitMenu(false)}
+                anchor={
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowWeightUnitMenu(true)}
+                    style={styles.weightUnitButton}
+                    color={theme.colors.primary}
+                  >
+                    {gearWeightUnit}
+                  </Button>
+                }
+              >
+                <Menu.Item onPress={() => { setGearWeightUnit("g"); setShowWeightUnitMenu(false); }} title="g" />
+                <Menu.Item onPress={() => { setGearWeightUnit("kg"); setShowWeightUnitMenu(false); }} title="kg" />
+                <Menu.Item onPress={() => { setGearWeightUnit("oz"); setShowWeightUnitMenu(false); }} title="oz" />
+                <Menu.Item onPress={() => { setGearWeightUnit("lb"); setShowWeightUnitMenu(false); }} title="lb" />
+              </Menu>
+            </View>
+            <View style={styles.switchContainer}>
+              <Text style={[styles.switchLabel, { color: theme.colors.text }]}>
+                Nutrition Related
+              </Text>
+              <Switch
+                value={isNutrition}
+                onValueChange={setIsNutrition}
+                color={theme.colors.success}
+              />
+            </View>
+            <View style={styles.switchContainer}>
+              <Text style={[styles.switchLabel, { color: theme.colors.text }]}>
+                Hydration Related
+              </Text>
+              <Switch
+                value={isHydration}
+                onValueChange={setIsHydration}
+                color={theme.colors.info}
+              />
+            </View>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => setShowGearDialog(false)}
+              color={theme.colors.textSecondary}
+            >
+              Cancel
+            </Button>
+            <Button onPress={handleAddGearItem} color={theme.colors.primary}>
+              {editingGearIndex !== null ? "Update" : "Create"}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
     </View>
   );
@@ -889,6 +1197,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     paddingBottom: 10, // Extra padding for FAB
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+  },
+  switchLabel: {
+    fontSize: 16,
+  },
+  itemTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  tagChip: {
+    marginRight: 8,
+    marginTop: 4,
   },
   screenTitle: {
     fontSize: 28,
@@ -1009,6 +1335,20 @@ const styles = StyleSheet.create({
   },
   dialogInput: {
     marginBottom: 12,
+  },
+  weightInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  weightInput: {
+    flex: 1,
+    marginRight: 8,
+  },
+  weightUnitButton: {
+    height: 56,
+    justifyContent: 'center',
+    minWidth: 60,
   },
   checkboxContainer: {
     marginVertical: 12,

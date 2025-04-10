@@ -51,14 +51,6 @@ export const GearProvider = ({ children }) => {
       // Save to AsyncStorage
       await AsyncStorage.setItem('gearItems', JSON.stringify(updatedGearItems));
       
-      // Backup to Supabase if user is premium
-      if (user && isPremium) {
-        // Wait a bit to ensure state is updated
-        setTimeout(() => {
-          backupGearItems(updatedGearItems);
-        }, 300);
-      }
-      
       return { success: true };
     } catch (error) {
       console.error('Failed to save gear items:', error);
@@ -68,14 +60,48 @@ export const GearProvider = ({ children }) => {
 
   // Add a new gear item
   const addGearItem = async (newItem) => {
-    const updatedGearItems = [...gearItems, newItem];
+    // Ensure the new item has quantity and retired properties
+    const itemWithDefaults = {
+      ...newItem,
+      quantity: newItem.quantity || 1,
+      retired: newItem.retired || false
+    };
+    
+    const updatedGearItems = [...gearItems, itemWithDefaults];
+    
+    // If user is premium, push to Supabase immediately
+    if (user && isPremium) {
+      try {
+        await backupGearItems(updatedGearItems);
+      } catch (error) {
+        console.error('Failed to backup new gear item to Supabase:', error);
+      }
+    }
+    
     return saveGearItems(updatedGearItems);
   };
 
   // Update an existing gear item
   const updateGearItem = async (index, updatedItem) => {
+    // Ensure the updated item has quantity and retired properties
+    const itemWithDefaults = {
+      ...updatedItem,
+      quantity: updatedItem.quantity !== undefined ? updatedItem.quantity : 1,
+      retired: updatedItem.retired !== undefined ? updatedItem.retired : false
+    };
+    
     const updatedGearItems = [...gearItems];
-    updatedGearItems[index] = updatedItem;
+    updatedGearItems[index] = itemWithDefaults;
+    
+    // If user is premium, push to Supabase immediately
+    if (user && isPremium) {
+      try {
+        await backupGearItems(updatedGearItems);
+      } catch (error) {
+        console.error('Failed to backup updated gear item to Supabase:', error);
+      }
+    }
+    
     return saveGearItems(updatedGearItems);
   };
 
@@ -83,6 +109,16 @@ export const GearProvider = ({ children }) => {
   const deleteGearItem = async (index) => {
     const updatedGearItems = [...gearItems];
     updatedGearItems.splice(index, 1);
+    
+    // If user is premium, push to Supabase immediately
+    if (user && isPremium) {
+      try {
+        await backupGearItems(updatedGearItems);
+      } catch (error) {
+        console.error('Failed to backup gear items after deletion to Supabase:', error);
+      }
+    }
+    
     return saveGearItems(updatedGearItems);
   };
 

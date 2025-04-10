@@ -121,6 +121,8 @@ CREATE TABLE IF NOT EXISTS gear_items (
   category TEXT NOT NULL,
   weight NUMERIC,
   description TEXT,
+  quantity INTEGER DEFAULT 1,
+  retired BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -83,6 +83,7 @@ const RacePrepScreen = ({ navigation, route }) => {
   // State for gear list
   const [gearItems, setGearItems] = useState([]);
   const [showGearDialog, setShowGearDialog] = useState(false);
+  const [showRetiredItems, setShowRetiredItems] = useState(false);
   const [gearName, setGearName] = useState("");
     const [gearCategory, setGearCategory] = useState("");
   const [gearBrand, setGearBrand] = useState("");
@@ -92,6 +93,8 @@ const RacePrepScreen = ({ navigation, route }) => {
   const [showWeightUnitMenu, setShowWeightUnitMenu] = useState(false);
   const [isNutrition, setIsNutrition] = useState(false);
   const [isHydration, setIsHydration] = useState(false);
+  const [gearQuantity, setGearQuantity] = useState("1");
+  const [isRetired, setIsRetired] = useState(false);
   const [editingGearIndex, setEditingGearIndex] = useState(null);
 
   // State for FAB
@@ -511,6 +514,8 @@ const RacePrepScreen = ({ navigation, route }) => {
       weightUnit: gearWeightUnit,
       isNutrition: isNutrition,
       isHydration: isHydration,
+      quantity: parseInt(gearQuantity) || 1,
+      retired: isRetired,
     };
 
     let updatedGearItems;
@@ -535,6 +540,8 @@ const RacePrepScreen = ({ navigation, route }) => {
     setGearWeightUnit("g"); // Reset to default unit
     setIsNutrition(false);
     setIsHydration(false);
+    setGearQuantity("1");
+    setIsRetired(false);
     setEditingGearIndex(null);
     setShowGearDialog(false);
   };
@@ -550,6 +557,8 @@ const RacePrepScreen = ({ navigation, route }) => {
     setGearWeightUnit(item.weightUnit || "g"); // Default to "g" if not set
     setIsNutrition(item.isNutrition);
     setIsHydration(item.isHydration);
+    setGearQuantity(item.quantity ? item.quantity.toString() : "1");
+    setIsRetired(item.retired || false);
     setEditingGearIndex(index);
     setShowGearDialog(true);
   };
@@ -833,6 +842,17 @@ const RacePrepScreen = ({ navigation, route }) => {
               ? "Your gear is automatically backed up to the cloud."
               : ""}
           </Paragraph>
+          
+          <View style={styles.switchContainer}>
+            <Text style={[styles.switchLabel, { color: theme.colors.text }]}>
+              Show Retired Items
+            </Text>
+            <Switch
+              value={showRetiredItems}
+              onValueChange={setShowRetiredItems}
+              color={theme.colors.primary}
+            />
+          </View>
 
           {gearItems.length === 0 ? (
             <View style={styles.emptyState}>
@@ -859,6 +879,8 @@ const RacePrepScreen = ({ navigation, route }) => {
                   setGearWeightUnit("g"); // Reset to default unit
                   setIsNutrition(false);
                   setIsHydration(false);
+                  setGearQuantity("1");
+                  setIsRetired(false);
                   setShowGearDialog(true);
                 }}
                 style={styles.emptyStateButton}
@@ -868,7 +890,10 @@ const RacePrepScreen = ({ navigation, route }) => {
               </Button>
             </View>
           ) : (
-            gearItems.map((item, index) => (
+            // Filter gear items based on showRetiredItems toggle
+            gearItems
+              .filter(item => showRetiredItems || !item.retired)
+              .map((item, index) => (
               <Surface
                 key={index}
                 style={[
@@ -881,11 +906,30 @@ const RacePrepScreen = ({ navigation, route }) => {
                 ]}
               >
                 <View style={styles.itemCardHeader}>
-                  <Text
-                    style={[styles.itemCardTitle, { color: theme.colors.text }]}
-                  >
-                    {item.name}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text
+                      style={[
+                        styles.itemCardTitle, 
+                        { 
+                          color: item.retired ? theme.colors.disabled : theme.colors.text,
+                          textDecorationLine: item.retired ? 'line-through' : 'none'
+                        }
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    {item.retired && (
+                      <Chip
+                        style={[
+                          styles.tagChip,
+                          { backgroundColor: theme.colors.error + "20", marginLeft: 8 }
+                        ]}
+                        textStyle={{ color: theme.colors.error }}
+                      >
+                        Retired
+                      </Chip>
+                    )}
+                  </View>
                   <View style={styles.itemCardActions}>
                     <TouchableOpacity
                       onPress={() => handleEditGearItem(index)}
@@ -947,6 +991,24 @@ const RacePrepScreen = ({ navigation, route }) => {
                       {item.weight
                         ? `${item.weight} ${item.weightUnit || "g"}`
                         : "Not specified"}
+                    </Text>
+                  </View>
+                  <View style={styles.planDetailRow}>
+                    <Text
+                      style={[
+                        styles.planDetailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      Quantity:
+                    </Text>
+                    <Text
+                      style={[
+                        styles.planDetailValue,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      {item.quantity || 1}
                     </Text>
                   </View>
                   <View style={styles.itemTags}>
@@ -1961,6 +2023,25 @@ const RacePrepScreen = ({ navigation, route }) => {
                 value={isHydration}
                 onValueChange={setIsHydration}
                 color={theme.colors.tertiary}
+              />
+            </View>
+            <TextInput
+              label="Quantity"
+              value={gearQuantity}
+              onChangeText={setGearQuantity}
+              style={styles.dialogInput}
+              mode="outlined"
+              keyboardType="numeric"
+              theme={{ colors: { primary: theme.colors.primary } }}
+            />
+            <View style={styles.switchContainer}>
+              <Text style={[styles.switchLabel, { color: theme.colors.text }]}>
+                Retired Item
+              </Text>
+              <Switch
+                value={isRetired}
+                onValueChange={setIsRetired}
+                color={theme.colors.error}
               />
             </View>
           </Dialog.Content>

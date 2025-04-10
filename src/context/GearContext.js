@@ -20,8 +20,10 @@ export const GearProvider = ({ children }) => {
         if (user && isPremium) {
           const result = await restoreGearItems();
           if (result.success && result.data) {
-            setGearItems(result.data);
-            // Also save to AsyncStorage as a backup
+            // Filter out retired items for the initial view
+            const activeItems = result.data.filter(item => !item.retired);
+            setGearItems(activeItems);
+            // Also save to AsyncStorage as a backup (including retired items)
             await AsyncStorage.setItem('gearItems', JSON.stringify(result.data));
             setLoading(false);
             return;
@@ -31,7 +33,8 @@ export const GearProvider = ({ children }) => {
         // Fall back to AsyncStorage
         const storedGearItems = await AsyncStorage.getItem('gearItems');
         if (storedGearItems) {
-          setGearItems(JSON.parse(storedGearItems));
+          const parsedItems = JSON.parse(storedGearItems);
+          setGearItems(parsedItems);
         }
       } catch (error) {
         console.error('Failed to load gear items:', error);

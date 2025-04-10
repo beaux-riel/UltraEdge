@@ -252,7 +252,7 @@ const ProfileScreen = ({ navigation, route }) => {
                 elevation: 2,
               },
             ]}
-            color={isDarkMode ? "#fffff" : theme.colors.primary }
+            color={isDarkMode ? "#fffff" : theme.colors.primary}
             onPress={() => navigation.navigate("EditProfile", { userData })}
             icon="pencil"
           >
@@ -474,7 +474,8 @@ const ProfileScreen = ({ navigation, route }) => {
                       }}
                       textStyle={{ color: isDarkMode ? "#e0e0e0" : "#333333" }}
                     >
-                      {userData.upcomingRace.distance} miles
+                      {userData.upcomingRace.distance}{" "}
+                      {userData.upcomingRace.distanceUnit}
                     </Chip>
 
                     <Chip

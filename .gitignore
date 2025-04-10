@@ -41,3 +41,5 @@ yarn-error.*
 
 # Temp
 .temp/
+
+src/context/RevenueCatContext.js

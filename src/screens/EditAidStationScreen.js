@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Chip } from 'react-native-paper';
+import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Chip, FAB, Dialog } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const EditAidStationScreen = ({ route, navigation }) => {
   const { raceId, stationIndex } = route.params;
@@ -17,10 +18,29 @@ const EditAidStationScreen = ({ route, navigation }) => {
   const raceData = getRaceById(raceId) || {};
   const [station, setStation] = useState(null);
   const [equipmentModalVisible, setEquipmentModalVisible] = useState(false);
+  const [suppliesModalVisible, setSuppliesModalVisible] = useState(false);
+  const [newSupplyName, setNewSupplyName] = useState('');
+  const [addSupplyDialogVisible, setAddSupplyDialogVisible] = useState(false);
   
   useEffect(() => {
     if (raceData.aidStations && raceData.aidStations[stationIndex]) {
-      setStation({...raceData.aidStations[stationIndex]});
+      // Ensure the station has all the required fields
+      const updatedStation = {
+        ...raceData.aidStations[stationIndex],
+        number: raceData.aidStations[stationIndex].number || stationIndex + 1,
+        washroomAvailable: raceData.aidStations[stationIndex].washroomAvailable || false,
+        cutoffTimeSpecific: raceData.aidStations[stationIndex].cutoffTimeSpecific || '',
+        supplies: {
+          ...raceData.aidStations[stationIndex].supplies,
+          energy_gels: raceData.aidStations[stationIndex].supplies?.energy_gels || false,
+          electrolyte_tablets: raceData.aidStations[stationIndex].supplies?.electrolyte_tablets || false,
+          hot_food: raceData.aidStations[stationIndex].supplies?.hot_food || false,
+          snacks: raceData.aidStations[stationIndex].supplies?.snacks || false,
+          coffee: raceData.aidStations[stationIndex].supplies?.coffee || false,
+          tea: raceData.aidStations[stationIndex].supplies?.tea || false,
+        }
+      };
+      setStation(updatedStation);
     } else {
       Alert.alert('Error', 'Aid station not found');
       navigation.goBack();
@@ -76,10 +96,113 @@ const EditAidStationScreen = ({ route, navigation }) => {
     });
   };
   
+  // Function to add a custom supply
+  const addCustomSupply = () => {
+    if (!newSupplyName.trim()) {
+      Alert.alert('Error', 'Please enter a supply name');
+      return;
+    }
+    
+    // Format the supply name as a key (lowercase, underscores)
+    const supplyKey = newSupplyName.trim().toLowerCase().replace(/\s+/g, '_');
+    
+    // Update the station with the new supply (default to false)
+    setStation(prevStation => ({
+      ...prevStation,
+      supplies: {
+        ...prevStation.supplies,
+        [supplyKey]: false
+      }
+    }));
+    
+    setNewSupplyName('');
+    setAddSupplyDialogVisible(false);
+  };
+  
+  // Function to calculate cutoff time based on specific time or duration
+  const calculateCutoffTime = (field, value) => {
+    if (!station) return;
+    
+    const updatedStation = {...station};
+    
+    if (field === 'cutoffTime') {
+      // User entered a duration (e.g., "7:00")
+      updatedStation.cutoffTime = value;
+      
+      // Calculate specific time if race start time is available
+      if (raceData.startTime) {
+        try {
+          const [hours, minutes] = value.split(':').map(Number);
+          const totalMinutes = hours * 60 + minutes;
+          
+          const startTime = new Date(`2000-01-01T${raceData.startTime}`);
+          const cutoffTime = new Date(startTime.getTime() + totalMinutes * 60000);
+          
+          const formattedTime = cutoffTime.toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+          });
+          
+          updatedStation.cutoffTimeSpecific = formattedTime;
+        } catch (error) {
+          console.log('Error calculating specific time:', error);
+        }
+      }
+    } else if (field === 'cutoffTimeSpecific') {
+      // User entered a specific time (e.g., "1:30pm")
+      updatedStation.cutoffTimeSpecific = value;
+      
+      // Calculate duration if race start time is available
+      if (raceData.startTime) {
+        try {
+          // Parse the specific time
+          let specificTime;
+          if (value.toLowerCase().includes('am') || value.toLowerCase().includes('pm')) {
+            // Convert 12-hour format to 24-hour
+            const timeStr = value.toLowerCase();
+            const isPM = timeStr.includes('pm');
+            let [hours, minutesStr] = timeStr.replace(/[ap]m/i, '').split(':');
+            hours = parseInt(hours);
+            const minutes = parseInt(minutesStr);
+            
+            if (isPM && hours < 12) hours += 12;
+            if (!isPM && hours === 12) hours = 0;
+            
+            specificTime = new Date();
+            specificTime.setHours(hours, minutes, 0);
+          } else {
+            // Assume 24-hour format
+            const [hours, minutes] = value.split(':').map(Number);
+            specificTime = new Date();
+            specificTime.setHours(hours, minutes, 0);
+          }
+          
+          // Parse the start time
+          const startTime = new Date(`2000-01-01T${raceData.startTime}`);
+          
+          // Calculate the difference in minutes
+          const diffMinutes = (specificTime - startTime) / 60000;
+          
+          // Format as hours:minutes
+          const hours = Math.floor(diffMinutes / 60);
+          const minutes = Math.floor(diffMinutes % 60);
+          const formattedDuration = `${hours}:${minutes.toString().padStart(2, '0')}`;
+          
+          updatedStation.cutoffTime = formattedDuration;
+        } catch (error) {
+          console.log('Error calculating duration:', error);
+        }
+      }
+    }
+    
+    setStation(updatedStation);
+  };
+  
   const handleSaveStation = () => {
     // Validate that the station has a name and distance
-    if (!station.name.trim() || !station.distance.trim()) {
-      Alert.alert('Missing Information', 'Please enter a name and distance for the aid station.');
+    if (!station.distance.trim()) {
+      Alert.alert('Missing Information', 'Please enter a distance for the aid station.');
       return;
     }
     
@@ -118,6 +241,25 @@ const EditAidStationScreen = ({ route, navigation }) => {
       marginBottom: 16,
       borderRadius: 8,
       backgroundColor: isDarkMode ? theme.colors.surface : '#ffffff',
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowRadius: 4,
+      borderLeftWidth: 4,
+      borderLeftColor: theme.colors.primary,
+    },
+    stationNumber: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      textAlign: 'center',
+      textAlignVertical: 'center',
+      color: '#ffffff',
+      fontWeight: 'bold',
+      fontSize: 16,
+      lineHeight: 36,
+      backgroundColor: theme.colors.primary,
     },
     input: {
       marginBottom: 12,
@@ -129,6 +271,12 @@ const EditAidStationScreen = ({ route, navigation }) => {
       marginTop: 8,
       marginBottom: 4,
       color: isDarkMode ? theme.colors.text : '#000000',
+    },
+    supplyCategoryTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      color: theme.colors.primary,
     },
     divider: {
       marginVertical: 12,
@@ -173,7 +321,7 @@ const EditAidStationScreen = ({ route, navigation }) => {
       <ScrollView 
         style={dynamicStyles.container}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 16
+          paddingBottom: insets.bottom + 80 // Extra padding for FAB
         }}
       >
         <View style={styles.content}>
@@ -184,14 +332,24 @@ const EditAidStationScreen = ({ route, navigation }) => {
           
           <Card style={dynamicStyles.stationCard}>
             <Card.Content>
-              <TextInput
-                label="Aid Station Name"
-                value={station.name}
-                onChangeText={(value) => updateStationField('name', value)}
-                style={dynamicStyles.input}
-                mode="outlined"
-                theme={paperTheme}
-              />
+              <View style={styles.stationHeader}>
+                <View style={styles.stationNumberContainer}>
+                  <Text style={dynamicStyles.stationNumber}>
+                    {station.number}
+                  </Text>
+                </View>
+                
+                <View style={styles.stationTitleContainer}>
+                  <TextInput
+                    label="Aid Station Name (optional)"
+                    value={station.name}
+                    onChangeText={(value) => updateStationField('name', value)}
+                    style={[dynamicStyles.input, { flex: 1 }]}
+                    mode="outlined"
+                    theme={paperTheme}
+                  />
+                </View>
+              </View>
               
               <View style={styles.rowInputs}>
                 <TextInput
@@ -203,72 +361,53 @@ const EditAidStationScreen = ({ route, navigation }) => {
                   mode="outlined"
                   theme={paperTheme}
                 />
-                
+              </View>
+              
+              <View style={styles.rowInputs}>
                 <TextInput
                   label="Cut-off Time (hh:mm)"
                   value={station.cutoffTime}
-                  onChangeText={(value) => updateStationField('cutoffTime', value)}
+                  onChangeText={(value) => calculateCutoffTime('cutoffTime', value)}
+                  style={[dynamicStyles.input, styles.halfInput]}
+                  mode="outlined"
+                  theme={paperTheme}
+                />
+                
+                <TextInput
+                  label="Specific Time (e.g. 1:30pm)"
+                  value={station.cutoffTimeSpecific}
+                  onChangeText={(value) => calculateCutoffTime('cutoffTimeSpecific', value)}
                   style={[dynamicStyles.input, styles.halfInput]}
                   mode="outlined"
                   theme={paperTheme}
                 />
               </View>
               
-              <Text style={dynamicStyles.sectionLabel}>Available Supplies:</Text>
-              
-              <View style={styles.checkboxRow}>
-                <Checkbox.Item
-                  label="Water"
-                  status={station.supplies.water ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.water', !station.supplies.water)}
-                  style={styles.checkbox}
-                />
-                
-                <Checkbox.Item
-                  label="Sports Drink"
-                  status={station.supplies.sports_drink ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.sports_drink', !station.supplies.sports_drink)}
-                  style={styles.checkbox}
-                />
+              <View style={styles.sectionHeader}>
+                <Text style={dynamicStyles.sectionLabel}>Available Supplies:</Text>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => setSuppliesModalVisible(true)}
+                  style={styles.equipmentButton}
+                  icon="pencil"
+                >
+                  Edit
+                </Button>
               </View>
               
-              <View style={styles.checkboxRow}>
-                <Checkbox.Item
-                  label="Soda"
-                  status={station.supplies.soda ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.soda', !station.supplies.soda)}
-                  style={styles.checkbox}
-                />
-                
-                <Checkbox.Item
-                  label="Fruit"
-                  status={station.supplies.fruit ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.fruit', !station.supplies.fruit)}
-                  style={styles.checkbox}
-                />
+              <View style={styles.suppliesContainer}>
+                {Object.entries(station.supplies).map(([key, value]) => 
+                  value && (
+                    <Chip 
+                      key={key} 
+                      style={[styles.supplyChip, { backgroundColor: isDarkMode ? '#333333' : '#f0f0f0' }]}
+                      textStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+                    >
+                      {key.replace(/_/g, ' ')}
+                    </Chip>
+                  )
+                )}
               </View>
-              
-              <View style={styles.checkboxRow}>
-                <Checkbox.Item
-                  label="Sandwiches"
-                  status={station.supplies.sandwiches ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.sandwiches', !station.supplies.sandwiches)}
-                  style={styles.checkbox}
-                />
-                
-                <Checkbox.Item
-                  label="Soup"
-                  status={station.supplies.soup ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('supplies.soup', !station.supplies.soup)}
-                  style={styles.checkbox}
-                />
-              </View>
-              
-              <Checkbox.Item
-                label="Medical Support"
-                status={station.supplies.medical ? 'checked' : 'unchecked'}
-                onPress={() => updateStationField('supplies.medical', !station.supplies.medical)}
-              />
               
               <Divider style={dynamicStyles.divider} />
               
@@ -280,6 +419,7 @@ const EditAidStationScreen = ({ route, navigation }) => {
                       mode="outlined" 
                       onPress={openEquipmentModal}
                       style={styles.equipmentButton}
+                      icon="pencil"
                     >
                       Edit
                     </Button>
@@ -290,8 +430,9 @@ const EditAidStationScreen = ({ route, navigation }) => {
                       {station.requiredEquipment.map((item, i) => (
                         <Chip 
                           key={i} 
-                          style={styles.chip}
+                          style={[styles.chip, { backgroundColor: isDarkMode ? '#333333' : '#f0f0f0' }]}
                           icon="check"
+                          textStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
                         >
                           {item}
                         </Chip>
@@ -305,21 +446,32 @@ const EditAidStationScreen = ({ route, navigation }) => {
                 </View>
               )}
               
-              {raceData.dropBagsAllowed && (
+              <View style={styles.featuresContainer}>
+                {raceData.dropBagsAllowed && (
+                  <Checkbox.Item
+                    label="Drop Bags Allowed"
+                    status={station.dropBagAllowed ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('dropBagAllowed', !station.dropBagAllowed)}
+                    style={styles.featureCheckbox}
+                  />
+                )}
+                
+                {raceData.crewAllowed && (
+                  <Checkbox.Item
+                    label="Crew Access Allowed"
+                    status={station.crewAllowed ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('crewAllowed', !station.crewAllowed)}
+                    style={styles.featureCheckbox}
+                  />
+                )}
+                
                 <Checkbox.Item
-                  label="Drop Bags Allowed"
-                  status={station.dropBagAllowed ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('dropBagAllowed', !station.dropBagAllowed)}
+                  label="Washroom Available"
+                  status={station.washroomAvailable ? 'checked' : 'unchecked'}
+                  onPress={() => updateStationField('washroomAvailable', !station.washroomAvailable)}
+                  style={styles.featureCheckbox}
                 />
-              )}
-              
-              {raceData.crewAllowed && (
-                <Checkbox.Item
-                  label="Crew Access Allowed"
-                  status={station.crewAllowed ? 'checked' : 'unchecked'}
-                  onPress={() => updateStationField('crewAllowed', !station.crewAllowed)}
-                />
-              )}
+              </View>
             </Card.Content>
           </Card>
           
@@ -368,7 +520,177 @@ const EditAidStationScreen = ({ route, navigation }) => {
             Done
           </Button>
         </Modal>
+        
+        <Modal
+          visible={suppliesModalVisible}
+          onDismiss={() => setSuppliesModalVisible(false)}
+          contentContainerStyle={dynamicStyles.modalContainer}
+        >
+          <Text style={dynamicStyles.modalTitle}>Available Supplies</Text>
+          <Text style={dynamicStyles.modalSubtitle}>
+            Select supplies available at this aid station:
+          </Text>
+          
+          <ScrollView style={styles.modalScroll}>
+            {station && (
+              <>
+                <View style={styles.supplyCategory}>
+                  <Text style={dynamicStyles.supplyCategoryTitle}>Hydration</Text>
+                  <Checkbox.Item
+                    label="Water"
+                    status={station.supplies.water ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.water', !station.supplies.water)}
+                  />
+                  <Checkbox.Item
+                    label="Sports Drink"
+                    status={station.supplies.sports_drink ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.sports_drink', !station.supplies.sports_drink)}
+                  />
+                  <Checkbox.Item
+                    label="Soda"
+                    status={station.supplies.soda ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.soda', !station.supplies.soda)}
+                  />
+                  <Checkbox.Item
+                    label="Coffee"
+                    status={station.supplies.coffee ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.coffee', !station.supplies.coffee)}
+                  />
+                  <Checkbox.Item
+                    label="Tea"
+                    status={station.supplies.tea ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.tea', !station.supplies.tea)}
+                  />
+                </View>
+                
+                <Divider style={dynamicStyles.divider} />
+                
+                <View style={styles.supplyCategory}>
+                  <Text style={dynamicStyles.supplyCategoryTitle}>Nutrition</Text>
+                  <Checkbox.Item
+                    label="Fruit"
+                    status={station.supplies.fruit ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.fruit', !station.supplies.fruit)}
+                  />
+                  <Checkbox.Item
+                    label="Sandwiches"
+                    status={station.supplies.sandwiches ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.sandwiches', !station.supplies.sandwiches)}
+                  />
+                  <Checkbox.Item
+                    label="Soup"
+                    status={station.supplies.soup ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.soup', !station.supplies.soup)}
+                  />
+                  <Checkbox.Item
+                    label="Energy Gels"
+                    status={station.supplies.energy_gels ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.energy_gels', !station.supplies.energy_gels)}
+                  />
+                  <Checkbox.Item
+                    label="Electrolyte Tablets"
+                    status={station.supplies.electrolyte_tablets ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.electrolyte_tablets', !station.supplies.electrolyte_tablets)}
+                  />
+                  <Checkbox.Item
+                    label="Hot Food"
+                    status={station.supplies.hot_food ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.hot_food', !station.supplies.hot_food)}
+                  />
+                  <Checkbox.Item
+                    label="Snacks"
+                    status={station.supplies.snacks ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.snacks', !station.supplies.snacks)}
+                  />
+                </View>
+                
+                <Divider style={dynamicStyles.divider} />
+                
+                <View style={styles.supplyCategory}>
+                  <Text style={dynamicStyles.supplyCategoryTitle}>Support</Text>
+                  <Checkbox.Item
+                    label="Medical Support"
+                    status={station.supplies.medical ? 'checked' : 'unchecked'}
+                    onPress={() => updateStationField('supplies.medical', !station.supplies.medical)}
+                  />
+                </View>
+                
+                {/* Custom supplies */}
+                {Object.entries(station.supplies)
+                  .filter(([key]) => !['water', 'sports_drink', 'soda', 'fruit', 'sandwiches', 'soup', 'medical', 
+                                      'energy_gels', 'electrolyte_tablets', 'hot_food', 'snacks', 'coffee', 'tea'].includes(key))
+                  .length > 0 && (
+                  <>
+                    <Divider style={dynamicStyles.divider} />
+                    <View style={styles.supplyCategory}>
+                      <Text style={dynamicStyles.supplyCategoryTitle}>Custom Supplies</Text>
+                      {Object.entries(station.supplies)
+                        .filter(([key]) => !['water', 'sports_drink', 'soda', 'fruit', 'sandwiches', 'soup', 'medical', 
+                                            'energy_gels', 'electrolyte_tablets', 'hot_food', 'snacks', 'coffee', 'tea'].includes(key))
+                        .map(([key, value]) => (
+                          <Checkbox.Item
+                            key={key}
+                            label={key.replace(/_/g, ' ')}
+                            status={value ? 'checked' : 'unchecked'}
+                            onPress={() => updateStationField(`supplies.${key}`, !value)}
+                          />
+                        ))
+                      }
+                    </View>
+                  </>
+                )}
+              </>
+            )}
+          </ScrollView>
+          
+          <View style={styles.modalActions}>
+            <Button 
+              mode="outlined" 
+              onPress={() => setAddSupplyDialogVisible(true)}
+              style={styles.addSupplyButton}
+              icon="plus"
+            >
+              Add New Supply
+            </Button>
+            
+            <Button 
+              mode="contained" 
+              onPress={() => setSuppliesModalVisible(false)}
+              style={styles.modalButton}
+            >
+              Done
+            </Button>
+          </View>
+        </Modal>
+        
+        <Dialog
+          visible={addSupplyDialogVisible}
+          onDismiss={() => setAddSupplyDialogVisible(false)}
+        >
+          <Dialog.Title>Add New Supply</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Supply Name"
+              value={newSupplyName}
+              onChangeText={setNewSupplyName}
+              mode="outlined"
+              theme={paperTheme}
+              style={{ marginTop: 8 }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setAddSupplyDialogVisible(false)}>Cancel</Button>
+            <Button onPress={addCustomSupply}>Add</Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
+      
+      <FAB
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        icon="content-save"
+        label="Save"
+        onPress={handleSaveStation}
+      />
     </Portal.Host>
   );
 };
@@ -377,9 +699,21 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
+  stationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  stationNumberContainer: {
+    marginRight: 12,
+  },
+  stationTitleContainer: {
+    flex: 1,
+  },
   rowInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   halfInput: {
     width: '48%',
@@ -395,6 +729,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 32,
     paddingVertical: 8,
+    elevation: 2,
   },
   equipmentSection: {
     marginBottom: 8,
@@ -416,11 +751,47 @@ const styles = StyleSheet.create({
   chip: {
     margin: 4,
   },
+  supplyChip: {
+    margin: 4,
+    borderRadius: 16,
+  },
   modalScroll: {
     maxHeight: 300,
   },
   modalButton: {
     marginTop: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  addSupplyButton: {
+    flex: 1,
+    marginRight: 8,
+  },
+  supplyCategory: {
+    marginBottom: 8,
+  },
+  suppliesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  featuresContainer: {
+    marginTop: 8,
+  },
+  featureCheckbox: {
+    borderRadius: 8,
+    marginVertical: 2,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
   },
 });
 

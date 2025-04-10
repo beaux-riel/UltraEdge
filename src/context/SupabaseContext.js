@@ -208,6 +208,39 @@ export const SupabaseProvider = ({ children }) => {
         racesArray = Object.values(parsedRaces);
       }
       
+      // Ensure all race preparation data is included
+      for (const race of racesArray) {
+        // Initialize preparation object if it doesn't exist
+        if (!race.preparation) {
+          race.preparation = {};
+        }
+        
+        // Ensure gear items are included
+        if (!race.preparation.gearItems) {
+          race.preparation.gearItems = [];
+        }
+        
+        // Ensure drop bags are included
+        if (!race.preparation.dropBags) {
+          race.preparation.dropBags = [];
+        }
+        
+        // Ensure nutrition plans are included
+        if (!race.preparation.nutritionPlans) {
+          race.preparation.nutritionPlans = [];
+        }
+        
+        // Ensure hydration plans are included
+        if (!race.preparation.hydrationPlans) {
+          race.preparation.hydrationPlans = [];
+        }
+        
+        // Ensure aid stations are included
+        if (!race.aidStations) {
+          race.aidStations = [];
+        }
+      }
+      
       // First, delete existing backup data for this user
       const { error: deleteError } = await supabase
         .from('race_backups')
@@ -318,6 +351,7 @@ export const SupabaseProvider = ({ children }) => {
         }
       }
       
+      console.log('Race data backed up successfully with all preparation data');
       return { success: true };
     } catch (error) {
       console.error('Error backing up races:', error);
@@ -349,6 +383,36 @@ export const SupabaseProvider = ({ children }) => {
       // Convert races array back to object with id as key
       const racesObject = {};
       data.races_data.forEach(race => {
+        // Ensure all race preparation data is included
+        if (!race.preparation) {
+          race.preparation = {};
+        }
+        
+        // Ensure gear items are included
+        if (!race.preparation.gearItems) {
+          race.preparation.gearItems = [];
+        }
+        
+        // Ensure drop bags are included
+        if (!race.preparation.dropBags) {
+          race.preparation.dropBags = [];
+        }
+        
+        // Ensure nutrition plans are included
+        if (!race.preparation.nutritionPlans) {
+          race.preparation.nutritionPlans = [];
+        }
+        
+        // Ensure hydration plans are included
+        if (!race.preparation.hydrationPlans) {
+          race.preparation.hydrationPlans = [];
+        }
+        
+        // Ensure aid stations are included
+        if (!race.aidStations) {
+          race.aidStations = [];
+        }
+        
         racesObject[race.id] = race;
       });
       
@@ -418,6 +482,8 @@ export const SupabaseProvider = ({ children }) => {
       
       // Save to AsyncStorage
       await AsyncStorage.setItem('races', JSON.stringify(racesObject));
+      
+      console.log('Race data restored successfully with all preparation data');
       
       // Force reload the app or refresh races context
       return { 

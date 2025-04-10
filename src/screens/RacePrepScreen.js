@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Text,
   Title,
@@ -79,6 +80,31 @@ const RacePrepScreen = ({ navigation }) => {
   // State for FAB
   const [fabOpen, setFabOpen] = useState(false);
 
+  // Load drop bags from AsyncStorage
+  useEffect(() => {
+    const loadDropBags = async () => {
+      try {
+        const storedDropBags = await AsyncStorage.getItem('dropBags');
+        if (storedDropBags) {
+          setDropBags(JSON.parse(storedDropBags));
+        }
+      } catch (error) {
+        console.error('Error loading drop bags:', error);
+      }
+    };
+    
+    loadDropBags();
+  }, []);
+  
+  // Save drop bags to AsyncStorage
+  const saveDropBags = async (bags) => {
+    try {
+      await AsyncStorage.setItem('dropBags', JSON.stringify(bags));
+    } catch (error) {
+      console.error('Error saving drop bags:', error);
+    }
+  };
+
   // Handle drop bag creation/editing
   const handleAddDropBag = () => {
     if (dropBagName.trim() === "") return;
@@ -90,15 +116,20 @@ const RacePrepScreen = ({ navigation }) => {
       gearItems: selectedGearItems.map(index => gearItems[index]), // Add reference to selected gear items
     };
 
+    let updatedBags;
     if (editingBagIndex !== null) {
       // Edit existing bag
-      const updatedBags = [...dropBags];
+      updatedBags = [...dropBags];
       updatedBags[editingBagIndex] = newBag;
       setDropBags(updatedBags);
     } else {
       // Add new bag
-      setDropBags([...dropBags, newBag]);
+      updatedBags = [...dropBags, newBag];
+      setDropBags(updatedBags);
     }
+    
+    // Save to AsyncStorage
+    saveDropBags(updatedBags);
 
     // Reset form
     setDropBagName("");
@@ -150,6 +181,9 @@ const RacePrepScreen = ({ navigation }) => {
     const updatedBags = [...dropBags];
     updatedBags.splice(index, 1);
     setDropBags(updatedBags);
+    
+    // Save to AsyncStorage
+    saveDropBags(updatedBags);
   };
 
   // Handle nutrition plan creation/editing

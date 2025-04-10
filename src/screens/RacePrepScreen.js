@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -26,14 +27,20 @@ import {
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../context/ThemeContext";
+import { useRaces } from "../context/RaceContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
-const RacePrepScreen = ({ navigation }) => {
+const RacePrepScreen = ({ navigation, route }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { races, updateRace } = useRaces();
+  
+  // Get raceId from route params
+  const { raceId } = route.params || {};
+  const [currentRace, setCurrentRace] = useState(null);
 
   // State for drop bags
   const [dropBags, setDropBags] = useState([]);
@@ -80,28 +87,105 @@ const RacePrepScreen = ({ navigation }) => {
   // State for FAB
   const [fabOpen, setFabOpen] = useState(false);
 
-  // Load drop bags from AsyncStorage
+  // Load race data and preparation items
   useEffect(() => {
-    const loadDropBags = async () => {
-      try {
-        const storedDropBags = await AsyncStorage.getItem('dropBags');
-        if (storedDropBags) {
-          setDropBags(JSON.parse(storedDropBags));
+    if (raceId && races[raceId]) {
+      setCurrentRace(races[raceId]);
+      
+      // Load race-specific preparation data
+      if (races[raceId].preparation) {
+        const prep = races[raceId].preparation;
+        
+        // Load drop bags
+        if (prep.dropBags) {
+          setDropBags(prep.dropBags);
         }
-      } catch (error) {
-        console.error('Error loading drop bags:', error);
+        
+        // Load gear items
+        if (prep.gearItems) {
+          setGearItems(prep.gearItems);
+        }
+        
+        // Load nutrition plans
+        if (prep.nutritionPlans) {
+          setNutritionPlans(prep.nutritionPlans);
+        }
+        
+        // Load hydration plans
+        if (prep.hydrationPlans) {
+          setHydrationPlans(prep.hydrationPlans);
+        }
       }
-    };
-    
-    loadDropBags();
-  }, []);
+    } else {
+      // If no raceId provided, load from AsyncStorage (legacy behavior)
+      const loadDropBags = async () => {
+        try {
+          const storedDropBags = await AsyncStorage.getItem('dropBags');
+          if (storedDropBags) {
+            setDropBags(JSON.parse(storedDropBags));
+          }
+        } catch (error) {
+          console.error('Error loading drop bags:', error);
+        }
+      };
+      
+      loadDropBags();
+    }
+  }, [raceId, races]);
   
-  // Save drop bags to AsyncStorage
+  // Save preparation data to race object or AsyncStorage
+  const savePreparationData = async () => {
+    if (raceId && currentRace) {
+      // Save to race object
+      const updatedRace = {
+        ...currentRace,
+        preparation: {
+          dropBags,
+          gearItems,
+          nutritionPlans,
+          hydrationPlans
+        }
+      };
+      
+      // Update race in context
+      updateRace(raceId, { preparation: updatedRace.preparation });
+      
+      // Backup to Supabase is handled by updateRace
+      
+      return true;
+    } else {
+      // Legacy behavior - save to AsyncStorage
+      try {
+        await AsyncStorage.setItem('dropBags', JSON.stringify(dropBags));
+        return true;
+      } catch (error) {
+        console.error('Error saving drop bags:', error);
+        return false;
+      }
+    }
+  };
+  
+  // Save drop bags
   const saveDropBags = async (bags) => {
-    try {
-      await AsyncStorage.setItem('dropBags', JSON.stringify(bags));
-    } catch (error) {
-      console.error('Error saving drop bags:', error);
+    setDropBags(bags);
+    
+    if (raceId && currentRace) {
+      const preparation = {
+        ...(currentRace.preparation || {}),
+        dropBags: bags,
+        gearItems,
+        nutritionPlans,
+        hydrationPlans
+      };
+      
+      updateRace(raceId, { preparation });
+      // Backup to Supabase is handled by updateRace
+    } else {
+      try {
+        await AsyncStorage.setItem('dropBags', JSON.stringify(bags));
+      } catch (error) {
+        console.error('Error saving drop bags:', error);
+      }
     }
   };
 
@@ -121,14 +205,12 @@ const RacePrepScreen = ({ navigation }) => {
       // Edit existing bag
       updatedBags = [...dropBags];
       updatedBags[editingBagIndex] = newBag;
-      setDropBags(updatedBags);
     } else {
       // Add new bag
       updatedBags = [...dropBags, newBag];
-      setDropBags(updatedBags);
     }
     
-    // Save to AsyncStorage
+    // Save to race object or AsyncStorage
     saveDropBags(updatedBags);
 
     // Reset form
@@ -187,6 +269,24 @@ const RacePrepScreen = ({ navigation }) => {
   };
 
   // Handle nutrition plan creation/editing
+  // Save nutrition plans
+  const saveNutritionPlans = (plans) => {
+    setNutritionPlans(plans);
+    
+    if (raceId && currentRace) {
+      const preparation = {
+        ...(currentRace.preparation || {}),
+        dropBags,
+        gearItems,
+        nutritionPlans: plans,
+        hydrationPlans
+      };
+      
+      updateRace(raceId, { preparation });
+      // Backup to Supabase is handled by updateRace
+    }
+  };
+
   const handleAddNutritionPlan = () => {
     if (nutritionName.trim() === "" || nutritionTiming.trim() === "") return;
 
@@ -198,15 +298,18 @@ const RacePrepScreen = ({ navigation }) => {
       gearItems: selectedNutritionGearItems.map(index => gearItems[index]), // Add reference to selected gear items
     };
 
+    let updatedPlans;
     if (editingNutritionIndex !== null) {
       // Edit existing plan
-      const updatedPlans = [...nutritionPlans];
+      updatedPlans = [...nutritionPlans];
       updatedPlans[editingNutritionIndex] = newPlan;
-      setNutritionPlans(updatedPlans);
     } else {
       // Add new plan
-      setNutritionPlans([...nutritionPlans, newPlan]);
+      updatedPlans = [...nutritionPlans, newPlan];
     }
+    
+    // Save to race object
+    saveNutritionPlans(updatedPlans);
 
     // Reset form
     setNutritionName("");
@@ -249,6 +352,24 @@ const RacePrepScreen = ({ navigation }) => {
   };
 
   // Handle hydration plan creation/editing
+  // Save hydration plans
+  const saveHydrationPlans = (plans) => {
+    setHydrationPlans(plans);
+    
+    if (raceId && currentRace) {
+      const preparation = {
+        ...(currentRace.preparation || {}),
+        dropBags,
+        gearItems,
+        nutritionPlans,
+        hydrationPlans: plans
+      };
+      
+      updateRace(raceId, { preparation });
+      // Backup to Supabase is handled by updateRace
+    }
+  };
+
   const handleAddHydrationPlan = () => {
     if (hydrationName.trim() === "" || hydrationTiming.trim() === "") return;
 
@@ -260,15 +381,18 @@ const RacePrepScreen = ({ navigation }) => {
       gearItems: selectedHydrationGearItems.map(index => gearItems[index]), // Add reference to selected gear items
     };
 
+    let updatedPlans;
     if (editingHydrationIndex !== null) {
       // Edit existing plan
-      const updatedPlans = [...hydrationPlans];
+      updatedPlans = [...hydrationPlans];
       updatedPlans[editingHydrationIndex] = newPlan;
-      setHydrationPlans(updatedPlans);
     } else {
       // Add new plan
-      setHydrationPlans([...hydrationPlans, newPlan]);
+      updatedPlans = [...hydrationPlans, newPlan];
     }
+    
+    // Save to race object
+    saveHydrationPlans(updatedPlans);
 
     // Reset form
     setHydrationName("");
@@ -311,6 +435,24 @@ const RacePrepScreen = ({ navigation }) => {
   };
 
   // Handle gear item creation/editing
+  // Save gear items
+  const saveGearItems = (items) => {
+    setGearItems(items);
+    
+    if (raceId && currentRace) {
+      const preparation = {
+        ...(currentRace.preparation || {}),
+        dropBags,
+        gearItems: items,
+        nutritionPlans,
+        hydrationPlans
+      };
+      
+      updateRace(raceId, { preparation });
+      // Backup to Supabase is handled by updateRace
+    }
+  };
+
   const handleAddGearItem = () => {
     if (gearName.trim() === "") return;
 
@@ -323,15 +465,18 @@ const RacePrepScreen = ({ navigation }) => {
       isHydration: isHydration,
     };
 
+    let updatedGearItems;
     if (editingGearIndex !== null) {
       // Edit existing gear item
-      const updatedGearItems = [...gearItems];
+      updatedGearItems = [...gearItems];
       updatedGearItems[editingGearIndex] = newGearItem;
-      setGearItems(updatedGearItems);
     } else {
       // Add new gear item
-      setGearItems([...gearItems, newGearItem]);
+      updatedGearItems = [...gearItems, newGearItem];
     }
+    
+    // Save to race object
+    saveGearItems(updatedGearItems);
 
     // Reset form
     setGearName("");
@@ -564,11 +709,21 @@ const RacePrepScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <Title style={[styles.screenTitle, { color: theme.colors.text }]}>
-          Race Preparation
+          {currentRace ? `Prep for ${currentRace.name}` : 'Race Preparation'}
         </Title>
         <Paragraph style={[styles.screenDescription, { color: theme.colors.textSecondary }]}>
-          Prepare your race strategy with drop bags, nutrition, and hydration plans.
+          {currentRace 
+            ? `Prepare your strategy for ${currentRace.name} with drop bags, nutrition, and hydration plans.`
+            : 'Prepare your race strategy with drop bags, nutrition, and hydration plans.'}
         </Paragraph>
+        
+        {!currentRace && (
+          <Surface style={[styles.infoCard, { backgroundColor: isDarkMode ? '#1e1e1e' : '#fff8e1' }]}>
+            <Text style={{ color: isDarkMode ? '#ffecb3' : '#bf360c', padding: 16 }}>
+              For race-specific preparation, please access this screen from a race's details page.
+            </Text>
+          </Surface>
+        )}
 
         {/* Drop Bags Section */}
         <Surface
@@ -951,8 +1106,8 @@ const RacePrepScreen = ({ navigation }) => {
                     )}
                     {item.isHydration && (
                       <Chip
-                        style={[styles.tagChip, { backgroundColor: theme.colors.info + '20' }]}
-                        textStyle={{ color: theme.colors.info }}
+                        style={[styles.tagChip, { backgroundColor: theme.colors.tertiary + '20' }]}
+                        textStyle={{ color: theme.colors.tertiary }}
                       >
                         Hydration
                       </Chip>
@@ -970,6 +1125,32 @@ const RacePrepScreen = ({ navigation }) => {
         open={fabOpen}
         icon={fabOpen ? "close" : "plus"}
         actions={[
+          ...(currentRace ? [{
+            icon: "content-save",
+            label: "Save All Data",
+            onPress: () => {
+              // Save all preparation data to the race object
+              const updatedRace = {
+                ...currentRace,
+                preparation: {
+                  ...(currentRace.preparation || {}),
+                  dropBags,
+                  gearItems,
+                  nutritionPlans,
+                  hydrationPlans
+                }
+              };
+              
+              updateRace(raceId, { preparation: updatedRace.preparation });
+              // Backup to Supabase is handled by updateRace
+              
+              // Show a snackbar or toast notification
+              Alert.alert("Saved", "All preparation data has been saved to your race and backed up to Supabase.");
+              
+              setFabOpen(false);
+            },
+            color: theme.colors.success,
+          }] : []),
           {
             icon: "hiking",
             label: "Add Gear Item",
@@ -1449,7 +1630,7 @@ const RacePrepScreen = ({ navigation }) => {
               <Switch
                 value={isHydration}
                 onValueChange={setIsHydration}
-                color={theme.colors.info}
+                color={theme.colors.tertiary}
               />
             </View>
           </Dialog.Content>
@@ -1490,6 +1671,11 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     fontSize: 16,
+  },
+  infoCard: {
+    marginVertical: 10,
+    borderRadius: 8,
+    elevation: 2,
   },
   itemTags: {
     flexDirection: 'row',

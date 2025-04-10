@@ -53,42 +53,46 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [numAidStations, setNumAidStations] = useState("");
   const [dropBagsAllowed, setDropBagsAllowed] = useState(false);
   const [crewAllowed, setCrewAllowed] = useState(false);
-  
+
   // New fields for enhanced features
   const [startTime, setStartTime] = useState(new Date());
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [startTimeString, setStartTimeString] = useState("");
-  
+
   const [cutoffTime, setCutoffTime] = useState("");
   const [cutoffTimeUnit, setCutoffTimeUnit] = useState("hours");
-  
+
   const [goalTime, setGoalTime] = useState("");
   const [goalTimeUnit, setGoalTimeUnit] = useState("hours");
-  
+
   const [hikingPolesAllowed, setHikingPolesAllowed] = useState(false);
   const [pacerAllowed, setPacerAllowed] = useState(false);
-  
+
   const [autoStartTimer, setAutoStartTimer] = useState(true);
-  
+
   const [raceStatus, setRaceStatus] = useState("planned");
   const [resultTime, setResultTime] = useState("");
   const [resultNotes, setResultNotes] = useState("");
-  
+
   // Important dates/times
   const [importantDates, setImportantDates] = useState([]);
-  const [importantDateModalVisible, setImportantDateModalVisible] = useState(false);
-  const [newImportantDateType, setNewImportantDateType] = useState("gear_pickup");
+  const [importantDateModalVisible, setImportantDateModalVisible] =
+    useState(false);
+  const [newImportantDateType, setNewImportantDateType] =
+    useState("gear_pickup");
   const [newImportantDateTime, setNewImportantDateTime] = useState(new Date());
-  const [newImportantDateTimeString, setNewImportantDateTimeString] = useState("");
+  const [newImportantDateTimeString, setNewImportantDateTimeString] =
+    useState("");
   const [showImportantDatePicker, setShowImportantDatePicker] = useState(false);
-  const [importantDatePickerMode, setImportantDatePickerMode] = useState("date");
+  const [importantDatePickerMode, setImportantDatePickerMode] =
+    useState("date");
   const [customImportantDateName, setCustomImportantDateName] = useState("");
-  
+
   // Mandatory equipment state
   const [mandatoryEquipment, setMandatoryEquipment] = useState([]);
   const [equipmentModalVisible, setEquipmentModalVisible] = useState(false);
   const [newEquipmentItem, setNewEquipmentItem] = useState("");
-  
+
   // Pacer gear state
   const [pacerGear, setPacerGear] = useState([]);
   const [pacerGearModalVisible, setPacerGearModalVisible] = useState(false);
@@ -130,7 +134,10 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
       // Set cutoff time if it exists
       if (existingRace.cutoffTime) {
-        if (typeof existingRace.cutoffTime === 'object' && existingRace.cutoffTime.value) {
+        if (
+          typeof existingRace.cutoffTime === "object" &&
+          existingRace.cutoffTime.value
+        ) {
           setCutoffTime(existingRace.cutoffTime.value.toString());
           setCutoffTimeUnit(existingRace.cutoffTime.unit || "hours");
         } else {
@@ -140,7 +147,10 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
       // Set goal time if it exists
       if (existingRace.goalTime) {
-        if (typeof existingRace.goalTime === 'object' && existingRace.goalTime.value) {
+        if (
+          typeof existingRace.goalTime === "object" &&
+          existingRace.goalTime.value
+        ) {
           setGoalTime(existingRace.goalTime.value.toString());
           setGoalTimeUnit(existingRace.goalTime.unit || "hours");
         } else {
@@ -150,8 +160,8 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
       // Set hiking poles allowed
       setHikingPolesAllowed(
-        existingRace.hikingPolesAllowed !== undefined 
-          ? existingRace.hikingPolesAllowed 
+        existingRace.hikingPolesAllowed !== undefined
+          ? existingRace.hikingPolesAllowed
           : true
       );
 
@@ -160,8 +170,8 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
       // Set auto start timer
       setAutoStartTimer(
-        existingRace.autoStartTimer !== undefined 
-          ? existingRace.autoStartTimer 
+        existingRace.autoStartTimer !== undefined
+          ? existingRace.autoStartTimer
           : true
       );
 
@@ -179,7 +189,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       setNumAidStations(existingRace.numAidStations.toString());
       setDropBagsAllowed(existingRace.dropBagsAllowed);
       setCrewAllowed(existingRace.crewAllowed);
-      
+
       // Set equipment
       setMandatoryEquipment(existingRace.mandatoryEquipment || []);
       setPacerGear(existingRace.pacerGear || []);
@@ -217,11 +227,13 @@ const CreateRaceScreen = ({ route, navigation }) => {
     // Format based on mode
     if (importantDatePickerMode === "date") {
       // Format date as MM/DD/YYYY
-      const month = (currentDateTime.getMonth() + 1).toString().padStart(2, "0");
+      const month = (currentDateTime.getMonth() + 1)
+        .toString()
+        .padStart(2, "0");
       const day = currentDateTime.getDate().toString().padStart(2, "0");
       const year = currentDateTime.getFullYear();
       setNewImportantDateTimeString(`${month}/${day}/${year}`);
-      
+
       // Switch to time picker after date is selected
       if (Platform.OS !== "ios") {
         setTimeout(() => {
@@ -233,12 +245,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
       // Format time as HH:MM
       const hours = currentDateTime.getHours().toString().padStart(2, "0");
       const minutes = currentDateTime.getMinutes().toString().padStart(2, "0");
-      
+
       // Combine with existing date
       const existingDate = newImportantDateTimeString.split(" ")[0];
       const ampm = currentDateTime.getHours() >= 12 ? "PM" : "AM";
       const hours12 = (currentDateTime.getHours() % 12 || 12).toString();
-      
+
       setNewImportantDateTimeString(
         `${existingDate} ${hours12}:${minutes} ${ampm}`
       );
@@ -253,7 +265,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
         datetime: newImportantDateTimeString,
         name: newImportantDateType === "custom" ? customImportantDateName : "",
       };
-      
+
       setImportantDates([...importantDates, newImportantDate]);
       setNewImportantDateTimeString("");
       setCustomImportantDateName("");
@@ -262,7 +274,9 @@ const CreateRaceScreen = ({ route, navigation }) => {
   };
 
   const removeImportantDate = (id) => {
-    const updatedImportantDates = importantDates.filter(date => date.id !== id);
+    const updatedImportantDates = importantDates.filter(
+      (date) => date.id !== id
+    );
     setImportantDates(updatedImportantDates);
   };
 
@@ -291,29 +305,29 @@ const CreateRaceScreen = ({ route, navigation }) => {
     updatedEquipment.splice(index, 1);
     setMandatoryEquipment(updatedEquipment);
   };
-  
+
   const addPacerGearItem = () => {
     if (newPacerGearItem.trim()) {
       setPacerGear([
-        ...pacerGear, 
+        ...pacerGear,
         {
           id: Date.now().toString(),
           name: newPacerGearItem.trim(),
-          isMandatory: newPacerGearIsMandatory
-        }
+          isMandatory: newPacerGearIsMandatory,
+        },
       ]);
       setNewPacerGearItem("");
     }
   };
-  
+
   const removePacerGearItem = (id) => {
-    const updatedPacerGear = pacerGear.filter(item => item.id !== id);
+    const updatedPacerGear = pacerGear.filter((item) => item.id !== id);
     setPacerGear(updatedPacerGear);
   };
 
   const handleDeleteRace = () => {
     if (!existingRace) return;
-    
+
     Alert.alert(
       "Delete Race",
       `Are you sure you want to delete "${existingRace.name}"?`,
@@ -341,8 +355,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
       elevationUnit,
       date: raceDate,
       startTime: startTimeString,
-      cutoffTime: cutoffTime ? { value: parseFloat(cutoffTime), unit: cutoffTimeUnit } : null,
-      goalTime: goalTime ? { value: parseFloat(goalTime), unit: goalTimeUnit } : null,
+      cutoffTime: cutoffTime
+        ? { value: parseFloat(cutoffTime), unit: cutoffTimeUnit }
+        : null,
+      goalTime: goalTime
+        ? { value: parseFloat(goalTime), unit: goalTimeUnit }
+        : null,
       hikingPolesAllowed,
       pacerAllowed,
       pacerGear: pacerAllowed ? pacerGear : [],
@@ -388,7 +406,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       <ScrollView
         style={[
           styles.container,
-          { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5", },
+          { backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" },
         ]}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16,
@@ -415,7 +433,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#333333" : undefined}
+            outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
             activeOutlineColor={theme.colors.primary}
           />
 
@@ -433,7 +451,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : undefined}
+              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -461,7 +479,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : undefined}
+              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -487,12 +505,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#333333" : undefined}
+                outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="calendar"
-                    color={isDarkMode ? "#ffffff" : undefined}
+                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
                   />
                 }
               />
@@ -508,7 +526,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               themeVariant={isDarkMode ? "dark" : "light"}
             />
           )}
-          
+
           <TouchableOpacity onPress={() => setShowStartTimePicker(true)}>
             <View pointerEvents="none">
               <TextInput
@@ -521,12 +539,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#333333" : undefined}
+                outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="clock"
-                    color={isDarkMode ? "#ffffff" : undefined}
+                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
                   />
                 }
               />
@@ -542,7 +560,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               themeVariant={isDarkMode ? "dark" : "light"}
             />
           )}
-          
+
           <View style={styles.inputRow}>
             <TextInput
               label="Cutoff Time"
@@ -557,7 +575,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : undefined}
+              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -570,7 +588,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               style={styles.segmentedButton}
             />
           </View>
-          
+
           <View style={styles.inputRow}>
             <TextInput
               label="Goal Time"
@@ -585,7 +603,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : undefined}
+              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -611,7 +629,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#333333" : undefined}
+            outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
             activeOutlineColor={theme.colors.primary}
           />
 
@@ -621,7 +639,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               { backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" },
             ]}
           />
-          
+
           {/* Important Dates Section */}
           <View style={styles.sectionHeader}>
             <Text
@@ -642,12 +660,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
               Add
             </Button>
           </View>
-          
+
           {importantDates.length === 0 ? (
             <Text
               style={[
                 styles.emptyText,
-                { color: isDarkMode ? "#9e9e9e" : undefined },
+                { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
               ]}
             >
               No important dates added yet.
@@ -668,8 +686,15 @@ const CreateRaceScreen = ({ route, navigation }) => {
                   ]}
                 >
                   <View>
-                    <Text style={{ color: isDarkMode ? "#ffffff" : "#000000", fontWeight: 'bold' }}>
-                      {item.type === "custom" ? item.name : getImportantDateTypeName(item.type)}
+                    <Text
+                      style={{
+                        color: isDarkMode ? "#ffffff" : "#000000",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {item.type === "custom"
+                        ? item.name
+                        : getImportantDateTypeName(item.type)}
                     </Text>
                     <Text style={{ color: isDarkMode ? "#cccccc" : "#666666" }}>
                       {item.datetime}
@@ -679,7 +704,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                     icon="delete"
                     size={20}
                     onPress={() => removeImportantDate(item.id)}
-                    color={isDarkMode ? "#e0e0e0" : undefined}
+                    color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
                   />
                 </View>
               ))}
@@ -714,7 +739,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           <View style={styles.switchContainer}>
             <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Hiking Poles Allowed
@@ -725,7 +750,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           <View style={styles.switchContainer}>
             <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Pacer Allowed
@@ -736,7 +761,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           <View style={styles.switchContainer}>
             <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Auto Start Race Timer
@@ -747,13 +772,17 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           {autoStartTimer && (
             <HelperText
               type="info"
               style={[
                 styles.helperText,
-                { color: isDarkMode ? "#9e9e9e" : undefined, marginTop: -8, marginBottom: 16 },
+                {
+                  color: isDarkMode ? "#9e9e9e" : "#FFC5D3",
+                  marginTop: -8,
+                  marginBottom: 16,
+                },
               ]}
             >
               Timer will start automatically at race start time
@@ -792,7 +821,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               <Text
                 style={[
                   styles.emptyText,
-                  { color: isDarkMode ? "#9e9e9e" : undefined },
+                  { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
                 ]}
               >
                 No mandatory equipment added yet.
@@ -819,14 +848,14 @@ const CreateRaceScreen = ({ route, navigation }) => {
                       icon="delete"
                       size={20}
                       onPress={() => removeEquipmentItem(index)}
-                      color={isDarkMode ? "#e0e0e0" : undefined}
+                      color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
                     />
                   </View>
                 ))}
               </View>
             )}
           </View>
-          
+
           {pacerAllowed && (
             <View style={styles.equipmentSection}>
               <View style={styles.sectionHeader}>
@@ -853,7 +882,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 <Text
                   style={[
                     styles.emptyText,
-                    { color: isDarkMode ? "#9e9e9e" : undefined },
+                    { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
                   ]}
                 >
                   No pacer gear added yet.
@@ -870,16 +899,25 @@ const CreateRaceScreen = ({ route, navigation }) => {
                       key={item.id}
                       style={[
                         styles.equipmentItem,
-                        { borderBottomColor: isDarkMode ? "#333333" : "#f0f0f0" },
+                        {
+                          borderBottomColor: isDarkMode ? "#333333" : "#f0f0f0",
+                        },
                       ]}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Text
+                          style={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                        >
                           {item.name}
                         </Text>
                         {item.isMandatory && (
-                          <Chip 
-                            style={{ marginLeft: 8, backgroundColor: theme.colors.primary + '40' }}
+                          <Chip
+                            style={{
+                              marginLeft: 8,
+                              backgroundColor: theme.colors.primary + "40",
+                            }}
                             textStyle={{ fontSize: 10 }}
                           >
                             Required
@@ -890,7 +928,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                         icon="delete"
                         size={20}
                         onPress={() => removePacerGearItem(item.id)}
-                        color={isDarkMode ? "#e0e0e0" : undefined}
+                        color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
                       />
                     </View>
                   ))}
@@ -925,7 +963,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               type="info"
               style={[
                 styles.helperText,
-                { color: isDarkMode ? "#9e9e9e" : undefined },
+                { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
               ]}
             >
               You'll be able to set up aid station details in the next step.
@@ -963,13 +1001,13 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#555555" : undefined}
+            outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
             activeOutlineColor={theme.colors.primary}
           />
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setEquipmentModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : undefined}
+              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
             >
               Cancel
             </Button>
@@ -988,7 +1026,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             </Button>
           </View>
         </Modal>
-        
+
         {/* Pacer Gear Modal */}
         <Modal
           visible={pacerGearModalVisible}
@@ -1017,10 +1055,10 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#555555" : undefined}
+            outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
             activeOutlineColor={theme.colors.primary}
           />
-          
+
           <View style={styles.switchContainer}>
             <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
               Mandatory Item
@@ -1031,11 +1069,11 @@ const CreateRaceScreen = ({ route, navigation }) => {
               color={theme.colors.primary}
             />
           </View>
-          
+
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setPacerGearModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : undefined}
+              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
             >
               Cancel
             </Button>
@@ -1054,7 +1092,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             </Button>
           </View>
         </Modal>
-        
+
         {/* Important Dates Modal */}
         <Modal
           visible={importantDateModalVisible}
@@ -1072,45 +1110,45 @@ const CreateRaceScreen = ({ route, navigation }) => {
           >
             Add Important Date/Time
           </Text>
-          
+
           <RadioButton.Group
-            onValueChange={value => setNewImportantDateType(value)}
+            onValueChange={(value) => setNewImportantDateType(value)}
             value={newImportantDateType}
           >
             <View style={styles.radioItem}>
               <RadioButton
                 value="gear_pickup"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : undefined}
+                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Gear Pickup
               </Text>
             </View>
-            
+
             <View style={styles.radioItem}>
               <RadioButton
                 value="mandatory_briefing"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : undefined}
+                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Mandatory Briefing
               </Text>
             </View>
-            
+
             <View style={styles.radioItem}>
               <RadioButton
                 value="custom"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : undefined}
+                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Custom
               </Text>
             </View>
           </RadioButton.Group>
-          
+
           {newImportantDateType === "custom" && (
             <TextInput
               label="Custom Event Name"
@@ -1123,12 +1161,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#555555" : undefined}
+              outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
               activeOutlineColor={theme.colors.primary}
             />
           )}
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             onPress={() => {
               setImportantDatePickerMode("date");
               setShowImportantDatePicker(true);
@@ -1146,18 +1184,18 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#555555" : undefined}
+                outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="calendar-clock"
-                    color={isDarkMode ? "#ffffff" : undefined}
+                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
                   />
                 }
               />
             </View>
           </TouchableOpacity>
-          
+
           {showImportantDatePicker && (
             <DateTimePicker
               value={newImportantDateTime}
@@ -1167,18 +1205,21 @@ const CreateRaceScreen = ({ route, navigation }) => {
               themeVariant={isDarkMode ? "dark" : "light"}
             />
           )}
-          
+
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setImportantDateModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : undefined}
+              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
             >
               Cancel
             </Button>
             <Button
               mode="contained"
               onPress={addImportantDate}
-              disabled={!newImportantDateTimeString || (newImportantDateType === "custom" && !customImportantDateName)}
+              disabled={
+                !newImportantDateTimeString ||
+                (newImportantDateType === "custom" && !customImportantDateName)
+              }
               color={theme.colors.primary}
             >
               Add

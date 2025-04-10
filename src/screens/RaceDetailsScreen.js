@@ -836,7 +836,12 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                       Drop Bag
                     </Chip>
                     {station.assignedDropBag && (
-                      <Text style={[styles.assignedDropBagText, { color: isDarkMode ? theme.colors.text : '#666666' }]}>
+                      <Text
+                        style={[
+                          styles.assignedDropBagText,
+                          { color: isDarkMode ? theme.colors.text : "#666666" },
+                        ]}
+                      >
                         {station.assignedDropBag.name}
                       </Text>
                     )}
@@ -1036,7 +1041,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "overview" && {
-              color: isDarkMode ? "#ffffff" : undefined,
+              color: isDarkMode ? "#ffffff" : "#FFC5D3",
             },
           ]}
           color={theme.colors.primary}
@@ -1050,7 +1055,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "aidStations" && {
-              color: isDarkMode ? "#ffffff" : undefined,
+              color: isDarkMode ? "#ffffff" : "#FFC5D3",
             },
           ]}
           color={theme.colors.primary}
@@ -1064,7 +1069,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "crew" && {
-              color: isDarkMode ? "#ffffff" : undefined,
+              color: isDarkMode ? "#ffffff" : "#FFC5D3",
             },
           ]}
           color={theme.colors.primary}
@@ -1281,7 +1286,7 @@ const styles = StyleSheet.create({
   },
   assignedDropBagText: {
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginLeft: 8,
     marginTop: 2,
   },

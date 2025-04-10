@@ -1041,7 +1041,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "overview" && {
-              color: isDarkMode ? "#ffffff" : "#FFC5D3",
+              color: isDarkMode ? "#ffffff" : "#111112",
             },
           ]}
           color={theme.colors.primary}
@@ -1055,7 +1055,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "aidStations" && {
-              color: isDarkMode ? "#ffffff" : "#FFC5D3",
+              color: isDarkMode ? "#ffffff" : "#111112",
             },
           ]}
           color={theme.colors.primary}
@@ -1069,7 +1069,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           labelStyle={[
             styles.tabLabel,
             activeTab !== "crew" && {
-              color: isDarkMode ? "#ffffff" : "#FFC5D3",
+              color: isDarkMode ? "#ffffff" : "#111112",
             },
           ]}
           color={theme.colors.primary}

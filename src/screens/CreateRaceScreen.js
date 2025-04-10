@@ -433,7 +433,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+            outlineColor={isDarkMode ? "#333333" : "#111112"}
             activeOutlineColor={theme.colors.primary}
           />
 
@@ -451,7 +451,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+              outlineColor={isDarkMode ? "#333333" : "#111112"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -479,7 +479,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+              outlineColor={isDarkMode ? "#333333" : "#111112"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -505,12 +505,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+                outlineColor={isDarkMode ? "#333333" : "#111112"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="calendar"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 }
               />
@@ -539,12 +539,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+                outlineColor={isDarkMode ? "#333333" : "#111112"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="clock"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 }
               />
@@ -575,7 +575,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+              outlineColor={isDarkMode ? "#333333" : "#111112"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -603,7 +603,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+              outlineColor={isDarkMode ? "#333333" : "#111112"}
               activeOutlineColor={theme.colors.primary}
             />
             <SegmentedButtons
@@ -629,7 +629,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#333333" : "#FFC5D3"}
+            outlineColor={isDarkMode ? "#333333" : "#111112"}
             activeOutlineColor={theme.colors.primary}
           />
 
@@ -665,7 +665,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             <Text
               style={[
                 styles.emptyText,
-                { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
+                { color: isDarkMode ? "#9e9e9e" : "#111112" },
               ]}
             >
               No important dates added yet.
@@ -704,7 +704,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                     icon="delete"
                     size={20}
                     onPress={() => removeImportantDate(item.id)}
-                    color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                    color={isDarkMode ? "#e0e0e0" : "#111112"}
                   />
                 </View>
               ))}
@@ -779,7 +779,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               style={[
                 styles.helperText,
                 {
-                  color: isDarkMode ? "#9e9e9e" : "#FFC5D3",
+                  color: isDarkMode ? "#9e9e9e" : "#111112",
                   marginTop: -8,
                   marginBottom: 16,
                 },
@@ -821,7 +821,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               <Text
                 style={[
                   styles.emptyText,
-                  { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
+                  { color: isDarkMode ? "#9e9e9e" : "#111112" },
                 ]}
               >
                 No mandatory equipment added yet.
@@ -848,7 +848,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                       icon="delete"
                       size={20}
                       onPress={() => removeEquipmentItem(index)}
-                      color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                      color={isDarkMode ? "#e0e0e0" : "#111112"}
                     />
                   </View>
                 ))}
@@ -882,7 +882,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 <Text
                   style={[
                     styles.emptyText,
-                    { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
+                    { color: isDarkMode ? "#9e9e9e" : "#111112" },
                   ]}
                 >
                   No pacer gear added yet.
@@ -928,7 +928,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
                         icon="delete"
                         size={20}
                         onPress={() => removePacerGearItem(item.id)}
-                        color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                        color={isDarkMode ? "#e0e0e0" : "#111112"}
                       />
                     </View>
                   ))}
@@ -963,7 +963,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               type="info"
               style={[
                 styles.helperText,
-                { color: isDarkMode ? "#9e9e9e" : "#FFC5D3" },
+                { color: isDarkMode ? "#9e9e9e" : "#111112" },
               ]}
             >
               You'll be able to set up aid station details in the next step.
@@ -1001,13 +1001,13 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
+            outlineColor={isDarkMode ? "#555555" : "#111112"}
             activeOutlineColor={theme.colors.primary}
           />
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setEquipmentModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+              color={isDarkMode ? "#e0e0e0" : "#111112"}
             >
               Cancel
             </Button>
@@ -1055,7 +1055,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             mode="outlined"
             theme={inputTheme}
             labelStyle={labelStyle}
-            outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
+            outlineColor={isDarkMode ? "#555555" : "#111112"}
             activeOutlineColor={theme.colors.primary}
           />
 
@@ -1073,7 +1073,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setPacerGearModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+              color={isDarkMode ? "#e0e0e0" : "#111112"}
             >
               Cancel
             </Button>
@@ -1119,7 +1119,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               <RadioButton
                 value="gear_pickup"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#777777" : "#111112"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Gear Pickup
@@ -1130,7 +1130,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               <RadioButton
                 value="mandatory_briefing"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#777777" : "#111112"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Mandatory Briefing
@@ -1141,7 +1141,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               <RadioButton
                 value="custom"
                 color={theme.colors.primary}
-                uncheckedColor={isDarkMode ? "#777777" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#777777" : "#111112"}
               />
               <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
                 Custom
@@ -1161,7 +1161,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               mode="outlined"
               theme={inputTheme}
               labelStyle={labelStyle}
-              outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
+              outlineColor={isDarkMode ? "#555555" : "#111112"}
               activeOutlineColor={theme.colors.primary}
             />
           )}
@@ -1184,12 +1184,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
                 mode="outlined"
                 theme={inputTheme}
                 labelStyle={labelStyle}
-                outlineColor={isDarkMode ? "#555555" : "#FFC5D3"}
+                outlineColor={isDarkMode ? "#555555" : "#111112"}
                 activeOutlineColor={theme.colors.primary}
                 right={
                   <TextInput.Icon
                     icon="calendar-clock"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 }
               />
@@ -1209,7 +1209,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
           <View style={styles.modalButtons}>
             <Button
               onPress={() => setImportantDateModalVisible(false)}
-              color={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+              color={isDarkMode ? "#e0e0e0" : "#111112"}
             >
               Cancel
             </Button>

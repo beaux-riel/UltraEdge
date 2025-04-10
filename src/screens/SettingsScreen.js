@@ -304,7 +304,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="bell-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             right={(props) => (
@@ -327,7 +327,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon={isDarkMode ? "weather-night" : "weather-sunny"}
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             right={(props) => (
@@ -350,7 +350,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="cloud-upload-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             right={(props) => (
@@ -375,7 +375,7 @@ const SettingsScreen = () => {
               <RadioButton
                 value="miles"
                 color={paperTheme.colors.primary}
-                uncheckedColor={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : "#111112"}
               />
               <Text style={dynamicStyles.radioLabel}>Miles</Text>
             </View>
@@ -383,7 +383,7 @@ const SettingsScreen = () => {
               <RadioButton
                 value="km"
                 color={paperTheme.colors.primary}
-                uncheckedColor={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : "#111112"}
               />
               <Text style={dynamicStyles.radioLabel}>Kilometers</Text>
             </View>
@@ -400,7 +400,7 @@ const SettingsScreen = () => {
               <RadioButton
                 value="ft"
                 color={paperTheme.colors.primary}
-                uncheckedColor={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : "#111112"}
               />
               <Text style={dynamicStyles.radioLabel}>Feet</Text>
             </View>
@@ -408,7 +408,7 @@ const SettingsScreen = () => {
               <RadioButton
                 value="m"
                 color={paperTheme.colors.primary}
-                uncheckedColor={isDarkMode ? "#e0e0e0" : "#FFC5D3"}
+                uncheckedColor={isDarkMode ? "#e0e0e0" : "#111112"}
               />
               <Text style={dynamicStyles.radioLabel}>Meters</Text>
             </View>
@@ -431,7 +431,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="cloud-upload-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={handleBackup}
@@ -448,7 +448,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="cloud-download-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={handleRestore}
@@ -487,7 +487,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="run"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             right={(props) => (
@@ -510,7 +510,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="map-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={() => {
@@ -533,7 +533,7 @@ const SettingsScreen = () => {
                   <List.Icon
                     {...props}
                     icon="account"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 )}
               />
@@ -549,7 +549,7 @@ const SettingsScreen = () => {
                   <List.Icon
                     {...props}
                     icon="account-edit-outline"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 )}
                 onPress={() => {
@@ -568,7 +568,7 @@ const SettingsScreen = () => {
                   <List.Icon
                     {...props}
                     icon="lock-outline"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 )}
                 onPress={() => {
@@ -587,7 +587,7 @@ const SettingsScreen = () => {
                   <List.Icon
                     {...props}
                     icon="login"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 )}
                 onPress={() => setShowLoginDialog(true)}
@@ -604,7 +604,7 @@ const SettingsScreen = () => {
                   <List.Icon
                     {...props}
                     icon="account-plus-outline"
-                    color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                    color={isDarkMode ? "#ffffff" : "#111112"}
                   />
                 )}
                 onPress={() => setShowSignupDialog(true)}
@@ -623,7 +623,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="shield-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={() => {
@@ -644,7 +644,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="help-circle-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={() => {
@@ -663,7 +663,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="email-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={() => {
@@ -682,7 +682,7 @@ const SettingsScreen = () => {
               <List.Icon
                 {...props}
                 icon="information-outline"
-                color={isDarkMode ? "#ffffff" : "#FFC5D3"}
+                color={isDarkMode ? "#ffffff" : "#111112"}
               />
             )}
             onPress={() => {

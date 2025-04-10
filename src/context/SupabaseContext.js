@@ -545,6 +545,7 @@ export const SupabaseProvider = ({ children }) => {
         user_id: user.id,
         name: item.name,
         brand: item.brand || '',
+        description: item.description || '',
         weight: item.weight || '',
         weight_unit: item.weightUnit || 'g',
         is_nutrition: item.isNutrition || false,
@@ -594,6 +595,7 @@ export const SupabaseProvider = ({ children }) => {
       const gearItems = data.map(item => ({
         name: item.name,
         brand: item.brand,
+        description: item.description,
         weight: item.weight,
         weightUnit: item.weight_unit,
         isNutrition: item.is_nutrition,

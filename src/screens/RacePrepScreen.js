@@ -85,6 +85,7 @@ const RacePrepScreen = ({ navigation, route }) => {
   const [showGearDialog, setShowGearDialog] = useState(false);
   const [gearName, setGearName] = useState("");
   const [gearBrand, setGearBrand] = useState("");
+  const [gearDescription, setGearDescription] = useState("");
   const [gearWeight, setGearWeight] = useState("");
   const [gearWeightUnit, setGearWeightUnit] = useState("g"); // Default unit is grams
   const [showWeightUnitMenu, setShowWeightUnitMenu] = useState(false);
@@ -502,6 +503,7 @@ const RacePrepScreen = ({ navigation, route }) => {
     const newGearItem = {
       name: gearName,
       brand: gearBrand,
+      description: gearDescription,
       weight: gearWeight,
       weightUnit: gearWeightUnit,
       isNutrition: isNutrition,
@@ -524,6 +526,7 @@ const RacePrepScreen = ({ navigation, route }) => {
     // Reset form
     setGearName("");
     setGearBrand("");
+    setGearDescription("");
     setGearWeight("");
     setGearWeightUnit("g"); // Reset to default unit
     setIsNutrition(false);
@@ -537,6 +540,7 @@ const RacePrepScreen = ({ navigation, route }) => {
     const item = gearItems[index];
     setGearName(item.name);
     setGearBrand(item.brand);
+    setGearDescription(item.description || "");
     setGearWeight(item.weight);
     setGearWeightUnit(item.weightUnit || "g"); // Default to "g" if not set
     setIsNutrition(item.isNutrition);
@@ -1635,6 +1639,16 @@ const RacePrepScreen = ({ navigation, route }) => {
               style={styles.dialogInput}
               mode="outlined"
               theme={{ colors: { primary: theme.colors.primary } }}
+            />
+            <TextInput
+              label="Description"
+              value={gearDescription}
+              onChangeText={setGearDescription}
+              style={styles.dialogInput}
+              mode="outlined"
+              theme={{ colors: { primary: theme.colors.primary } }}
+              multiline={true}
+              numberOfLines={3}
             />
             <View style={styles.weightInputContainer}>
               <TextInput

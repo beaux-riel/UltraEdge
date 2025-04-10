@@ -16,6 +16,7 @@ import { SupabaseProvider } from "./src/context/SupabaseContext";
 import { UserProvider } from "./src/context/UserContext";
 import { RevenueCatProvider } from "./src/context/RevenueCatContext";
 import { SettingsProvider } from "./src/context/SettingsContext";
+import { GearProvider } from "./src/context/GearContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -82,7 +83,9 @@ const PaperProviderWithTheme = () => {
           <RevenueCatProvider>
             <UserProvider>
               <RaceProvider>
-                <AppContent />
+                <GearProvider>
+                  <AppContent />
+                </GearProvider>
               </RaceProvider>
             </UserProvider>
           </RevenueCatProvider>

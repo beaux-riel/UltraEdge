@@ -519,6 +519,94 @@ export const SupabaseProvider = ({ children }) => {
     }
   };
 
+  // Backup gear items to Supabase
+  const backupGearItems = async (gearItems) => {
+    if (!supabase || !user) {
+      return { success: false, error: 'Supabase client not initialized or user not logged in' };
+    }
+
+    if (!isPremium) {
+      return { success: false, error: 'Premium subscription required for backup' };
+    }
+
+    try {
+      console.log('Backing up gear items to Supabase...');
+      
+      // First, delete existing gear items for this user
+      const { error: deleteError } = await supabase
+        .from('gear_items')
+        .delete()
+        .eq('user_id', user.id);
+        
+      if (deleteError) throw deleteError;
+      
+      // Prepare gear items for insertion
+      const gearItemsToInsert = gearItems.map(item => ({
+        user_id: user.id,
+        name: item.name,
+        brand: item.brand || '',
+        weight: item.weight || '',
+        weight_unit: item.weightUnit || 'g',
+        is_nutrition: item.isNutrition || false,
+        is_hydration: item.isHydration || false,
+        created_at: new Date(),
+      }));
+      
+      // Insert gear items
+      const { error: insertError } = await supabase
+        .from('gear_items')
+        .insert(gearItemsToInsert);
+        
+      if (insertError) throw insertError;
+      
+      // Update last backup date
+      setLastBackupDate(new Date());
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to back up gear items to Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Restore gear items from Supabase
+  const restoreGearItems = async () => {
+    if (!supabase || !user) {
+      return { success: false, error: 'Supabase client not initialized or user not logged in' };
+    }
+
+    try {
+      console.log('Restoring gear items from Supabase...');
+      
+      // Get gear items from Supabase
+      const { data, error } = await supabase
+        .from('gear_items')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        return { success: true, data: [] };
+      }
+      
+      // Transform data to match app's format
+      const gearItems = data.map(item => ({
+        name: item.name,
+        brand: item.brand,
+        weight: item.weight,
+        weightUnit: item.weight_unit,
+        isNutrition: item.is_nutrition,
+        isHydration: item.is_hydration,
+      }));
+      
+      return { success: true, data: gearItems };
+    } catch (error) {
+      console.error('Failed to restore gear items from Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   return (
     <SupabaseContext.Provider
       value={{
@@ -532,6 +620,8 @@ export const SupabaseProvider = ({ children }) => {
         signOut,
         backupRaces,
         restoreRaces,
+        backupGearItems,
+        restoreGearItems,
         upgradeToPremium,
       }}
     >

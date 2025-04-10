@@ -28,6 +28,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../context/ThemeContext";
 import { useRaces } from "../context/RaceContext";
+import { useGear } from "../context/GearContext";
+import { useSupabase } from "../context/SupabaseContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
@@ -37,6 +39,12 @@ const RacePrepScreen = ({ navigation, route }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { races, updateRace } = useRaces();
+  const { user, isPremium } = useSupabase();
+  const { 
+    gearItems: globalGearItems, 
+    saveGearItems: saveGlobalGearItems,
+    backupGearItemsToSupabase 
+  } = useGear();
   
   // Get raceId from route params
   const { raceId } = route.params || {};
@@ -101,9 +109,22 @@ const RacePrepScreen = ({ navigation, route }) => {
           setDropBags(prep.dropBags);
         }
         
-        // Load gear items
-        if (prep.gearItems) {
+        // Load gear items - prioritize race-specific gear items, but fall back to global gear items
+        if (prep.gearItems && prep.gearItems.length > 0) {
           setGearItems(prep.gearItems);
+        } else if (globalGearItems && globalGearItems.length > 0) {
+          // If no race-specific gear items, use global gear items
+          setGearItems(globalGearItems);
+          
+          // Also update the race preparation with these global items
+          const updatedRace = {
+            ...races[raceId],
+            preparation: {
+              ...races[raceId].preparation,
+              gearItems: globalGearItems,
+            },
+          };
+          updateRace(raceId, updatedRace);
         }
         
         // Load nutrition plans
@@ -131,7 +152,7 @@ const RacePrepScreen = ({ navigation, route }) => {
       
       loadDropBags();
     }
-  }, [raceId, races]);
+  }, [raceId, races, globalGearItems]);
   
   // Save preparation data to race object or AsyncStorage
   const savePreparationData = async () => {
@@ -434,11 +455,28 @@ const RacePrepScreen = ({ navigation, route }) => {
     setHydrationPlans(updatedPlans);
   };
 
+  // Backup all gear items to Supabase
+  const backupAllGearItems = async () => {
+    if (user && isPremium) {
+      try {
+        await backupGearItemsToSupabase();
+        Alert.alert('Success', 'All gear items backed up to Supabase successfully.');
+      } catch (error) {
+        console.error('Failed to backup gear items:', error);
+        Alert.alert('Error', 'Failed to backup gear items to Supabase.');
+      }
+    } else {
+      Alert.alert('Premium Required', 'You need a premium subscription to backup gear items to Supabase.');
+    }
+  };
+  
   // Handle gear item creation/editing
   // Save gear items
-  const saveGearItems = (items) => {
+  const saveGearItems = async (items) => {
+    // Update local state
     setGearItems(items);
     
+    // Save to race object
     if (raceId && currentRace) {
       const preparation = {
         ...(currentRace.preparation || {}),
@@ -450,6 +488,11 @@ const RacePrepScreen = ({ navigation, route }) => {
       
       updateRace(raceId, { preparation });
       // Backup to Supabase is handled by updateRace
+    }
+    
+    // Save to global gear context and backup to Supabase
+    if (user && isPremium) {
+      await saveGlobalGearItems(items);
     }
   };
 
@@ -1004,9 +1047,19 @@ const RacePrepScreen = ({ navigation, route }) => {
                 Gear List
               </Title>
             </View>
+            {user && isPremium && (
+              <Button 
+                mode="outlined" 
+                onPress={backupAllGearItems}
+                style={{ marginRight: 8 }}
+                color={theme.colors.primary}
+              >
+                Backup Gear
+              </Button>
+            )}
           </View>
           <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Manage your ultra marathon gear inventory.
+            Manage your ultra marathon gear inventory. {user && isPremium ? 'Your gear is automatically backed up to the cloud.' : ''}
           </Paragraph>
 
           {gearItems.length === 0 ? (

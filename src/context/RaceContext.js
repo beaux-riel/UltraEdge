@@ -88,7 +88,7 @@ const initialRaces = {
 export const RaceProvider = ({ children }) => {
   const [races, setRaces] = useState({});
   const [loading, setLoading] = useState(true);
-  const { user, isPremium, backupRaces } = useSupabase();
+  const { user, isPremium, backupRaces, checkAndFetchData } = useSupabase();
 
   // Load races from AsyncStorage on mount
   useEffect(() => {
@@ -139,6 +139,11 @@ export const RaceProvider = ({ children }) => {
           const racesToSave = JSON.stringify(races);
           await AsyncStorage.setItem('races', racesToSave);
           console.log('Races saved successfully to AsyncStorage');
+          
+          // If user is premium, also backup to Supabase
+          if (user && isPremium) {
+            await backupRaces(races);
+          }
         } catch (error) {
           console.error('Failed to save races to storage', error);
         }
@@ -151,7 +156,7 @@ export const RaceProvider = ({ children }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [races, loading]);
+  }, [races, loading, user, isPremium]);
   
   // Function to manually backup races to Supabase
   const backupRacesToSupabase = async () => {
@@ -175,6 +180,22 @@ export const RaceProvider = ({ children }) => {
       return { success: false, error: error.message };
     }
   };
+  
+  // Check for data on Supabase when component mounts
+  useEffect(() => {
+    if (user && isPremium) {
+      // Check if we need to fetch data from Supabase
+      const checkForSupabaseData = async () => {
+        try {
+          await checkAndFetchData('races');
+        } catch (error) {
+          console.error('Error checking for Supabase data:', error);
+        }
+      };
+      
+      checkForSupabaseData();
+    }
+  }, [user, isPremium]);
 
   // Add a new race
   const addRace = (raceData) => {

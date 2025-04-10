@@ -8,7 +8,7 @@ const GearContext = createContext();
 export const GearProvider = ({ children }) => {
   const [gearItems, setGearItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user, isPremium, supabase, backupGearItems, restoreGearItems } = useSupabase();
+  const { user, isPremium, supabase, backupGearItems, restoreGearItems, saveGearItems: saveGearItemsToSupabase, checkAndFetchData } = useSupabase();
 
   // Load gear items from storage on mount
   useEffect(() => {
@@ -23,8 +23,6 @@ export const GearProvider = ({ children }) => {
             // Filter out retired items for the initial view
             const activeItems = result.data.filter(item => !item.retired);
             setGearItems(activeItems);
-            // Also save to AsyncStorage as a backup (including retired items)
-            await AsyncStorage.setItem('gearItems', JSON.stringify(result.data));
             setLoading(false);
             return;
           }
@@ -51,15 +49,32 @@ export const GearProvider = ({ children }) => {
     try {
       setGearItems(updatedGearItems);
       
-      // Save to AsyncStorage
-      await AsyncStorage.setItem('gearItems', JSON.stringify(updatedGearItems));
+      // Use the new saveGearItems function from SupabaseContext
+      // This will save to AsyncStorage and to Supabase if user is premium
+      const result = await saveGearItemsToSupabase(updatedGearItems);
       
-      return { success: true };
+      return result;
     } catch (error) {
       console.error('Failed to save gear items:', error);
       return { success: false, error: error.message };
     }
   };
+  
+  // Check for data on Supabase when component mounts
+  useEffect(() => {
+    if (user && isPremium) {
+      // Check if we need to fetch data from Supabase
+      const checkForSupabaseData = async () => {
+        try {
+          await checkAndFetchData('gearItems');
+        } catch (error) {
+          console.error('Error checking for Supabase data:', error);
+        }
+      };
+      
+      checkForSupabaseData();
+    }
+  }, [user, isPremium]);
 
   // Add a new gear item
   const addGearItem = async (newItem) => {

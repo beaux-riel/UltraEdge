@@ -24,6 +24,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSettings } from "../context/SettingsContext";
+
+// Define feature colors for aid station chips
+const featureColors = {
+  dropBags: {
+    lightBg: "#e8f5e9",
+    lightText: "#2e7d32",
+    darkBg: "#2e7d32",
+    darkText: "#ffffff"
+  },
+  crew: {
+    lightBg: "#e3f2fd",
+    lightText: "#1565c0",
+    darkBg: "#1565c0",
+    darkText: "#ffffff"
+  }
+};
 
 // Function to format date from MM/DD/YYYY to "Apr 7, 2025"
 const formatDate = (dateString) => {
@@ -631,9 +648,9 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         mode="contained"
         icon="plus"
         onPress={() => navigation.navigate("AidStationSetup", { raceData })}
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.colors.secondary }]}
       >
-        Add Aid Stations
+        Manage Aid Stations
       </Button>
 
       {raceData.aidStations?.length > 0 ? (
@@ -642,7 +659,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             key={station.id}
             style={[
               styles.stationCard,
-              { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+              { 
+                backgroundColor: isDarkMode ? "#1e1e1e" : "white",
+                borderLeftWidth: 4,
+                borderLeftColor: theme.colors.primary,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDarkMode ? 0.3 : 0.1,
+                shadowRadius: 4,
+              },
             ]}
           >
             <Card.Content>
@@ -660,23 +686,35 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 />
               </View>
               <View style={styles.stationHeader}>
-                <Text
-                  style={[
-                    styles.stationName,
-                    { color: isDarkMode ? "#ffffff" : "#000000" },
-                  ]}
-                >
-                  {station.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.stationDistance,
-                    { color: isDarkMode ? "#9e9e9e" : "#000000" },
-                  ]}
-                >
-                  {raceData.distanceUnit === "km" ? "KM" : "Mile"}{" "}
-                  {station.distance}
-                </Text>
+                <View style={styles.stationNumberContainer}>
+                  <Text
+                    style={[
+                      styles.stationNumber,
+                      { backgroundColor: theme.colors.primary }
+                    ]}
+                  >
+                    {station.number || index + 1}
+                  </Text>
+                </View>
+                <View style={styles.stationNameContainer}>
+                  <Text
+                    style={[
+                      styles.stationName,
+                      { color: isDarkMode ? "#ffffff" : "#000000" },
+                    ]}
+                  >
+                    {station.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.stationDistance,
+                      { color: isDarkMode ? "#9e9e9e" : "#000000" },
+                    ]}
+                  >
+                    {raceData.distanceUnit === "km" ? "KM" : "Mile"}{" "}
+                    {station.distance}
+                  </Text>
+                </View>
               </View>
               <Divider
                 style={[
@@ -685,22 +723,26 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 ]}
               />
               <View style={styles.stationDetails}>
-                <Text
-                  style={[
-                    styles.detailLabel,
-                    { color: isDarkMode ? "#9e9e9e" : "#000000" },
-                  ]}
-                >
-                  Cut-off Time:
-                </Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    { color: isDarkMode ? "#ffffff" : "#000000" },
-                  ]}
-                >
-                  {station.cutoffTime}
-                </Text>
+                <View style={styles.cutoffTimeContainer}>
+                  <Text
+                    style={[
+                      styles.detailLabel,
+                      { color: isDarkMode ? "#9e9e9e" : "#000000" },
+                    ]}
+                  >
+                    Cut-off Time:
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailValue,
+                      { color: isDarkMode ? "#ffffff" : "#000000" },
+                    ]}
+                  >
+                    {station.cutoffTime && station.cutoffTimeSpecific 
+                      ? `${station.cutoffTime} (${station.cutoffTimeSpecific})`
+                      : station.cutoffTime || station.cutoffTimeSpecific || 'None'}
+                  </Text>
+                </View>
               </View>
               <Text
                 style={[
@@ -719,15 +761,16 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                         style={[
                           styles.supplyChip,
                           {
-                            backgroundColor: isDarkMode ? "#333333" : undefined,
+                            backgroundColor: isDarkMode ? "#333333" : "#f0f0f0",
+                            borderRadius: 16,
                           },
                         ]}
                         small
                         textStyle={{
-                          color: isDarkMode ? "#ffffff" : undefined,
+                          color: isDarkMode ? "#ffffff" : "#000000",
                         }}
                       >
-                        {key.replace("_", " ")}
+                        {key.replace(/_/g, " ")}
                       </Chip>
                     )
                 )}
@@ -750,15 +793,14 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                           style={[
                             styles.equipmentCheckChip,
                             {
-                              backgroundColor: isDarkMode
-                                ? "#333333"
-                                : undefined,
+                              backgroundColor: isDarkMode ? "#333333" : "#f0f0f0",
+                              borderRadius: 16,
                             },
                           ]}
                           small
                           icon="check"
                           textStyle={{
-                            color: isDarkMode ? "#ffffff" : undefined,
+                            color: isDarkMode ? "#ffffff" : "#000000",
                           }}
                         >
                           {item}
@@ -773,10 +815,18 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                     icon="bag-personal"
                     style={[
                       styles.accessChip,
-                      { backgroundColor: isDarkMode ? "#333333" : undefined },
+                      { 
+                        backgroundColor: isDarkMode 
+                          ? featureColors.dropBags.darkBg 
+                          : featureColors.dropBags.lightBg 
+                      },
                     ]}
                     small
-                    textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
+                    textStyle={{ 
+                      color: isDarkMode 
+                        ? featureColors.dropBags.darkText 
+                        : featureColors.dropBags.lightText 
+                    }}
                   >
                     Drop Bag
                   </Chip>
@@ -786,12 +836,41 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                     icon="account-group"
                     style={[
                       styles.accessChip,
-                      { backgroundColor: isDarkMode ? "#333333" : undefined },
+                      { 
+                        backgroundColor: isDarkMode 
+                          ? featureColors.crew.darkBg 
+                          : featureColors.crew.lightBg 
+                      },
                     ]}
                     small
-                    textStyle={{ color: isDarkMode ? "#ffffff" : undefined }}
+                    textStyle={{ 
+                      color: isDarkMode 
+                        ? featureColors.crew.darkText 
+                        : featureColors.crew.lightText 
+                    }}
                   >
                     Crew
+                  </Chip>
+                )}
+                {station.washroomAvailable && (
+                  <Chip
+                    icon="toilet"
+                    style={[
+                      styles.accessChip,
+                      { 
+                        backgroundColor: isDarkMode 
+                          ? "#1a237e" 
+                          : "#c5cae9" 
+                      },
+                    ]}
+                    small
+                    textStyle={{ 
+                      color: isDarkMode 
+                        ? "#ffffff" 
+                        : "#1a237e" 
+                    }}
+                  >
+                    Washroom
                   </Chip>
                 )}
               </View>
@@ -1096,19 +1175,37 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   stationCard: {
-    marginBottom: 12,
+    marginBottom: 16,
     borderRadius: 8,
     elevation: 4,
   },
   cardActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: 4,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    zIndex: 1,
   },
   stationHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 8,
+  },
+  stationNumberContainer: {
+    marginRight: 12,
+  },
+  stationNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    textAlign: "center",
+    textAlignVertical: "center",
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 16,
+    lineHeight: 36,
+  },
+  stationNameContainer: {
+    flex: 1,
   },
   stationName: {
     fontSize: 18,
@@ -1123,8 +1220,11 @@ const styles = StyleSheet.create({
     height: 1,
   },
   stationDetails: {
+    marginVertical: 8,
+  },
+  cutoffTimeContainer: {
     flexDirection: "row",
-    marginBottom: 8,
+    alignItems: "center",
   },
   detailLabel: {
     fontWeight: "bold",
@@ -1144,8 +1244,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   supplyChip: {
-    marginRight: 4,
-    marginBottom: 4,
+    margin: 4,
+    borderRadius: 16,
   },
   equipmentCheckContainer: {
     marginTop: 8,
@@ -1160,15 +1260,17 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   equipmentCheckChip: {
-    marginRight: 4,
-    marginBottom: 4,
+    margin: 4,
+    borderRadius: 16,
   },
   accessContainer: {
     flexDirection: "row",
-    marginTop: 4,
+    flexWrap: "wrap",
+    marginTop: 8,
   },
   accessChip: {
-    marginRight: 8,
+    margin: 4,
+    borderRadius: 16,
   },
   crewCard: {
     marginBottom: 16,

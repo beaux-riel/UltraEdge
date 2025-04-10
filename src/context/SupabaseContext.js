@@ -544,6 +544,7 @@ export const SupabaseProvider = ({ children }) => {
       const gearItemsToInsert = gearItems.map(item => ({
         user_id: user.id,
         name: item.name,
+        category: item.category || '',
         brand: item.brand || '',
         description: item.description || '',
         weight: item.weight || '',

@@ -84,6 +84,7 @@ const RacePrepScreen = ({ navigation, route }) => {
   const [gearItems, setGearItems] = useState([]);
   const [showGearDialog, setShowGearDialog] = useState(false);
   const [gearName, setGearName] = useState("");
+    const [gearCategory, setGearCategory] = useState("");
   const [gearBrand, setGearBrand] = useState("");
   const [gearDescription, setGearDescription] = useState("");
   const [gearWeight, setGearWeight] = useState("");
@@ -356,6 +357,7 @@ const RacePrepScreen = ({ navigation, route }) => {
       plan.gearItems.map(planItem => 
         gearItems.findIndex(item => 
           item.name === planItem.name && 
+          item.category === planItem.category &&
           item.brand === planItem.brand && 
           item.weight === planItem.weight
         )
@@ -502,6 +504,7 @@ const RacePrepScreen = ({ navigation, route }) => {
 
     const newGearItem = {
       name: gearName,
+      category: gearCategory,
       brand: gearBrand,
       description: gearDescription,
       weight: gearWeight,
@@ -525,6 +528,7 @@ const RacePrepScreen = ({ navigation, route }) => {
 
     // Reset form
     setGearName("");
+    setGearCategory("");
     setGearBrand("");
     setGearDescription("");
     setGearWeight("");
@@ -539,6 +543,7 @@ const RacePrepScreen = ({ navigation, route }) => {
   const handleEditGearItem = (index) => {
     const item = gearItems[index];
     setGearName(item.name);
+    setGearCategory(item.category);
     setGearBrand(item.brand);
     setGearDescription(item.description || "");
     setGearWeight(item.weight);
@@ -746,7 +751,7 @@ const RacePrepScreen = ({ navigation, route }) => {
         styles.container,
         {
           backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa",
-          paddingTop: insets.top
+          paddingTop: insets.top,
         },
       ]}
     >
@@ -756,281 +761,34 @@ const RacePrepScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
       >
         <Title style={[styles.screenTitle, { color: theme.colors.text }]}>
-          {currentRace ? `Prep for ${currentRace.name}` : 'Race Preparation'}
+          {currentRace ? `Prep for ${currentRace.name}` : "Race Preparation"}
         </Title>
-        <Paragraph style={[styles.screenDescription, { color: theme.colors.textSecondary }]}>
-          {currentRace 
+        <Paragraph
+          style={[
+            styles.screenDescription,
+            { color: theme.colors.textSecondary },
+          ]}
+        >
+          {currentRace
             ? `Prepare your strategy for ${currentRace.name} with drop bags, nutrition, and hydration plans.`
-            : 'Prepare your race strategy with drop bags, nutrition, and hydration plans.'}
+            : "Prepare your race strategy with drop bags, nutrition, and hydration plans."}
         </Paragraph>
-        
+
         {!currentRace && (
-          <Surface style={[styles.infoCard, { backgroundColor: isDarkMode ? '#1e1e1e' : '#fff8e1' }]}>
-            <Text style={{ color: isDarkMode ? '#ffecb3' : '#bf360c', padding: 16 }}>
-              For race-specific preparation, please access this screen from a race's details page.
+          <Surface
+            style={[
+              styles.infoCard,
+              { backgroundColor: isDarkMode ? "#1e1e1e" : "#fff8e1" },
+            ]}
+          >
+            <Text
+              style={{ color: isDarkMode ? "#ffecb3" : "#bf360c", padding: 16 }}
+            >
+              For race-specific preparation, please access this screen from a
+              race's details page.
             </Text>
           </Surface>
         )}
-
-        {/* Drop Bags Section */}
-        <Surface
-          style={[
-            styles.sectionContainer,
-            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <MaterialCommunityIcons
-                name="bag-personal"
-                size={24}
-                color={theme.colors.primary}
-                style={styles.sectionIcon}
-              />
-              <Title style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Drop Bags
-              </Title>
-            </View>
-          </View>
-          <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Create and manage your drop bags for aid stations.
-          </Paragraph>
-
-          {dropBags.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="bag-personal-outline"
-                size={48}
-                color={theme.colors.disabled}
-              />
-              <Text style={[styles.emptyStateText, { color: theme.colors.textSecondary }]}>
-                No drop bags created yet
-              </Text>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  setEditingBagIndex(null);
-                  setDropBagName("");
-                  setDropBagItems([]);
-                  setSelectedGearItems([]);
-                  setIsTemplate(false);
-                  setShowDropBagDialog(true);
-                }}
-                style={styles.emptyStateButton}
-                color={theme.colors.primary}
-              >
-                Create Drop Bag
-              </Button>
-            </View>
-          ) : (
-            dropBags.map((bag, index) => (
-              <Surface
-                key={index}
-                style={[
-                  styles.itemCard,
-                  {
-                    backgroundColor: isDarkMode
-                      ? theme.colors.surfaceVariant
-                      : theme.colors.surfaceVariant,
-                  },
-                ]}
-              >
-                <View style={styles.itemCardHeader}>
-                  <View style={styles.itemCardTitleContainer}>
-                    <Text style={[styles.itemCardTitle, { color: theme.colors.text }]}>
-                      {bag.name}
-                    </Text>
-                    {bag.isTemplate && (
-                      <Chip
-                        style={[styles.templateChip, { backgroundColor: theme.colors.primary + '20' }]}
-                        textStyle={{ color: theme.colors.primary }}
-                      >
-                        Template
-                      </Chip>
-                    )}
-                  </View>
-                  <View style={styles.itemCardActions}>
-                    <TouchableOpacity
-                      onPress={() => handleEditDropBag(index)}
-                      style={styles.itemCardAction}
-                    >
-                      <MaterialCommunityIcons
-                        name="pencil"
-                        size={20}
-                        color={theme.colors.primary}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteDropBag(index)}
-                      style={styles.itemCardAction}
-                    >
-                      <MaterialCommunityIcons
-                        name="delete"
-                        size={20}
-                        color={theme.colors.error}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <Divider style={styles.itemCardDivider} />
-                <View style={styles.itemCardContent}>
-                  <Text style={[styles.itemCardSubtitle, { color: theme.colors.textSecondary }]}>
-                    Contents:
-                  </Text>
-                  {bag.items.length > 0 ? (
-                    <View style={styles.itemsList}>
-                      {bag.items.map((item, itemIndex) => (
-                        <Chip
-                          key={itemIndex}
-                          style={styles.itemChip}
-                          textStyle={{ color: theme.colors.text }}
-                        >
-                          {item}
-                        </Chip>
-                      ))}
-                    </View>
-                  ) : (
-                    <Text style={[styles.emptyItemsText, { color: theme.colors.disabled }]}>
-                      No items added
-                    </Text>
-                  )}
-                  
-                  {/* Display associated gear items */}
-                  {bag.gearItems && bag.gearItems.length > 0 && (
-                    <View style={styles.gearItemsSection}>
-                      <Text style={[styles.itemCardSubtitle, { color: theme.colors.textSecondary, marginTop: 8 }]}>
-                        Gear:
-                      </Text>
-                      <View style={styles.itemsList}>
-                        {bag.gearItems.map((item, itemIndex) => (
-                          <Chip
-                            key={itemIndex}
-                            style={[styles.itemChip, { backgroundColor: theme.colors.tertiary + '20' }]}
-                            textStyle={{ color: theme.colors.tertiary }}
-                          >
-                            {item.name} {item.weight && `(${item.weight} ${item.weightUnit || 'g'})`}
-                          </Chip>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </Surface>
-            ))
-          )}
-        </Surface>
-
-        {/* Nutrition Plans Section */}
-        <Surface
-          style={[
-            styles.sectionContainer,
-            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <MaterialCommunityIcons
-                name="food-apple"
-                size={24}
-                color={theme.colors.success}
-                style={styles.sectionIcon}
-              />
-              <Title style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Nutrition Plans
-              </Title>
-            </View>
-          </View>
-          <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Plan your race nutrition strategy.
-          </Paragraph>
-
-          {nutritionPlans.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="food-apple-outline"
-                size={48}
-                color={theme.colors.disabled}
-              />
-              <Text style={[styles.emptyStateText, { color: theme.colors.textSecondary }]}>
-                No nutrition plans created yet
-              </Text>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  setEditingNutritionIndex(null);
-                  setNutritionName("");
-                  setNutritionTiming("");
-                  setNutritionCalories("");
-                  setNutritionType("");
-                  setSelectedNutritionGearItems([]);
-                  setShowNutritionDialog(true);
-                }}
-                style={styles.emptyStateButton}
-                color={theme.colors.primary}
-              >
-                Create Nutrition Plan
-              </Button>
-            </View>
-          ) : (
-            nutritionPlans.map((plan, index) => renderNutritionPlanCard(plan, index))
-          )}
-        </Surface>
-
-        {/* Hydration Plans Section */}
-        <Surface
-          style={[
-            styles.sectionContainer,
-            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <MaterialCommunityIcons
-                name="water"
-                size={24}
-                color={theme.colors.tertiary}
-                style={styles.sectionIcon}
-              />
-              <Title style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Hydration Plans
-              </Title>
-            </View>
-          </View>
-          <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Plan your race hydration strategy.
-          </Paragraph>
-
-          {hydrationPlans.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons
-                name="water-outline"
-                size={48}
-                color={theme.colors.disabled}
-              />
-              <Text style={[styles.emptyStateText, { color: theme.colors.textSecondary }]}>
-                No hydration plans created yet
-              </Text>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  setEditingHydrationIndex(null);
-                  setHydrationName("");
-                  setHydrationTiming("");
-                  setHydrationQuantity("");
-                  setHydrationType("");
-                  setSelectedHydrationGearItems([]);
-                  setShowHydrationDialog(true);
-                }}
-                style={styles.emptyStateButton}
-                color={theme.colors.primary}
-              >
-                Create Hydration Plan
-              </Button>
-            </View>
-          ) : (
-            hydrationPlans.map((plan, index) => renderHydrationPlanCard(plan, index))
-          )}
-        </Surface>
 
         {/* Gear List Section */}
         <Surface
@@ -1047,13 +805,15 @@ const RacePrepScreen = ({ navigation, route }) => {
                 color={theme.colors.tertiary}
                 style={styles.sectionIcon}
               />
-              <Title style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              <Title
+                style={[styles.sectionTitle, { color: theme.colors.text }]}
+              >
                 Gear List
               </Title>
             </View>
             {user && isPremium && (
-              <Button 
-                mode="outlined" 
+              <Button
+                mode="outlined"
                 onPress={backupAllGearItems}
                 style={{ marginRight: 8 }}
                 color={theme.colors.primary}
@@ -1062,8 +822,16 @@ const RacePrepScreen = ({ navigation, route }) => {
               </Button>
             )}
           </View>
-          <Paragraph style={[styles.sectionDescription, { color: theme.colors.textSecondary }]}>
-            Manage your ultra marathon gear inventory. {user && isPremium ? 'Your gear is automatically backed up to the cloud.' : ''}
+          <Paragraph
+            style={[
+              styles.sectionDescription,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Manage your ultra marathon gear inventory.{" "}
+            {user && isPremium
+              ? "Your gear is automatically backed up to the cloud."
+              : ""}
           </Paragraph>
 
           {gearItems.length === 0 ? (
@@ -1073,7 +841,12 @@ const RacePrepScreen = ({ navigation, route }) => {
                 size={48}
                 color={theme.colors.disabled}
               />
-              <Text style={[styles.emptyStateText, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.emptyStateText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 No gear items added yet
               </Text>
               <Button
@@ -1108,7 +881,9 @@ const RacePrepScreen = ({ navigation, route }) => {
                 ]}
               >
                 <View style={styles.itemCardHeader}>
-                  <Text style={[styles.itemCardTitle, { color: theme.colors.text }]}>
+                  <Text
+                    style={[styles.itemCardTitle, { color: theme.colors.text }]}
+                  >
                     {item.name}
                   </Text>
                   <View style={styles.itemCardActions}>
@@ -1137,25 +912,50 @@ const RacePrepScreen = ({ navigation, route }) => {
                 <Divider style={styles.itemCardDivider} />
                 <View style={styles.itemCardContent}>
                   <View style={styles.planDetailRow}>
-                    <Text style={[styles.planDetailLabel, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.planDetailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
                       Brand:
                     </Text>
-                    <Text style={[styles.planDetailValue, { color: theme.colors.text }]}>
+                    <Text
+                      style={[
+                        styles.planDetailValue,
+                        { color: theme.colors.text },
+                      ]}
+                    >
                       {item.brand || "Not specified"}
                     </Text>
                   </View>
                   <View style={styles.planDetailRow}>
-                    <Text style={[styles.planDetailLabel, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.planDetailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
                       Weight:
                     </Text>
-                    <Text style={[styles.planDetailValue, { color: theme.colors.text }]}>
-                      {item.weight ? `${item.weight} ${item.weightUnit || 'g'}` : "Not specified"}
+                    <Text
+                      style={[
+                        styles.planDetailValue,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      {item.weight
+                        ? `${item.weight} ${item.weightUnit || "g"}`
+                        : "Not specified"}
                     </Text>
                   </View>
                   <View style={styles.itemTags}>
                     {item.isNutrition && (
                       <Chip
-                        style={[styles.tagChip, { backgroundColor: theme.colors.success + '20' }]}
+                        style={[
+                          styles.tagChip,
+                          { backgroundColor: theme.colors.success + "20" },
+                        ]}
                         textStyle={{ color: theme.colors.success }}
                       >
                         Nutrition
@@ -1163,7 +963,10 @@ const RacePrepScreen = ({ navigation, route }) => {
                     )}
                     {item.isHydration && (
                       <Chip
-                        style={[styles.tagChip, { backgroundColor: theme.colors.tertiary + '20' }]}
+                        style={[
+                          styles.tagChip,
+                          { backgroundColor: theme.colors.tertiary + "20" },
+                        ]}
                         textStyle={{ color: theme.colors.tertiary }}
                       >
                         Hydration
@@ -1175,6 +978,335 @@ const RacePrepScreen = ({ navigation, route }) => {
             ))
           )}
         </Surface>
+
+        {/* Drop Bags Section */}
+        <Surface
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialCommunityIcons
+                name="bag-personal"
+                size={24}
+                color={theme.colors.primary}
+                style={styles.sectionIcon}
+              />
+              <Title
+                style={[styles.sectionTitle, { color: theme.colors.text }]}
+              >
+                Drop Bags
+              </Title>
+            </View>
+          </View>
+          <Paragraph
+            style={[
+              styles.sectionDescription,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Create and manage your drop bags for aid stations.
+          </Paragraph>
+
+          {dropBags.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="bag-personal-outline"
+                size={48}
+                color={theme.colors.disabled}
+              />
+              <Text
+                style={[
+                  styles.emptyStateText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                No drop bags created yet
+              </Text>
+              <Button
+                mode="outlined"
+                onPress={() => {
+                  setEditingBagIndex(null);
+                  setDropBagName("");
+                  setDropBagItems([]);
+                  setSelectedGearItems([]);
+                  setIsTemplate(false);
+                  setShowDropBagDialog(true);
+                }}
+                style={styles.emptyStateButton}
+                color={theme.colors.primary}
+              >
+                Create Drop Bag
+              </Button>
+            </View>
+          ) : (
+            dropBags.map((bag, index) => (
+              <Surface
+                key={index}
+                style={[
+                  styles.itemCard,
+                  {
+                    backgroundColor: isDarkMode
+                      ? theme.colors.surfaceVariant
+                      : theme.colors.surfaceVariant,
+                  },
+                ]}
+              >
+                <View style={styles.itemCardHeader}>
+                  <View style={styles.itemCardTitleContainer}>
+                    <Text
+                      style={[
+                        styles.itemCardTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      {bag.name}
+                    </Text>
+                    {bag.isTemplate && (
+                      <Chip
+                        style={[
+                          styles.templateChip,
+                          { backgroundColor: theme.colors.primary + "20" },
+                        ]}
+                        textStyle={{ color: theme.colors.primary }}
+                      >
+                        Template
+                      </Chip>
+                    )}
+                  </View>
+                  <View style={styles.itemCardActions}>
+                    <TouchableOpacity
+                      onPress={() => handleEditDropBag(index)}
+                      style={styles.itemCardAction}
+                    >
+                      <MaterialCommunityIcons
+                        name="pencil"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteDropBag(index)}
+                      style={styles.itemCardAction}
+                    >
+                      <MaterialCommunityIcons
+                        name="delete"
+                        size={20}
+                        color={theme.colors.error}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <Divider style={styles.itemCardDivider} />
+                <View style={styles.itemCardContent}>
+                  <Text
+                    style={[
+                      styles.itemCardSubtitle,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Contents:
+                  </Text>
+                  {bag.items.length > 0 ? (
+                    <View style={styles.itemsList}>
+                      {bag.items.map((item, itemIndex) => (
+                        <Chip
+                          key={itemIndex}
+                          style={styles.itemChip}
+                          textStyle={{ color: theme.colors.text }}
+                        >
+                          {item}
+                        </Chip>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.emptyItemsText,
+                        { color: theme.colors.disabled },
+                      ]}
+                    >
+                      No items added
+                    </Text>
+                  )}
+
+                  {/* Display associated gear items */}
+                  {bag.gearItems && bag.gearItems.length > 0 && (
+                    <View style={styles.gearItemsSection}>
+                      <Text
+                        style={[
+                          styles.itemCardSubtitle,
+                          { color: theme.colors.textSecondary, marginTop: 8 },
+                        ]}
+                      >
+                        Gear:
+                      </Text>
+                      <View style={styles.itemsList}>
+                        {bag.gearItems.map((item, itemIndex) => (
+                          <Chip
+                            key={itemIndex}
+                            style={[
+                              styles.itemChip,
+                              { backgroundColor: theme.colors.tertiary + "20" },
+                            ]}
+                            textStyle={{ color: theme.colors.tertiary }}
+                          >
+                            {item.name}{" "}
+                            {item.weight &&
+                              `(${item.weight} ${item.weightUnit || "g"})`}
+                          </Chip>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </Surface>
+            ))
+          )}
+        </Surface>
+
+        {/* Nutrition Plans Section */}
+        <Surface
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialCommunityIcons
+                name="food-apple"
+                size={24}
+                color={theme.colors.success}
+                style={styles.sectionIcon}
+              />
+              <Title
+                style={[styles.sectionTitle, { color: theme.colors.text }]}
+              >
+                Nutrition Plans
+              </Title>
+            </View>
+          </View>
+          <Paragraph
+            style={[
+              styles.sectionDescription,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Plan your race nutrition strategy.
+          </Paragraph>
+
+          {nutritionPlans.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="food-apple-outline"
+                size={48}
+                color={theme.colors.disabled}
+              />
+              <Text
+                style={[
+                  styles.emptyStateText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                No nutrition plans created yet
+              </Text>
+              <Button
+                mode="outlined"
+                onPress={() => {
+                  setEditingNutritionIndex(null);
+                  setNutritionName("");
+                  setNutritionTiming("");
+                  setNutritionCalories("");
+                  setNutritionType("");
+                  setSelectedNutritionGearItems([]);
+                  setShowNutritionDialog(true);
+                }}
+                style={styles.emptyStateButton}
+                color={theme.colors.primary}
+              >
+                Create Nutrition Plan
+              </Button>
+            </View>
+          ) : (
+            nutritionPlans.map((plan, index) =>
+              renderNutritionPlanCard(plan, index)
+            )
+          )}
+        </Surface>
+
+        {/* Hydration Plans Section */}
+        <Surface
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialCommunityIcons
+                name="water"
+                size={24}
+                color={theme.colors.tertiary}
+                style={styles.sectionIcon}
+              />
+              <Title
+                style={[styles.sectionTitle, { color: theme.colors.text }]}
+              >
+                Hydration Plans
+              </Title>
+            </View>
+          </View>
+          <Paragraph
+            style={[
+              styles.sectionDescription,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Plan your race hydration strategy.
+          </Paragraph>
+
+          {hydrationPlans.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="water-outline"
+                size={48}
+                color={theme.colors.disabled}
+              />
+              <Text
+                style={[
+                  styles.emptyStateText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                No hydration plans created yet
+              </Text>
+              <Button
+                mode="outlined"
+                onPress={() => {
+                  setEditingHydrationIndex(null);
+                  setHydrationName("");
+                  setHydrationTiming("");
+                  setHydrationQuantity("");
+                  setHydrationType("");
+                  setSelectedHydrationGearItems([]);
+                  setShowHydrationDialog(true);
+                }}
+                style={styles.emptyStateButton}
+                color={theme.colors.primary}
+              >
+                Create Hydration Plan
+              </Button>
+            </View>
+          ) : (
+            hydrationPlans.map((plan, index) =>
+              renderHydrationPlanCard(plan, index)
+            )
+          )}
+        </Surface>
+
       </ScrollView>
 
       {/* FAB for quick actions */}
@@ -1182,32 +1314,41 @@ const RacePrepScreen = ({ navigation, route }) => {
         open={fabOpen}
         icon={fabOpen ? "close" : "plus"}
         actions={[
-          ...(currentRace ? [{
-            icon: "content-save",
-            label: "Save All Data",
-            onPress: () => {
-              // Save all preparation data to the race object
-              const updatedRace = {
-                ...currentRace,
-                preparation: {
-                  ...(currentRace.preparation || {}),
-                  dropBags,
-                  gearItems,
-                  nutritionPlans,
-                  hydrationPlans
-                }
-              };
-              
-              updateRace(raceId, { preparation: updatedRace.preparation });
-              // Backup to Supabase is handled by updateRace
-              
-              // Show a snackbar or toast notification
-              Alert.alert("Saved", "All preparation data has been saved to your race and backed up to Supabase.");
-              
-              setFabOpen(false);
-            },
-            color: theme.colors.success,
-          }] : []),
+          ...(currentRace
+            ? [
+                {
+                  icon: "content-save",
+                  label: "Save All Data",
+                  onPress: () => {
+                    // Save all preparation data to the race object
+                    const updatedRace = {
+                      ...currentRace,
+                      preparation: {
+                        ...(currentRace.preparation || {}),
+                        dropBags,
+                        gearItems,
+                        nutritionPlans,
+                        hydrationPlans,
+                      },
+                    };
+
+                    updateRace(raceId, {
+                      preparation: updatedRace.preparation,
+                    });
+                    // Backup to Supabase is handled by updateRace
+
+                    // Show a snackbar or toast notification
+                    Alert.alert(
+                      "Saved",
+                      "All preparation data has been saved to your race and backed up to Supabase."
+                    );
+
+                    setFabOpen(false);
+                  },
+                  color: theme.colors.success,
+                },
+              ]
+            : []),
           {
             icon: "hiking",
             label: "Add Gear Item",
@@ -1301,16 +1442,22 @@ const RacePrepScreen = ({ navigation, route }) => {
                 onPress={() => setIsTemplate(!isTemplate)}
               >
                 <MaterialCommunityIcons
-                  name={isTemplate ? "checkbox-marked" : "checkbox-blank-outline"}
+                  name={
+                    isTemplate ? "checkbox-marked" : "checkbox-blank-outline"
+                  }
                   size={24}
                   color={theme.colors.primary}
                 />
-                <Text style={[styles.checkboxLabel, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.checkboxLabel, { color: theme.colors.text }]}
+                >
                   Save as template
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={[styles.dialogSectionTitle, { color: theme.colors.text }]}>
+            <Text
+              style={[styles.dialogSectionTitle, { color: theme.colors.text }]}
+            >
               Add Items
             </Text>
             <View style={styles.addItemContainer}>
@@ -1333,7 +1480,12 @@ const RacePrepScreen = ({ navigation, route }) => {
             </View>
             {dropBagItems.length > 0 && (
               <View style={styles.itemsContainer}>
-                <Text style={[styles.itemsTitle, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.itemsTitle,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   Items:
                 </Text>
                 <View style={styles.itemsList}>
@@ -1350,11 +1502,16 @@ const RacePrepScreen = ({ navigation, route }) => {
                 </View>
               </View>
             )}
-            
+
             {/* Gear Items Selection */}
             {gearItems.length > 0 && (
               <View style={styles.gearSelectionContainer}>
-                <Text style={[styles.dialogSectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.dialogSectionTitle,
+                    { color: theme.colors.text },
+                  ]}
+                >
                   Select Gear Items
                 </Text>
                 <View style={styles.gearItemsSelectionContainer}>
@@ -1365,26 +1522,39 @@ const RacePrepScreen = ({ navigation, route }) => {
                         styles.gearItemSelectionChip,
                         {
                           backgroundColor: selectedGearItems.includes(index)
-                            ? theme.colors.primary + '20'
+                            ? theme.colors.primary + "20"
                             : theme.colors.surfaceVariant,
                         },
                       ]}
                       onPress={() => {
                         if (selectedGearItems.includes(index)) {
-                          setSelectedGearItems(selectedGearItems.filter(i => i !== index));
+                          setSelectedGearItems(
+                            selectedGearItems.filter((i) => i !== index)
+                          );
                         } else {
                           setSelectedGearItems([...selectedGearItems, index]);
                         }
                       }}
                     >
                       <MaterialCommunityIcons
-                        name={selectedGearItems.includes(index) ? "checkbox-marked" : "checkbox-blank-outline"}
+                        name={
+                          selectedGearItems.includes(index)
+                            ? "checkbox-marked"
+                            : "checkbox-blank-outline"
+                        }
                         size={20}
                         color={theme.colors.primary}
                         style={styles.gearItemSelectionIcon}
                       />
-                      <Text style={[styles.gearItemSelectionText, { color: theme.colors.text }]}>
-                        {item.name} {item.weight && `(${item.weight} ${item.weightUnit || 'g'})`}
+                      <Text
+                        style={[
+                          styles.gearItemSelectionText,
+                          { color: theme.colors.text },
+                        ]}
+                      >
+                        {item.name}{" "}
+                        {item.weight &&
+                          `(${item.weight} ${item.weightUnit || "g"})`}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -1393,7 +1563,10 @@ const RacePrepScreen = ({ navigation, route }) => {
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowDropBagDialog(false)} color={theme.colors.textSecondary}>
+            <Button
+              onPress={() => setShowDropBagDialog(false)}
+              color={theme.colors.textSecondary}
+            >
               Cancel
             </Button>
             <Button onPress={handleAddDropBag} color={theme.colors.primary}>
@@ -1413,7 +1586,9 @@ const RacePrepScreen = ({ navigation, route }) => {
           }}
         >
           <Dialog.Title style={{ color: theme.colors.text }}>
-            {editingNutritionIndex !== null ? "Edit Nutrition Plan" : "Create Nutrition Plan"}
+            {editingNutritionIndex !== null
+              ? "Edit Nutrition Plan"
+              : "Create Nutrition Plan"}
           </Dialog.Title>
           <Dialog.Content>
             <TextInput
@@ -1450,11 +1625,16 @@ const RacePrepScreen = ({ navigation, route }) => {
               mode="outlined"
               theme={{ colors: { primary: theme.colors.primary } }}
             />
-            
+
             {/* Nutrition-related Gear Items Selection */}
-            {gearItems.filter(item => item.isNutrition).length > 0 && (
+            {gearItems.filter((item) => item.isNutrition).length > 0 && (
               <View style={styles.gearSelectionContainer}>
-                <Text style={[styles.dialogSectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.dialogSectionTitle,
+                    { color: theme.colors.text },
+                  ]}
+                >
                   Select Nutrition Gear Items
                 </Text>
                 <View style={styles.gearItemsSelectionContainer}>
@@ -1467,27 +1647,46 @@ const RacePrepScreen = ({ navigation, route }) => {
                         style={[
                           styles.gearItemSelectionChip,
                           {
-                            backgroundColor: selectedNutritionGearItems.includes(index)
-                              ? theme.colors.success + '20'
-                              : theme.colors.surfaceVariant,
+                            backgroundColor:
+                              selectedNutritionGearItems.includes(index)
+                                ? theme.colors.success + "20"
+                                : theme.colors.surfaceVariant,
                           },
                         ]}
                         onPress={() => {
                           if (selectedNutritionGearItems.includes(index)) {
-                            setSelectedNutritionGearItems(selectedNutritionGearItems.filter(i => i !== index));
+                            setSelectedNutritionGearItems(
+                              selectedNutritionGearItems.filter(
+                                (i) => i !== index
+                              )
+                            );
                           } else {
-                            setSelectedNutritionGearItems([...selectedNutritionGearItems, index]);
+                            setSelectedNutritionGearItems([
+                              ...selectedNutritionGearItems,
+                              index,
+                            ]);
                           }
                         }}
                       >
                         <MaterialCommunityIcons
-                          name={selectedNutritionGearItems.includes(index) ? "checkbox-marked" : "checkbox-blank-outline"}
+                          name={
+                            selectedNutritionGearItems.includes(index)
+                              ? "checkbox-marked"
+                              : "checkbox-blank-outline"
+                          }
                           size={20}
                           color={theme.colors.success}
                           style={styles.gearItemSelectionIcon}
                         />
-                        <Text style={[styles.gearItemSelectionText, { color: theme.colors.text }]}>
-                          {item.name} {item.weight && `(${item.weight} ${item.weightUnit || 'g'})`}
+                        <Text
+                          style={[
+                            styles.gearItemSelectionText,
+                            { color: theme.colors.text },
+                          ]}
+                        >
+                          {item.name}{" "}
+                          {item.weight &&
+                            `(${item.weight} ${item.weightUnit || "g"})`}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -1502,7 +1701,10 @@ const RacePrepScreen = ({ navigation, route }) => {
             >
               Cancel
             </Button>
-            <Button onPress={handleAddNutritionPlan} color={theme.colors.primary}>
+            <Button
+              onPress={handleAddNutritionPlan}
+              color={theme.colors.primary}
+            >
               {editingNutritionIndex !== null ? "Update" : "Create"}
             </Button>
           </Dialog.Actions>
@@ -1519,7 +1721,9 @@ const RacePrepScreen = ({ navigation, route }) => {
           }}
         >
           <Dialog.Title style={{ color: theme.colors.text }}>
-            {editingHydrationIndex !== null ? "Edit Hydration Plan" : "Create Hydration Plan"}
+            {editingHydrationIndex !== null
+              ? "Edit Hydration Plan"
+              : "Create Hydration Plan"}
           </Dialog.Title>
           <Dialog.Content>
             <TextInput
@@ -1556,11 +1760,16 @@ const RacePrepScreen = ({ navigation, route }) => {
               mode="outlined"
               theme={{ colors: { primary: theme.colors.primary } }}
             />
-            
+
             {/* Hydration-related Gear Items Selection */}
-            {gearItems.filter(item => item.isHydration).length > 0 && (
+            {gearItems.filter((item) => item.isHydration).length > 0 && (
               <View style={styles.gearSelectionContainer}>
-                <Text style={[styles.dialogSectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.dialogSectionTitle,
+                    { color: theme.colors.text },
+                  ]}
+                >
                   Select Hydration Gear Items
                 </Text>
                 <View style={styles.gearItemsSelectionContainer}>
@@ -1573,27 +1782,46 @@ const RacePrepScreen = ({ navigation, route }) => {
                         style={[
                           styles.gearItemSelectionChip,
                           {
-                            backgroundColor: selectedHydrationGearItems.includes(index)
-                              ? theme.colors.tertiary + '20'
-                              : theme.colors.surfaceVariant,
+                            backgroundColor:
+                              selectedHydrationGearItems.includes(index)
+                                ? theme.colors.tertiary + "20"
+                                : theme.colors.surfaceVariant,
                           },
                         ]}
                         onPress={() => {
                           if (selectedHydrationGearItems.includes(index)) {
-                            setSelectedHydrationGearItems(selectedHydrationGearItems.filter(i => i !== index));
+                            setSelectedHydrationGearItems(
+                              selectedHydrationGearItems.filter(
+                                (i) => i !== index
+                              )
+                            );
                           } else {
-                            setSelectedHydrationGearItems([...selectedHydrationGearItems, index]);
+                            setSelectedHydrationGearItems([
+                              ...selectedHydrationGearItems,
+                              index,
+                            ]);
                           }
                         }}
                       >
                         <MaterialCommunityIcons
-                          name={selectedHydrationGearItems.includes(index) ? "checkbox-marked" : "checkbox-blank-outline"}
+                          name={
+                            selectedHydrationGearItems.includes(index)
+                              ? "checkbox-marked"
+                              : "checkbox-blank-outline"
+                          }
                           size={20}
                           color={theme.colors.tertiary}
                           style={styles.gearItemSelectionIcon}
                         />
-                        <Text style={[styles.gearItemSelectionText, { color: theme.colors.text }]}>
-                          {item.name} {item.weight && `(${item.weight} ${item.weightUnit || 'g'})`}
+                        <Text
+                          style={[
+                            styles.gearItemSelectionText,
+                            { color: theme.colors.text },
+                          ]}
+                        >
+                          {item.name}{" "}
+                          {item.weight &&
+                            `(${item.weight} ${item.weightUnit || "g"})`}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -1608,7 +1836,10 @@ const RacePrepScreen = ({ navigation, route }) => {
             >
               Cancel
             </Button>
-            <Button onPress={handleAddHydrationPlan} color={theme.colors.primary}>
+            <Button
+              onPress={handleAddHydrationPlan}
+              color={theme.colors.primary}
+            >
               {editingHydrationIndex !== null ? "Update" : "Create"}
             </Button>
           </Dialog.Actions>
@@ -1618,7 +1849,9 @@ const RacePrepScreen = ({ navigation, route }) => {
         <Dialog
           visible={showGearDialog}
           onDismiss={() => setShowGearDialog(false)}
-          style={{ backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" }}
+          style={{
+            backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff",
+          }}
         >
           <Dialog.Title style={{ color: theme.colors.text }}>
             {editingGearIndex !== null ? "Edit Gear Item" : "Add Gear Item"}
@@ -1628,6 +1861,14 @@ const RacePrepScreen = ({ navigation, route }) => {
               label="Item Name"
               value={gearName}
               onChangeText={setGearName}
+              style={styles.dialogInput}
+              mode="outlined"
+              theme={{ colors: { primary: theme.colors.primary } }}
+            />
+            <TextInput
+              label="Category"
+              value={gearCategory}
+              onChangeText={setGearCategory}
               style={styles.dialogInput}
               mode="outlined"
               theme={{ colors: { primary: theme.colors.primary } }}
@@ -1647,9 +1888,6 @@ const RacePrepScreen = ({ navigation, route }) => {
               style={styles.dialogInput}
               mode="outlined"
               theme={{ colors: { primary: theme.colors.primary } }}
-              multiline={true}
-              numberOfLines={3}
-              editable={true}
             />
             <View style={styles.weightInputContainer}>
               <TextInput
@@ -1675,10 +1913,34 @@ const RacePrepScreen = ({ navigation, route }) => {
                   </Button>
                 }
               >
-                <Menu.Item onPress={() => { setGearWeightUnit("g"); setShowWeightUnitMenu(false); }} title="g" />
-                <Menu.Item onPress={() => { setGearWeightUnit("kg"); setShowWeightUnitMenu(false); }} title="kg" />
-                <Menu.Item onPress={() => { setGearWeightUnit("oz"); setShowWeightUnitMenu(false); }} title="oz" />
-                <Menu.Item onPress={() => { setGearWeightUnit("lb"); setShowWeightUnitMenu(false); }} title="lb" />
+                <Menu.Item
+                  onPress={() => {
+                    setGearWeightUnit("g");
+                    setShowWeightUnitMenu(false);
+                  }}
+                  title="g"
+                />
+                <Menu.Item
+                  onPress={() => {
+                    setGearWeightUnit("kg");
+                    setShowWeightUnitMenu(false);
+                  }}
+                  title="kg"
+                />
+                <Menu.Item
+                  onPress={() => {
+                    setGearWeightUnit("oz");
+                    setShowWeightUnitMenu(false);
+                  }}
+                  title="oz"
+                />
+                <Menu.Item
+                  onPress={() => {
+                    setGearWeightUnit("lb");
+                    setShowWeightUnitMenu(false);
+                  }}
+                  title="lb"
+                />
               </Menu>
             </View>
             <View style={styles.switchContainer}>

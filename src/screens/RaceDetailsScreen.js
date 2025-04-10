@@ -815,25 +815,32 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 )}
               <View style={styles.accessContainer}>
                 {station.dropBagAllowed && (
-                  <Chip
-                    icon="bag-personal"
-                    style={[
-                      styles.accessChip,
-                      {
-                        backgroundColor: isDarkMode
-                          ? featureColors.dropBags.darkBg
-                          : featureColors.dropBags.lightBg,
-                      },
-                    ]}
-                    small
-                    textStyle={{
-                      color: isDarkMode
-                        ? featureColors.dropBags.darkText
-                        : featureColors.dropBags.lightText,
-                    }}
-                  >
-                    Drop Bag
-                  </Chip>
+                  <>
+                    <Chip
+                      icon="bag-personal"
+                      style={[
+                        styles.accessChip,
+                        {
+                          backgroundColor: isDarkMode
+                            ? featureColors.dropBags.darkBg
+                            : featureColors.dropBags.lightBg,
+                        },
+                      ]}
+                      small
+                      textStyle={{
+                        color: isDarkMode
+                          ? featureColors.dropBags.darkText
+                          : featureColors.dropBags.lightText,
+                      }}
+                    >
+                      Drop Bag
+                    </Chip>
+                    {station.assignedDropBag && (
+                      <Text style={[styles.assignedDropBagText, { color: isDarkMode ? theme.colors.text : '#666666' }]}>
+                        {station.assignedDropBag.name}
+                      </Text>
+                    )}
+                  </>
                 )}
                 {station.crewAllowed && (
                   <Chip
@@ -1271,6 +1278,12 @@ const styles = StyleSheet.create({
   accessChip: {
     margin: 4,
     borderRadius: 16,
+  },
+  assignedDropBagText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginLeft: 8,
+    marginTop: 2,
   },
   crewCard: {
     marginBottom: 16,

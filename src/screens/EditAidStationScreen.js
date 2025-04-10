@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Chip, FAB, Dialog } from 'react-native-paper';
+import { Text, TextInput, Button, Card, Checkbox, Divider, List, useTheme as usePaperTheme, Portal, Modal, IconButton, Chip, FAB, Dialog, Menu } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const EditAidStationScreen = ({ route, navigation }) => {
@@ -21,7 +22,21 @@ const EditAidStationScreen = ({ route, navigation }) => {
   const [suppliesModalVisible, setSuppliesModalVisible] = useState(false);
   const [newSupplyName, setNewSupplyName] = useState('');
   const [addSupplyDialogVisible, setAddSupplyDialogVisible] = useState(false);
+  const [dropBags, setDropBags] = useState([]);
+  const [dropBagMenuVisible, setDropBagMenuVisible] = useState(false);
   
+  // Load drop bags from AsyncStorage
+  const loadDropBags = async () => {
+    try {
+      const storedDropBags = await AsyncStorage.getItem('dropBags');
+      if (storedDropBags) {
+        setDropBags(JSON.parse(storedDropBags));
+      }
+    } catch (error) {
+      console.error('Error loading drop bags:', error);
+    }
+  };
+
   useEffect(() => {
     if (raceData.aidStations && raceData.aidStations[stationIndex]) {
       // Ensure the station has all the required fields
@@ -38,9 +53,13 @@ const EditAidStationScreen = ({ route, navigation }) => {
           snacks: raceData.aidStations[stationIndex].supplies?.snacks || false,
           coffee: raceData.aidStations[stationIndex].supplies?.coffee || false,
           tea: raceData.aidStations[stationIndex].supplies?.tea || false,
-        }
+        },
+        assignedDropBag: raceData.aidStations[stationIndex].assignedDropBag || null
       };
       setStation(updatedStation);
+      
+      // Load drop bags
+      loadDropBags();
     } else {
       Alert.alert('Error', 'Aid station not found');
       navigation.goBack();
@@ -445,12 +464,100 @@ const EditAidStationScreen = ({ route, navigation }) => {
               
               <View style={styles.featuresContainer}>
                 {raceData.dropBagsAllowed && (
-                  <Checkbox.Item
-                    label="Drop Bags Allowed"
-                    status={station.dropBagAllowed ? 'checked' : 'unchecked'}
-                    onPress={() => updateStationField('dropBagAllowed', !station.dropBagAllowed)}
-                    style={styles.featureCheckbox}
-                  />
+                  <>
+                    <Checkbox.Item
+                      label="Drop Bags Allowed"
+                      status={station.dropBagAllowed ? 'checked' : 'unchecked'}
+                      onPress={() => updateStationField('dropBagAllowed', !station.dropBagAllowed)}
+                      style={styles.featureCheckbox}
+                    />
+                    
+                    {station.dropBagAllowed && (
+                      <View style={styles.dropBagSelector}>
+                        <Text style={[dynamicStyles.sectionLabel, { marginBottom: 8 }]}>
+                          Assigned Drop Bag:
+                        </Text>
+                        
+                        <View style={styles.dropBagRow}>
+                          <Text style={[styles.selectedDropBag, { color: isDarkMode ? theme.colors.text : '#000000' }]}>
+                            {station.assignedDropBag ? station.assignedDropBag.name : 'None selected'}
+                          </Text>
+                          
+                          <Menu
+                            visible={dropBagMenuVisible}
+                            onDismiss={() => setDropBagMenuVisible(false)}
+                            anchor={
+                              <Button 
+                                mode="outlined"
+                                onPress={() => setDropBagMenuVisible(true)}
+                                icon="bag-personal"
+                                style={{ marginLeft: 8 }}
+                              >
+                                {station.assignedDropBag ? 'Change' : 'Select'}
+                              </Button>
+                            }
+                          >
+                            <Menu.Item 
+                              onPress={() => {
+                                updateStationField('assignedDropBag', null);
+                                setDropBagMenuVisible(false);
+                              }} 
+                              title="None" 
+                            />
+                            <Divider />
+                            {dropBags.map((bag, index) => (
+                              <Menu.Item
+                                key={index}
+                                onPress={() => {
+                                  updateStationField('assignedDropBag', bag);
+                                  setDropBagMenuVisible(false);
+                                }}
+                                title={bag.name}
+                              />
+                            ))}
+                          </Menu>
+                        </View>
+                        
+                        {station.assignedDropBag && (
+                          <View style={styles.dropBagDetails}>
+                            <Text style={{ color: isDarkMode ? theme.colors.text : '#000000', marginTop: 8 }}>
+                              Contents:
+                            </Text>
+                            <View style={styles.chipContainer}>
+                              {station.assignedDropBag.items.map((item, i) => (
+                                <Chip 
+                                  key={i} 
+                                  style={[styles.chip, { backgroundColor: isDarkMode ? '#333333' : '#f0f0f0' }]}
+                                  textStyle={{ color: isDarkMode ? '#ffffff' : '#000000' }}
+                                >
+                                  {item}
+                                </Chip>
+                              ))}
+                            </View>
+                            
+                            {station.assignedDropBag.gearItems && station.assignedDropBag.gearItems.length > 0 && (
+                              <>
+                                <Text style={{ color: isDarkMode ? theme.colors.text : '#000000', marginTop: 8 }}>
+                                  Gear:
+                                </Text>
+                                <View style={styles.chipContainer}>
+                                  {station.assignedDropBag.gearItems.map((item, i) => (
+                                    <Chip 
+                                      key={i} 
+                                      style={[styles.chip, { backgroundColor: theme.colors.tertiary + '20' }]}
+                                      textStyle={{ color: theme.colors.tertiary }}
+                                    >
+                                      {item.name} {item.weight && `(${item.weight} ${item.weightUnit || 'g'})`}
+                                    </Chip>
+                                  ))}
+                                </View>
+                              </>
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </>
                 )}
                 
                 {raceData.crewAllowed && (
@@ -789,6 +896,31 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+  },
+  dropBagSelector: {
+    marginLeft: 32,
+    marginTop: 8,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  dropBagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectedDropBag: {
+    flex: 1,
+    fontSize: 16,
+  },
+  dropBagDetails: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
 });
 

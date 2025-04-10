@@ -6,6 +6,7 @@ import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AidStationSetupScreen = ({ route, navigation }) => {
   const { raceData } = route.params;
@@ -23,6 +24,23 @@ const AidStationSetupScreen = ({ route, navigation }) => {
   const [addSupplyDialogVisible, setAddSupplyDialogVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [activeStationIndex, setActiveStationIndex] = useState(null);
+  const [dropBags, setDropBags] = useState([]);
+  
+  // Load drop bags from AsyncStorage
+  useEffect(() => {
+    const loadDropBags = async () => {
+      try {
+        const storedDropBags = await AsyncStorage.getItem('dropBags');
+        if (storedDropBags) {
+          setDropBags(JSON.parse(storedDropBags));
+        }
+      } catch (error) {
+        console.error('Error loading drop bags:', error);
+      }
+    };
+    
+    loadDropBags();
+  }, []);
   
   useEffect(() => {
     // Initialize aid stations based on the number specified
@@ -611,12 +629,22 @@ const AidStationSetupScreen = ({ route, navigation }) => {
                 
                 <View style={styles.featuresContainer}>
                   {raceData.dropBagsAllowed && (
-                    <Checkbox.Item
-                      label="Drop Bags Allowed"
-                      status={station.dropBagAllowed ? 'checked' : 'unchecked'}
-                      onPress={() => updateAidStation(index, 'dropBagAllowed', !station.dropBagAllowed)}
-                      style={styles.featureCheckbox}
-                    />
+                    <>
+                      <Checkbox.Item
+                        label="Drop Bags Allowed"
+                        status={station.dropBagAllowed ? 'checked' : 'unchecked'}
+                        onPress={() => updateAidStation(index, 'dropBagAllowed', !station.dropBagAllowed)}
+                        style={styles.featureCheckbox}
+                      />
+                      
+                      {station.dropBagAllowed && station.assignedDropBag && (
+                        <View style={styles.assignedDropBag}>
+                          <Text style={[styles.assignedDropBagText, { color: isDarkMode ? theme.colors.text : '#000000' }]}>
+                            Assigned Drop Bag: {station.assignedDropBag.name}
+                          </Text>
+                        </View>
+                      )}
+                    </>
                   )}
                   
                   {raceData.crewAllowed && (
@@ -1030,6 +1058,18 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+  },
+  assignedDropBag: {
+    marginLeft: 32,
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  assignedDropBagText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
 

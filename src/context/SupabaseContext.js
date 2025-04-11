@@ -2,10 +2,19 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, Platform } from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
 
 // Create context
 const SupabaseContext = createContext();
+
+// Simple UUID generator for React Native
+const generateUUID = () => {
+  // RFC4122 version 4 compliant UUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 // Default Supabase URL and anon key (these will be replaced with your actual values)
 const SUPABASE_URL = "https://tybnspiyravdizljzrxw.supabase.co"
@@ -212,13 +221,13 @@ export const SupabaseProvider = ({ children }) => {
       }
       
       // If no mapping exists, create a new UUID
-      const newUuid = uuidv4();
+      const newUuid = generateUUID();
       await AsyncStorage.setItem(mappingKey, newUuid);
       return newUuid;
     } catch (error) {
       console.error('Error getting or creating UUID mapping:', error);
       // Fallback to creating a new UUID if there's an error
-      return uuidv4();
+      return generateUUID();
     }
   };
 
@@ -322,7 +331,7 @@ export const SupabaseProvider = ({ children }) => {
       // Prepare aid stations for insertion
       const aidStationsToInsert = await Promise.all(aidStations.map(async station => {
         // Generate a UUID for each aid station
-        const stationUuid = uuidv4();
+        const stationUuid = generateUUID();
         
         // Store mapping for future reference
         await AsyncStorage.setItem(`aid_station_uuid_${station.id}`, stationUuid);
@@ -392,7 +401,7 @@ export const SupabaseProvider = ({ children }) => {
       // Prepare drop bags for insertion
       const dropBagsToInsert = await Promise.all(dropBags.map(async bag => {
         // Generate a UUID for each drop bag
-        const bagUuid = uuidv4();
+        const bagUuid = generateUUID();
         
         // Store mapping for future reference
         await AsyncStorage.setItem(`drop_bag_uuid_${bag.id}`, bagUuid);
@@ -566,7 +575,7 @@ export const SupabaseProvider = ({ children }) => {
                   if (updateError) throw updateError;
                 } else {
                   // Generate a UUID for the new crew member
-                  crewMemberId = uuidv4();
+                  crewMemberId = generateUUID();
                   
                   // Insert new crew member
                   const { error: insertMemberError } = await supabase
@@ -594,7 +603,7 @@ export const SupabaseProvider = ({ children }) => {
                 await supabase
                   .from('race_crew')
                   .upsert({
-                    id: uuidv4(), // Generate a UUID for the junction table entry
+                    id: generateUUID(), // Generate a UUID for the junction table entry
                     race_id: supabaseRaceId,
                     crew_member_id: crewMemberId,
                     created_at: new Date()

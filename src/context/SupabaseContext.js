@@ -231,6 +231,20 @@ export const SupabaseProvider = ({ children }) => {
     }
   };
 
+  // Helper function to convert time object to PostgreSQL interval format
+  const formatTimeToInterval = (timeObj) => {
+    if (!timeObj || !timeObj.value) return null;
+    
+    // Convert to PostgreSQL interval format: '10 hours', '45 minutes', etc.
+    return `${timeObj.value} ${timeObj.unit}`;
+  };
+  
+  // Helper function to format time string to PostgreSQL time format
+  const formatTimeString = (timeStr) => {
+    if (!timeStr) return null;
+    return timeStr; // Assuming timeStr is already in format like "07:00"
+  };
+
   // Save race data to Supabase (using the new schema)
   const saveRaceToSupabase = async (race) => {
     try {
@@ -257,19 +271,19 @@ export const SupabaseProvider = ({ children }) => {
         id: supabaseRaceId,
         user_id: user.id,
         name: race.name,
-        distance: race.distance,
-        elevation: race.elevation,
-        date: race.date,
-        start_time: race.startTime,
-        gear_pickup_time: race.gearPickupTime,
-        briefing_time: race.briefingTime,
-        cutoff_time: race.cutoffTime,
-        goal_time: race.goalTime,
+        distance: race.distance || 0,
+        elevation: race.elevation || 0,
+        date: race.date || new Date().toISOString().split('T')[0],
+        start_time: formatTimeString(race.startTime),
+        gear_pickup_time: race.gearPickupTime ? new Date(race.gearPickupTime) : null,
+        briefing_time: race.briefingTime ? new Date(race.briefingTime) : null,
+        cutoff_time: formatTimeToInterval(race.cutoffTime),
+        goal_time: formatTimeToInterval(race.goalTime),
         hiking_poles_allowed: race.hikingPolesAllowed !== false, // Default to true
         pacer_allowed: race.pacerAllowed || false,
         pacer_start_point: race.pacerStartPoint || '',
-        race_status: race.status || 'planned',
-        result_time: race.resultTime,
+        race_status: race.raceStatus || 'planned',
+        result_time: formatTimeToInterval(race.resultTime),
         result_notes: race.resultNotes || '',
         course_notes: race.courseNotes || '',
         updated_at: new Date()
@@ -339,10 +353,10 @@ export const SupabaseProvider = ({ children }) => {
         return {
           id: stationUuid,
           race_id: supabaseRaceId,
-          name: station.name,
+          name: station.name || 'Unnamed Aid Station',
           distance: parseFloat(station.distance) || 0,
-          cutoff_time: station.cutoffTime,
-          eta_time: station.etaTime,
+          cutoff_time: formatTimeString(station.cutoffTime),
+          eta_time: formatTimeString(station.etaTime),
           is_eta_manual: station.isEtaManual || false,
           water_available: station.supplies?.water !== false, // Default to true
           sports_drink_available: station.supplies?.sports_drink !== false, // Default to true

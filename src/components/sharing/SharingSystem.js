@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Share, Alert, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Share, Alert, Platform, Clipboard } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -17,7 +17,6 @@ import {
 } from 'react-native-paper';
 import { useAppTheme } from '../../context/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 
 /**
  * Component for sharing nutrition and hydration plans with crew and pacers
@@ -171,8 +170,8 @@ const SharingSystem = ({
   };
   
   // Handle copy link
-  const handleCopyLink = async (url) => {
-    await Clipboard.setStringAsync(url);
+  const handleCopyLink = (url) => {
+    Clipboard.setString(url);
     Alert.alert('Success', 'Link copied to clipboard');
   };
   

@@ -156,14 +156,6 @@ const RaceCard = ({ race, onPress, date, time }) => {
 
           {/* Countdown Timer Section */}
           <View style={styles.countdownContainer}>
-            <Text
-              style={[
-                styles.countdownTitle,
-                { color: isDarkMode ? "#ffffff" : "#333333" },
-              ]}
-            >
-              Race Starts In:
-            </Text>
             <View style={styles.countdownRow}>
               <View style={styles.countdownItem}>
                 <Text
@@ -274,15 +266,16 @@ const styles = StyleSheet.create({
   countdownContainer: {
     marginTop: 16,
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   countdownTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "500",
     marginBottom: 8,
   },
   countdownRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
   },
   countdownItem: {
     alignItems: "center",

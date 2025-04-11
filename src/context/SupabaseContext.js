@@ -544,7 +544,6 @@ export const SupabaseProvider = ({ children }) => {
       if (!user) throw new Error('User not authenticated');
       
       // Throttle backups to prevent multiple uploads in quick succession
-      const now = Date.now();
       if (now - lastBackupTimestamp < BACKUP_THROTTLE_MS) {
         console.log('Skipping backup - too soon since last backup');
         return { success: true, throttled: true };

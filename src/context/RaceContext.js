@@ -7,82 +7,8 @@ import { useSupabase } from './SupabaseContext';
 const RaceContext = createContext();
 
 // Sample initial data
-const initialRaces = {
-  '1': {
-    id: '1',
-    name: 'Western States 100',
-    distance: 100,
-    elevation: 18000,
-    date: '06/25/2025',
-    numAidStations: 25,
-    dropBagsAllowed: true,
-    crewAllowed: true,
-    aidStations: [
-      {
-        id: '0',
-        name: 'Olympic Valley',
-        distance: '0',
-        cutoffTime: '05:00',
-        supplies: {
-          water: true,
-          sports_drink: true,
-          soda: true,
-          fruit: true,
-          sandwiches: false,
-          soup: false,
-          medical: true,
-        },
-        dropBagAllowed: true,
-        crewAllowed: true,
-      },
-      {
-        id: '1',
-        name: 'Lyon Ridge',
-        distance: '10.3',
-        cutoffTime: '07:00',
-        supplies: {
-          water: true,
-          sports_drink: true,
-          soda: false,
-          fruit: true,
-          sandwiches: false,
-          soup: false,
-          medical: true,
-        },
-        dropBagAllowed: false,
-        crewAllowed: false,
-      },
-      {
-        id: '2',
-        name: 'Red Star Ridge',
-        distance: '15.8',
-        cutoffTime: '09:05',
-        supplies: {
-          water: true,
-          sports_drink: true,
-          soda: true,
-          fruit: true,
-          sandwiches: true,
-          soup: false,
-          medical: true,
-        },
-        dropBagAllowed: false,
-        crewAllowed: false,
-      },
-    ],
-  },
-  '2': {
-    id: '2',
-    name: 'UTMB',
-    distance: 171,
-    elevation: 10000,
-    date: '08/30/2025',
-    numAidStations: 10,
-    dropBagsAllowed: true,
-    crewAllowed: true,
-    aidStations: [],
-  },
-};
+const initialRaces = {};
+
 
 // Provider component
 export const RaceProvider = ({ children }) => {

@@ -199,9 +199,9 @@ const CreateRaceScreen = ({ route, navigation }) => {
       setImportantDates(existingRace.importantDates || []);
 
       // Set basic race info
-      setNumAidStations(existingRace.numAidStations.toString());
-      setDropBagsAllowed(existingRace.dropBagsAllowed);
-      setCrewAllowed(existingRace.crewAllowed);
+      setNumAidStations(existingRace.numAidStations ? existingRace.numAidStations.toString() : "0");
+      setDropBagsAllowed(existingRace.dropBagsAllowed === true);
+      setCrewAllowed(existingRace.crewAllowed === true);
 
       // Set equipment
       setMandatoryEquipment(existingRace.mandatoryEquipment || []);

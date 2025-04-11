@@ -362,6 +362,8 @@ export const SupabaseProvider = ({ children }) => {
         hiking_poles_allowed: race.hikingPolesAllowed !== false, // Default to true
         pacer_allowed: race.pacerAllowed || false,
         pacer_start_point: race.pacerStartPoint || '',
+        drop_bags_allowed: race.dropBagsAllowed || false,
+        crew_allowed: race.crewAllowed || false,
         race_status: race.status || race.raceStatus || 'planned',
         result_time: formatTimeToInterval(race.resultTime),
         result_notes: race.resultNotes || '',
@@ -609,23 +611,8 @@ export const SupabaseProvider = ({ children }) => {
       if (isPremium) {
         console.log(`Backing up ${racesArray.length} races to Supabase...`);
         
-        // Legacy backup to race_backups table
-        const { error: deleteError } = await supabase
-          .from('race_backups')
-          .delete()
-          .eq('user_id', user.id);
-          
-        if (deleteError) throw deleteError;
-        
-        const { error: insertError } = await supabase
-          .from('race_backups')
-          .insert({
-            user_id: user.id,
-            races_data: racesArray,
-            backup_date: new Date(),
-          });
-          
-        if (insertError) throw insertError;
+        // Race data is now only saved to the races table
+        // Legacy race_backups table is no longer used
         
         // New schema: Save each race to the races table
         for (const race of racesArray) {
@@ -833,6 +820,8 @@ export const SupabaseProvider = ({ children }) => {
           hikingPolesAllowed: race.hiking_poles_allowed,
           pacerAllowed: race.pacer_allowed,
           pacerStartPoint: race.pacer_start_point,
+          dropBagsAllowed: race.drop_bags_allowed || false,
+          crewAllowed: race.crew_allowed || false,
           status: race.race_status,
           resultTime: race.result_time,
           resultNotes: race.result_notes,
@@ -995,56 +984,9 @@ export const SupabaseProvider = ({ children }) => {
             // Update racesObject with merged data
             racesObject = mergedRaces;
           } else {
-            // Fall back to legacy race_backups table
-            const { data, error } = await supabase
-              .from('race_backups')
-              .select('races_data, backup_date')
-              .eq('user_id', user.id)
-              .order('backup_date', { ascending: false })
-              .limit(1)
-              .single();
-              
-            if (error) {
-              console.error('Error fetching from race_backups:', error);
-            } else if (data && data.races_data) {
-              // Convert races array back to object with id as key
-              data.races_data.forEach(race => {
-                // Ensure all race preparation data is included
-                if (!race.preparation) {
-                  race.preparation = {};
-                }
-                
-                // Ensure gear items are included
-                if (!race.preparation.gearItems) {
-                  race.preparation.gearItems = [];
-                }
-                
-                // Ensure drop bags are included
-                if (!race.preparation.dropBags) {
-                  race.preparation.dropBags = [];
-                }
-                
-                // Ensure nutrition plans are included
-                if (!race.preparation.nutritionPlans) {
-                  race.preparation.nutritionPlans = [];
-                }
-                
-                // Ensure hydration plans are included
-                if (!race.preparation.hydrationPlans) {
-                  race.preparation.hydrationPlans = [];
-                }
-                
-                // Ensure aid stations are included
-                if (!race.aidStations) {
-                  race.aidStations = [];
-                }
-                
-                racesObject[race.id] = race;
-              });
-              
-              // Update last backup date
-              setLastBackupDate(new Date(data.backup_date));
-            }
+            // No fallback to legacy race_backups table
+            // All race data is now stored in the races table
+            console.log('No races found in Supabase races table');
           }
         } catch (supabaseError) {
           console.error('Error fetching from Supabase:', supabaseError);

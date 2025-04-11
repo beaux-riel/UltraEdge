@@ -1092,13 +1092,29 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         {activeTab === "crew" && renderCrewTab()}
       </ScrollView>
       <View style={[styles.fabContainer, { bottom: insets.bottom }]}>
-        <FAB
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-          icon="pencil"
-          onPress={() =>
-            navigation.navigate("CreateRace", { editMode: true, raceData })
-          }
-          color="#ffffff"
+        <FAB.Group
+          open={false}
+          icon="plus"
+          actions={[
+            {
+              icon: 'pencil',
+              label: 'Edit Race',
+              onPress: () => navigation.navigate("CreateRace", { editMode: true, raceData }),
+            },
+            {
+              icon: 'link',
+              label: 'Race Integration',
+              onPress: () => navigation.navigate("RaceIntegration", { raceId: id }),
+            },
+            {
+              icon: 'account-group',
+              label: 'Crew Management',
+              onPress: () => navigation.navigate("CrewManagement", { raceId: id }),
+            },
+          ]}
+          onStateChange={() => {}}
+          onPress={() => {}}
+          fabStyle={{ backgroundColor: theme.colors.primary }}
         />
       </View>
     </View>

@@ -18,6 +18,7 @@ import CrewManagementScreen from '../screens/CrewManagementScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import PremiumScreen from '../screens/PremiumScreen';
 import RacePrepScreen from '../screens/RacePrepScreen';
+import RaceIntegrationScreen from '../screens/sharing/RaceIntegrationScreen';
 
 // Import navigators
 import NutritionHydrationNavigator from './NutritionHydrationNavigator';
@@ -177,6 +178,11 @@ const AppNavigator = () => {
           name="NutritionHydration" 
           component={NutritionHydrationNavigator} 
           options={{ title: 'Nutrition & Hydration', headerShown: false }}
+        />
+        <Stack.Screen 
+          name="RaceIntegration" 
+          component={RaceIntegrationScreen} 
+          options={{ title: 'Race Integration & Sharing' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -237,6 +237,14 @@ const NutritionPlanScreen = ({ navigation, route }) => {
               Analytics
             </Button>
             <Button 
+              mode="outlined" 
+              onPress={() => navigation.navigate('RaceIntegration')}
+              style={styles.actionButton}
+              icon="link"
+            >
+              Race Integration
+            </Button>
+            <Button 
               mode="contained" 
               onPress={handleEdit}
               style={styles.actionButton}

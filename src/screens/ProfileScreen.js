@@ -30,6 +30,45 @@ const ProfileScreen = ({ navigation, route }) => {
   const { getRacesArray } = useRaces();
   const { userData, updateUserData, updateUserStats } = useUser();
 
+    const formatDate = (dateString) => {
+      if (!dateString) return "";
+
+      let dateObj;
+
+      // Check if date is in YYYY-MM-DD format
+      if (dateString.includes("-")) {
+        // Parse YYYY-MM-DD format
+        const [year, month, day] = dateString.split("-");
+        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        // Parse MM/DD/YYYY format (for backward compatibility)
+        const [month, day, year] = dateString.split("/");
+        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+
+      // Format the date as "Apr 7, 2025"
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      return `${
+        monthNames[dateObj.getMonth()]
+      } ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+    };
+
+    const upcomingRaceDate = formatDate(userData.upcomingRace?.date);
+
   // Use useMemo to prevent recalculation on every render and sort by date
   const races = useMemo(() => {
     const allRaces = getRacesArray();
@@ -523,7 +562,7 @@ const ProfileScreen = ({ navigation, route }) => {
                       }}
                       textStyle={{ color: isDarkMode ? "#e0e0e0" : "#333333" }}
                     >
-                      {userData.upcomingRace.date}
+                      {upcomingRaceDate}
                     </Chip>
                   </View>
                 </View>

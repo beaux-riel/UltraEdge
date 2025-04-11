@@ -19,6 +19,9 @@ import EditProfileScreen from '../screens/EditProfileScreen';
 import PremiumScreen from '../screens/PremiumScreen';
 import RacePrepScreen from '../screens/RacePrepScreen';
 
+// Import navigators
+import NutritionHydrationNavigator from './NutritionHydrationNavigator';
+
 // Create navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -37,6 +40,8 @@ const MainTabNavigator = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'RacePrep') {
             iconName = focused ? 'fitness' : 'fitness-outline';
+          } else if (route.name === 'Nutrition') {
+            iconName = focused ? 'restaurant' : 'restaurant-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Settings') {
@@ -61,6 +66,11 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Race Prep' }}
       />
       <Tab.Screen 
+        name="Nutrition" 
+        component={NutritionHydrationNavigator} 
+        options={{ tabBarLabel: 'Nutrition' }}
+      />
+      <Tab.Screen 
         name="Profile" 
         component={ProfileScreen} 
         options={{ tabBarLabel: 'Profile' }}
@@ -68,7 +78,7 @@ const MainTabNavigator = () => {
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen} 
-        options={{ tabBarLabel: 'Setting' }}
+        options={{ tabBarLabel: 'Settings' }}
       />
     </Tab.Navigator>
   );
@@ -162,6 +172,11 @@ const AppNavigator = () => {
           name="RacePrep" 
           component={RacePrepScreen} 
           options={{ title: 'Race Preparation' }}
+        />
+        <Stack.Screen 
+          name="NutritionHydration" 
+          component={NutritionHydrationNavigator} 
+          options={{ title: 'Nutrition & Hydration', headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

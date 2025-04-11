@@ -265,16 +265,53 @@ export const SupabaseProvider = ({ children }) => {
 
   // Helper function to convert time object to PostgreSQL interval format
   const formatTimeToInterval = (timeObj) => {
-    if (!timeObj || !timeObj.value) return null;
+    if (!timeObj) return null;
     
-    // Convert to PostgreSQL interval format: '10 hours', '45 minutes', etc.
-    return `${timeObj.value} ${timeObj.unit}`;
+    // Handle string format like "45:00:00"
+    if (typeof timeObj === 'string') {
+      // If it's already in the right format, return it
+      if (timeObj.includes(' hours') || timeObj.includes(' minutes')) {
+        return timeObj;
+      }
+      
+      // Try to convert HH:MM:SS to interval
+      const parts = timeObj.split(':');
+      if (parts.length === 3) {
+        const hours = parseInt(parts[0], 10);
+        return `${hours} hours`;
+      } else if (parts.length === 2) {
+        const hours = parseInt(parts[0], 10);
+        return `${hours} hours`;
+      }
+      return timeObj;
+    }
+    
+    // Handle object format like {value: 10, unit: "hours"}
+    if (timeObj.value) {
+      // Convert to PostgreSQL interval format: '10 hours', '45 minutes', etc.
+      return `${timeObj.value} ${timeObj.unit}`;
+    }
+    
+    return null;
   };
   
   // Helper function to format time string to PostgreSQL time format
   const formatTimeString = (timeStr) => {
     if (!timeStr) return null;
-    return timeStr; // Assuming timeStr is already in format like "07:00"
+    
+    // If it's already in HH:MM format, return it
+    if (typeof timeStr === 'string' && timeStr.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+      return timeStr;
+    }
+    
+    // If it's a date object, format it
+    if (timeStr instanceof Date) {
+      const hours = String(timeStr.getHours()).padStart(2, '0');
+      const minutes = String(timeStr.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+    
+    return timeStr;
   };
 
   // Save race data to Supabase (using the new schema)
@@ -298,6 +335,17 @@ export const SupabaseProvider = ({ children }) => {
         
       if (fetchError) throw fetchError;
       
+      // Debug log for cutoff and goal times
+      console.log(`Race ${race.name} cutoff time:`, race.cutoffTime);
+      console.log(`Race ${race.name} goal time:`, race.goalTime);
+      
+      // Format cutoff and goal times
+      const formattedCutoffTime = formatTimeToInterval(race.cutoffTime);
+      const formattedGoalTime = formatTimeToInterval(race.goalTime);
+      
+      console.log(`Formatted cutoff time: ${formattedCutoffTime}`);
+      console.log(`Formatted goal time: ${formattedGoalTime}`);
+      
       // Store the app's race ID in a custom field for reference
       const raceData = {
         id: supabaseRaceId,
@@ -307,14 +355,14 @@ export const SupabaseProvider = ({ children }) => {
         elevation: race.elevation || 0,
         date: race.date || new Date().toISOString().split('T')[0],
         start_time: formatTimeString(race.startTime),
-        gear_pickup_time: race.gearPickupTime ? new Date(race.gearPickupTime) : null,
-        briefing_time: race.briefingTime ? new Date(race.briefingTime) : null,
-        cutoff_time: formatTimeToInterval(race.cutoffTime),
-        goal_time: formatTimeToInterval(race.goalTime),
+        gear_pickup_time: formatTimeString(race.gearPickupTime),
+        briefing_time: formatTimeString(race.briefingTime),
+        cutoff_time: formattedCutoffTime,
+        goal_time: formattedGoalTime,
         hiking_poles_allowed: race.hikingPolesAllowed !== false, // Default to true
         pacer_allowed: race.pacerAllowed || false,
         pacer_start_point: race.pacerStartPoint || '',
-        race_status: race.raceStatus || 'planned',
+        race_status: race.status || race.raceStatus || 'planned',
         result_time: formatTimeToInterval(race.resultTime),
         result_notes: race.resultNotes || '',
         course_notes: race.courseNotes || '',
@@ -483,11 +531,25 @@ export const SupabaseProvider = ({ children }) => {
     }
   };
 
+  // Track when the last backup was performed to prevent excessive backups
+  let lastBackupTimestamp = 0;
+  const BACKUP_THROTTLE_MS = 60000; // Only backup once per minute
+
   // Backup races data to Supabase (using both legacy and new schema)
   const backupRaces = async (racesData = null) => {
     try {
       if (!supabase) throw new Error('Supabase client not initialized');
       if (!user) throw new Error('User not authenticated');
+      
+      // Throttle backups to prevent multiple uploads in quick succession
+      const now = Date.now();
+      if (now - lastBackupTimestamp < BACKUP_THROTTLE_MS) {
+        console.log('Skipping backup - too soon since last backup');
+        return { success: true, throttled: true };
+      }
+      
+      // Update the timestamp
+      lastBackupTimestamp = now;
       
       // Always save to AsyncStorage first
       let racesArray;
@@ -545,6 +607,8 @@ export const SupabaseProvider = ({ children }) => {
       
       // If user is premium, also save to Supabase
       if (isPremium) {
+        console.log(`Backing up ${racesArray.length} races to Supabase...`);
+        
         // Legacy backup to race_backups table
         const { error: deleteError } = await supabase
           .from('race_backups')

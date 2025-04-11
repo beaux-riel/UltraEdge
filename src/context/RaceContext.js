@@ -140,10 +140,8 @@ export const RaceProvider = ({ children }) => {
           await AsyncStorage.setItem('races', racesToSave);
           console.log('Races saved successfully to AsyncStorage');
           
-          // If user is premium, also backup to Supabase
-          if (user && isPremium) {
-            await backupRaces(races);
-          }
+          // We'll only backup to Supabase on explicit user actions (add/update/delete)
+          // rather than on every change to prevent excessive uploads
         } catch (error) {
           console.error('Failed to save races to storage', error);
         }
@@ -156,7 +154,7 @@ export const RaceProvider = ({ children }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [races, loading, user, isPremium]);
+  }, [races, loading]);
   
   // Function to manually backup races to Supabase
   const backupRacesToSupabase = async () => {

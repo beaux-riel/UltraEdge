@@ -1,6 +1,6 @@
 # UltraEdge
 
-<img align="center" width="100" height="100" src="assets/logo.png">
+<img align="center" width="100%" src="assets/logo.png">
 
 **UltraEdge** is an open-source mobile application designed specifically for ultra marathon runners and their support crews. Plan your races, manage aid stations, coordinate your crew, and optimize your performance - all in one comprehensive app.
 

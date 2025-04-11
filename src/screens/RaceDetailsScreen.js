@@ -322,7 +322,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                   : "#757575",
               }}
             >
-              Drop Bags {raceData.dropBagsAllowed}
+              Drop Bags
             </Chip>
 
             <Chip
@@ -350,7 +350,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                   : "#757575",
               }}
             >
-              Crew Access {raceData.crewAllowed}
+              Crew Access
             </Chip>
 
             <Chip

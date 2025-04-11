@@ -229,6 +229,14 @@ const HydrationPlanScreen = ({ navigation, route }) => {
           
           <View style={styles.actions}>
             <Button 
+              mode="outlined" 
+              onPress={() => navigation.navigate('PlanAnalytics', { planId, planType: 'hydration' })}
+              style={styles.actionButton}
+              icon="chart-bar"
+            >
+              Analytics
+            </Button>
+            <Button 
               mode="contained" 
               onPress={handleEdit}
               style={styles.actionButton}

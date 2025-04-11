@@ -6,6 +6,7 @@ import { useAppTheme } from '../context/ThemeContext';
 import PlanOverviewScreen from '../screens/nutrition/PlanOverviewScreen';
 import NutritionPlanScreen from '../screens/nutrition/NutritionPlanScreen';
 import HydrationPlanScreen from '../screens/hydration/HydrationPlanScreen';
+import PlanAnalyticsScreen from '../screens/analytics/PlanAnalyticsScreen';
 
 // Create stack navigator
 const Stack = createNativeStackNavigator();
@@ -101,6 +102,13 @@ const NutritionHydrationNavigator = () => {
         component={HydrationPlanScreen}
         options={{ title: 'Edit Hydration Entry' }}
         initialParams={{ editingEntry: true }}
+      />
+      
+      {/* Analytics Screen */}
+      <Stack.Screen
+        name="PlanAnalytics"
+        component={PlanAnalyticsScreen}
+        options={{ title: 'Plan Analytics', headerShown: false }}
       />
     </Stack.Navigator>
   );

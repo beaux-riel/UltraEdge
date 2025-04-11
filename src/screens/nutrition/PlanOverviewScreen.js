@@ -385,6 +385,16 @@ const PlanOverviewScreen = ({ navigation }) => {
           leadingIcon="pencil"
         />
         <Menu.Item 
+          onPress={() => {
+            setMenuVisible(false);
+            if (activePlanId && activePlanType) {
+              navigation.navigate('PlanAnalytics', { planId: activePlanId, planType: activePlanType });
+            }
+          }} 
+          title="Analytics" 
+          leadingIcon="chart-bar"
+        />
+        <Menu.Item 
           onPress={handleDuplicatePlan} 
           title="Duplicate" 
           leadingIcon="content-copy"

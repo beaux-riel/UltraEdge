@@ -642,6 +642,11 @@ export const SupabaseProvider = ({ children }) => {
             await saveDropBagsToSupabase(race.id, race.preparation.dropBags);
           }
           
+          // Save gear items
+          if (race.preparation && race.preparation.gearItems && race.preparation.gearItems.length > 0) {
+            await saveGearItemsToSupabase(race.id, race.preparation.gearItems);
+          }
+          
           // Save crew members
           if (race.crewMembers && race.crewMembers.length > 0) {
             try {
@@ -1293,6 +1298,43 @@ export const SupabaseProvider = ({ children }) => {
       return { success: false, error: error.message };
     }
   };
+  
+  // Save race-specific gear items to AsyncStorage and optionally to Supabase
+  const saveRaceGearItems = async (raceId, gearItems) => {
+    try {
+      // Get races from AsyncStorage
+      const storedRaces = await AsyncStorage.getItem('races');
+      if (!storedRaces) {
+        throw new Error('No races found in storage');
+      }
+      
+      const racesObject = JSON.parse(storedRaces);
+      if (!racesObject[raceId]) {
+        throw new Error(`Race with ID ${raceId} not found`);
+      }
+      
+      // Ensure preparation object exists
+      if (!racesObject[raceId].preparation) {
+        racesObject[raceId].preparation = {};
+      }
+      
+      // Update gear items
+      racesObject[raceId].preparation.gearItems = gearItems;
+      
+      // Save back to AsyncStorage
+      await AsyncStorage.setItem('races', JSON.stringify(racesObject));
+      
+      // If user is premium, also save to Supabase
+      if (user && isPremium && supabase) {
+        await saveGearItemsToSupabase(raceId, gearItems);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving gear items:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // Check if data needs to be fetched from Supabase
   const checkAndFetchData = async (dataType) => {
@@ -1315,6 +1357,142 @@ export const SupabaseProvider = ({ children }) => {
       }
     }
   };
+  
+  // Fetch aid stations from Supabase
+  const fetchAidStationsFromSupabase = async (raceId) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
+      console.log(`Fetching aid stations for race ${raceId} from Supabase...`);
+      
+      const { data, error } = await supabase
+        .from('aid_stations')
+        .select('*')
+        .eq('race_id', supabaseRaceId);
+        
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error fetching aid stations from Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Fetch drop bags from Supabase
+  const fetchDropBagsFromSupabase = async (raceId) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
+      console.log(`Fetching drop bags for race ${raceId} from Supabase...`);
+      
+      const { data, error } = await supabase
+        .from('race_drop_bags')
+        .select('*')
+        .eq('race_id', supabaseRaceId);
+        
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error fetching drop bags from Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Save gear items to Supabase
+  const saveGearItemsToSupabase = async (raceId, gearItems) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      if (!isPremium) throw new Error('Premium subscription required for Supabase sync');
+      
+      console.log(`Saving gear items for race ${raceId} to Supabase...`);
+      
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
+      // First, delete existing gear items for this race
+      const { error: deleteError } = await supabase
+        .from('gear_items')
+        .delete()
+        .eq('race_id', supabaseRaceId);
+        
+      if (deleteError) throw deleteError;
+      
+      if (!gearItems || gearItems.length === 0) {
+        return { success: true }; // No gear items to save
+      }
+      
+      // Prepare gear items for insertion
+      const gearItemsToInsert = await Promise.all(gearItems.map(async item => {
+        // Generate a UUID for each gear item
+        const itemUuid = generateUUID();
+        
+        // Store mapping for future reference
+        await AsyncStorage.setItem(`gear_item_uuid_${item.id}`, itemUuid);
+        
+        return {
+          id: itemUuid,
+          race_id: supabaseRaceId,
+          user_id: user.id,
+          name: item.name || 'Unnamed Gear Item',
+          category: item.category || 'Uncategorized',
+          quantity: item.quantity || 1,
+          is_packed: item.isPacked || false,
+          is_required: item.isRequired || false,
+          notes: item.notes || '',
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+      }));
+      
+      // Insert gear items
+      const { error: insertError } = await supabase
+        .from('gear_items')
+        .insert(gearItemsToInsert);
+        
+      if (insertError) throw insertError;
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving gear items to Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Fetch gear items from Supabase
+  const fetchGearItemsFromSupabase = async (raceId) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
+      console.log(`Fetching gear items for race ${raceId} from Supabase...`);
+      
+      const { data, error } = await supabase
+        .from('gear_items')
+        .select('*')
+        .eq('race_id', supabaseRaceId);
+        
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error fetching gear items from Supabase:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   return (
     <SupabaseContext.Provider
@@ -1334,8 +1512,14 @@ export const SupabaseProvider = ({ children }) => {
         restoreGearItems,
         saveAidStations,
         saveDropBags,
+        saveRaceGearItems,
         checkAndFetchData,
         upgradeToPremium,
+        // New functions for better data handling
+        saveGearItemsToSupabase,
+        fetchGearItemsFromSupabase,
+        fetchAidStationsFromSupabase,
+        fetchDropBagsFromSupabase,
       }}
     >
       {children}

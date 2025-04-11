@@ -19,10 +19,16 @@ module.exports = {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
+    package: "com.beaux.ultraedge",
   },
   web: {
     favicon: "./assets/favicon.png",
   },
+  plugins: [
+    "expo-document-picker",
+    "expo-file-system",
+    "expo-sharing"
+  ],
   extra: {
     // Add any extra configuration here
   },

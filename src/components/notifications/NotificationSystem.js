@@ -18,7 +18,6 @@ import {
 } from 'react-native-paper';
 import { useAppTheme } from '../../context/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 /**
  * Component for managing notifications related to nutrition and hydration plans
@@ -498,19 +497,7 @@ const NotificationSystem = ({
             </Button>
           </View>
           
-          {showDatePicker && (
-            <DateTimePicker
-              value={notificationDate}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setNotificationDate(selectedDate);
-                }
-              }}
-            />
-          )}
+          {/* Date picker would go here - using button only for now */}
           
           <View style={styles.switchRow}>
             <Text>Enable Notification</Text>

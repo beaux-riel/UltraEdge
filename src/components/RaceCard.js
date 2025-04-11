@@ -17,15 +17,18 @@ const RaceCard = ({ race, onPress, date, time }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "";
 
-    // Parse MM/DD/YYYY format
-    const [month, day, year] = dateString.split("/");
-
-    // Create a Date object (months are 0-based in JavaScript)
-    const dateObj = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day)
-    );
+    let dateObj;
+    
+    // Check if date is in YYYY-MM-DD format
+    if (dateString.includes('-')) {
+      // Parse YYYY-MM-DD format
+      const [year, month, day] = dateString.split("-");
+      dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // Parse MM/DD/YYYY format (for backward compatibility)
+      const [month, day, year] = dateString.split("/");
+      dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
 
     // Format the date as "Apr 7, 2025"
     const monthNames = [
@@ -51,8 +54,17 @@ const RaceCard = ({ race, onPress, date, time }) => {
   useEffect(() => {
     if (!date || !time) return;
 
-    // Parse the date in MM/DD/YYYY format
-    const [month, day, year] = date.split("/");
+    let year, month, day;
+    
+    // Check if date is in YYYY-MM-DD format
+    if (date.includes('-')) {
+      // Parse YYYY-MM-DD format
+      [year, month, day] = date.split("-");
+    } else {
+      // Parse MM/DD/YYYY format (for backward compatibility)
+      [month, day, year] = date.split("/");
+    }
+    
     // Parse time in HH:MM format
     const [hours, minutes] = time.split(":");
 

@@ -113,10 +113,23 @@ const CreateRaceScreen = ({ route, navigation }) => {
 
       // Parse date from string if it exists
       if (existingRace.date) {
-        const parts = existingRace.date.split("/");
-        if (parts.length === 3) {
-          const newDate = new Date(parts[2], parts[0] - 1, parts[1]);
-          setDate(newDate);
+        let parts;
+        let newDate;
+        
+        // Check if date is in YYYY-MM-DD format
+        if (existingRace.date.includes('-')) {
+          parts = existingRace.date.split("-");
+          if (parts.length === 3) {
+            newDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            setDate(newDate);
+          }
+        } else {
+          // Parse MM/DD/YYYY format (for backward compatibility)
+          parts = existingRace.date.split("/");
+          if (parts.length === 3) {
+            newDate = new Date(parts[2], parts[0] - 1, parts[1]);
+            setDate(newDate);
+          }
         }
       }
 
@@ -201,11 +214,11 @@ const CreateRaceScreen = ({ route, navigation }) => {
     setShowDatePicker(Platform.OS === "ios");
     setDate(currentDate);
 
-    // Format date as MM/DD/YYYY
+    // Format date as YYYY-MM-DD (ISO format)
+    const year = currentDate.getFullYear();
     const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
     const day = currentDate.getDate().toString().padStart(2, "0");
-    const year = currentDate.getFullYear();
-    setRaceDate(`${month}/${day}/${year}`);
+    setRaceDate(`${year}-${month}-${day}`);
   };
 
   const onStartTimeChange = (event, selectedTime) => {

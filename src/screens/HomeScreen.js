@@ -57,24 +57,49 @@ const HomeScreen = ({ navigation }) => {
 
   // Get races and sort them by date (closest date first)
   const races = getRacesArray().sort((a, b) => {
-    // Parse MM/DD/YYYY dates
-    const partsA = a.date.split("/");
-    const partsB = b.date.split("/");
-
-    // Create date objects (months are 0-based in JavaScript Date)
-    const dateA = new Date(
-      parseInt(partsA[2]), // year
-      parseInt(partsA[0]) - 1, // month (0-based)
-      parseInt(partsA[1]), // day
-      ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-    );
-
-    const dateB = new Date(
-      parseInt(partsB[2]), // year
-      parseInt(partsB[0]) - 1, // month (0-based)
-      parseInt(partsB[1]), // day
-      ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-    );
+    let dateA, dateB;
+    
+    // Parse date A
+    if (a.date.includes('-')) {
+      // YYYY-MM-DD format
+      const partsA = a.date.split("-");
+      dateA = new Date(
+        parseInt(partsA[0]), // year
+        parseInt(partsA[1]) - 1, // month (0-based)
+        parseInt(partsA[2]), // day
+        ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+      );
+    } else {
+      // MM/DD/YYYY format (for backward compatibility)
+      const partsA = a.date.split("/");
+      dateA = new Date(
+        parseInt(partsA[2]), // year
+        parseInt(partsA[0]) - 1, // month (0-based)
+        parseInt(partsA[1]), // day
+        ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+      );
+    }
+    
+    // Parse date B
+    if (b.date.includes('-')) {
+      // YYYY-MM-DD format
+      const partsB = b.date.split("-");
+      dateB = new Date(
+        parseInt(partsB[0]), // year
+        parseInt(partsB[1]) - 1, // month (0-based)
+        parseInt(partsB[2]), // day
+        ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+      );
+    } else {
+      // MM/DD/YYYY format (for backward compatibility)
+      const partsB = b.date.split("/");
+      dateB = new Date(
+        parseInt(partsB[2]), // year
+        parseInt(partsB[0]) - 1, // month (0-based)
+        parseInt(partsB[1]), // day
+        ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
+      );
+    }
 
     return dateA - dateB;
   });

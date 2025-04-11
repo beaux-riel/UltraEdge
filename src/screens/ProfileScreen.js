@@ -35,8 +35,30 @@ const ProfileScreen = ({ navigation, route }) => {
     const allRaces = getRacesArray();
     // Sort races by date (ascending) to get the next upcoming race first
     return allRaces.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
+      let dateA, dateB;
+      
+      // Parse date A
+      if (a.date.includes('-')) {
+        // YYYY-MM-DD format
+        const [yearA, monthA, dayA] = a.date.split("-");
+        dateA = new Date(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
+      } else {
+        // MM/DD/YYYY format
+        const [monthA, dayA, yearA] = a.date.split("/");
+        dateA = new Date(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
+      }
+      
+      // Parse date B
+      if (b.date.includes('-')) {
+        // YYYY-MM-DD format
+        const [yearB, monthB, dayB] = b.date.split("-");
+        dateB = new Date(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
+      } else {
+        // MM/DD/YYYY format
+        const [monthB, dayB, yearB] = b.date.split("/");
+        dateB = new Date(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
+      }
+      
       return dateA - dateB;
     });
   }, [getRacesArray]);
@@ -48,13 +70,27 @@ const ProfileScreen = ({ navigation, route }) => {
 
     // Filter races to only include future races
     const futureRaces = races.filter((race) => {
-      // Convert MM/DD/YYYY to a Date object
-      const dateParts = race.date.split("/");
-      const raceDate = new Date(
-        parseInt(dateParts[2]), // Year
-        parseInt(dateParts[0]) - 1, // Month (0-based)
-        parseInt(dateParts[1]) // Day
-      );
+      let raceDate;
+      
+      // Check if date is in YYYY-MM-DD format
+      if (race.date.includes('-')) {
+        // Parse YYYY-MM-DD format
+        const dateParts = race.date.split("-");
+        raceDate = new Date(
+          parseInt(dateParts[0]), // Year
+          parseInt(dateParts[1]) - 1, // Month (0-based)
+          parseInt(dateParts[2]) // Day
+        );
+      } else {
+        // Parse MM/DD/YYYY format (for backward compatibility)
+        const dateParts = race.date.split("/");
+        raceDate = new Date(
+          parseInt(dateParts[2]), // Year
+          parseInt(dateParts[0]) - 1, // Month (0-based)
+          parseInt(dateParts[1]) // Day
+        );
+      }
+      
       return raceDate >= today;
     });
 

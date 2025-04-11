@@ -46,11 +46,18 @@ import { useSettings } from "../context/SettingsContext";
 const formatDate = (dateString) => {
   if (!dateString) return "";
 
-  // Parse MM/DD/YYYY format
-  const [month, day, year] = dateString.split("/");
-
-  // Create a Date object (months are 0-based in JavaScript)
-  const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  let dateObj;
+  
+  // Check if date is in YYYY-MM-DD format
+  if (dateString.includes('-')) {
+    // Parse YYYY-MM-DD format
+    const [year, month, day] = dateString.split("-");
+    dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  } else {
+    // Parse MM/DD/YYYY format (for backward compatibility)
+    const [month, day, year] = dateString.split("/");
+    dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
 
   // Format the date as "Apr 7, 2025"
   const monthNames = [

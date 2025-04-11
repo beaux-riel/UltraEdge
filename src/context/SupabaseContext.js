@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, Platform } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
 
 // Create context
 const SupabaseContext = createContext();
@@ -199,6 +200,28 @@ export const SupabaseProvider = ({ children }) => {
     }
   };
 
+  // Helper function to get or create a UUID mapping for race IDs
+  const getOrCreateUuidMapping = async (raceId) => {
+    try {
+      // Try to get existing mapping from AsyncStorage
+      const mappingKey = `race_uuid_${raceId}`;
+      const existingMapping = await AsyncStorage.getItem(mappingKey);
+      
+      if (existingMapping) {
+        return existingMapping;
+      }
+      
+      // If no mapping exists, create a new UUID
+      const newUuid = uuidv4();
+      await AsyncStorage.setItem(mappingKey, newUuid);
+      return newUuid;
+    } catch (error) {
+      console.error('Error getting or creating UUID mapping:', error);
+      // Fallback to creating a new UUID if there's an error
+      return uuidv4();
+    }
+  };
+
   // Save race data to Supabase (using the new schema)
   const saveRaceToSupabase = async (race) => {
     try {
@@ -208,18 +231,21 @@ export const SupabaseProvider = ({ children }) => {
       
       console.log(`Saving race ${race.name} to Supabase...`);
       
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(race.id);
+      
       // Check if race already exists in Supabase
       const { data: existingRace, error: fetchError } = await supabase
         .from('races')
         .select('id')
-        .eq('id', race.id)
+        .eq('id', supabaseRaceId)
         .maybeSingle();
         
       if (fetchError) throw fetchError;
       
-      // Prepare race data for Supabase
+      // Store the app's race ID in a custom field for reference
       const raceData = {
-        id: race.id,
+        id: supabaseRaceId,
         user_id: user.id,
         name: race.name,
         distance: race.distance,
@@ -246,7 +272,7 @@ export const SupabaseProvider = ({ children }) => {
         const { error: updateError } = await supabase
           .from('races')
           .update(raceData)
-          .eq('id', race.id);
+          .eq('id', supabaseRaceId);
           
         if (updateError) throw updateError;
       } else {
@@ -259,7 +285,10 @@ export const SupabaseProvider = ({ children }) => {
         if (insertError) throw insertError;
       }
       
-      return { success: true };
+      // Store the mapping for future reference
+      await AsyncStorage.setItem(`race_uuid_${race.id}`, supabaseRaceId);
+      
+      return { success: true, supabaseRaceId };
     } catch (error) {
       console.error(`Error saving race to Supabase:`, error);
       return { success: false, error: error.message };
@@ -275,11 +304,14 @@ export const SupabaseProvider = ({ children }) => {
       
       console.log(`Saving aid stations for race ${raceId} to Supabase...`);
       
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
       // First, delete existing aid stations for this race
       const { error: deleteError } = await supabase
         .from('aid_stations')
         .delete()
-        .eq('race_id', raceId);
+        .eq('race_id', supabaseRaceId);
         
       if (deleteError) throw deleteError;
       
@@ -288,27 +320,35 @@ export const SupabaseProvider = ({ children }) => {
       }
       
       // Prepare aid stations for insertion
-      const aidStationsToInsert = aidStations.map(station => ({
-        id: station.id,
-        race_id: raceId,
-        name: station.name,
-        distance: parseFloat(station.distance) || 0,
-        cutoff_time: station.cutoffTime,
-        eta_time: station.etaTime,
-        is_eta_manual: station.isEtaManual || false,
-        water_available: station.supplies?.water !== false, // Default to true
-        sports_drink_available: station.supplies?.sports_drink !== false, // Default to true
-        soda_available: station.supplies?.soda || false,
-        fruit_available: station.supplies?.fruit !== false, // Default to true
-        sandwiches_available: station.supplies?.sandwiches || false,
-        soup_available: station.supplies?.soup || false,
-        medical_available: station.supplies?.medical !== false, // Default to true
-        other_nutrition: station.supplies?.other || '',
-        washroom_available: station.supplies?.washroom || false,
-        drop_bag_allowed: station.dropBagAllowed || false,
-        crew_allowed: station.crewAllowed || false,
-        created_at: new Date(),
-        updated_at: new Date()
+      const aidStationsToInsert = await Promise.all(aidStations.map(async station => {
+        // Generate a UUID for each aid station
+        const stationUuid = uuidv4();
+        
+        // Store mapping for future reference
+        await AsyncStorage.setItem(`aid_station_uuid_${station.id}`, stationUuid);
+        
+        return {
+          id: stationUuid,
+          race_id: supabaseRaceId,
+          name: station.name,
+          distance: parseFloat(station.distance) || 0,
+          cutoff_time: station.cutoffTime,
+          eta_time: station.etaTime,
+          is_eta_manual: station.isEtaManual || false,
+          water_available: station.supplies?.water !== false, // Default to true
+          sports_drink_available: station.supplies?.sports_drink !== false, // Default to true
+          soda_available: station.supplies?.soda || false,
+          fruit_available: station.supplies?.fruit !== false, // Default to true
+          sandwiches_available: station.supplies?.sandwiches || false,
+          soup_available: station.supplies?.soup || false,
+          medical_available: station.supplies?.medical !== false, // Default to true
+          other_nutrition: station.supplies?.other || '',
+          washroom_available: station.supplies?.washroom || false,
+          drop_bag_allowed: station.dropBagAllowed || false,
+          crew_allowed: station.crewAllowed || false,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
       }));
       
       // Insert aid stations
@@ -334,11 +374,14 @@ export const SupabaseProvider = ({ children }) => {
       
       console.log(`Saving drop bags for race ${raceId} to Supabase...`);
       
+      // Get UUID mapping for this race ID
+      const supabaseRaceId = await getOrCreateUuidMapping(raceId);
+      
       // First, delete existing drop bags for this race
       const { error: deleteError } = await supabase
         .from('race_drop_bags')
         .delete()
-        .eq('race_id', raceId);
+        .eq('race_id', supabaseRaceId);
         
       if (deleteError) throw deleteError;
       
@@ -347,13 +390,28 @@ export const SupabaseProvider = ({ children }) => {
       }
       
       // Prepare drop bags for insertion
-      const dropBagsToInsert = dropBags.map(bag => ({
-        race_id: raceId,
-        aid_station_id: bag.aidStationId,
-        name: bag.name || `Drop Bag ${bag.id}`,
-        items: bag.items || [],
-        created_at: new Date(),
-        updated_at: new Date()
+      const dropBagsToInsert = await Promise.all(dropBags.map(async bag => {
+        // Generate a UUID for each drop bag
+        const bagUuid = uuidv4();
+        
+        // Store mapping for future reference
+        await AsyncStorage.setItem(`drop_bag_uuid_${bag.id}`, bagUuid);
+        
+        // Get UUID for aid station if it exists
+        let aidStationUuid = null;
+        if (bag.aidStationId) {
+          aidStationUuid = await AsyncStorage.getItem(`aid_station_uuid_${bag.aidStationId}`);
+        }
+        
+        return {
+          id: bagUuid,
+          race_id: supabaseRaceId,
+          aid_station_id: aidStationUuid,
+          name: bag.name || `Drop Bag ${bag.id}`,
+          items: bag.items || [],
+          created_at: new Date(),
+          updated_at: new Date()
+        };
       }));
       
       // Insert drop bags
@@ -468,6 +526,9 @@ export const SupabaseProvider = ({ children }) => {
           // Save crew members
           if (race.crewMembers && race.crewMembers.length > 0) {
             try {
+              // Get UUID mapping for this race ID
+              const supabaseRaceId = await getOrCreateUuidMapping(race.id);
+              
               // First, get existing crew members for this user
               const { data: existingCrewMembers, error: fetchError } = await supabase
                 .from('crew_members')
@@ -483,8 +544,12 @@ export const SupabaseProvider = ({ children }) => {
                   m => m.email === crewMember.email && crewMember.email
                 );
                 
+                let crewMemberId;
+                
                 if (existingMember) {
                   // Update existing crew member
+                  crewMemberId = existingMember.id;
+                  
                   const { error: updateError } = await supabase
                     .from('crew_members')
                     .update({
@@ -496,24 +561,18 @@ export const SupabaseProvider = ({ children }) => {
                       notes: crewMember.notes || '',
                       updated_at: new Date()
                     })
-                    .eq('id', existingMember.id);
+                    .eq('id', crewMemberId);
                     
                   if (updateError) throw updateError;
-                  
-                  // Add to race_crew junction table
-                  await supabase
-                    .from('race_crew')
-                    .upsert({
-                      race_id: race.id,
-                      crew_member_id: existingMember.id,
-                      created_at: new Date()
-                    }, { onConflict: ['race_id', 'crew_member_id'] });
-                    
                 } else {
+                  // Generate a UUID for the new crew member
+                  crewMemberId = uuidv4();
+                  
                   // Insert new crew member
-                  const { data: newMember, error: insertMemberError } = await supabase
+                  const { error: insertMemberError } = await supabase
                     .from('crew_members')
                     .insert({
+                      id: crewMemberId,
                       user_id: user.id,
                       name: crewMember.name,
                       phone: crewMember.phone,
@@ -523,22 +582,23 @@ export const SupabaseProvider = ({ children }) => {
                       notes: crewMember.notes || '',
                       created_at: new Date(),
                       updated_at: new Date()
-                    })
-                    .select();
+                    });
                     
                   if (insertMemberError) throw insertMemberError;
                   
-                  if (newMember && newMember.length > 0) {
-                    // Add to race_crew junction table
-                    await supabase
-                      .from('race_crew')
-                      .insert({
-                        race_id: race.id,
-                        crew_member_id: newMember[0].id,
-                        created_at: new Date()
-                      });
-                  }
+                  // Store mapping for future reference
+                  await AsyncStorage.setItem(`crew_member_uuid_${crewMember.id}`, crewMemberId);
                 }
+                
+                // Add to race_crew junction table
+                await supabase
+                  .from('race_crew')
+                  .upsert({
+                    id: uuidv4(), // Generate a UUID for the junction table entry
+                    race_id: supabaseRaceId,
+                    crew_member_id: crewMemberId,
+                    created_at: new Date()
+                  }, { onConflict: ['race_id', 'crew_member_id'] });
               }
             } catch (crewError) {
               console.error('Error saving crew members:', crewError);

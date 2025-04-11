@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Text, IconButton, Surface } from "react-native-paper";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAppTheme } from "../context/ThemeContext";
 
 const RaceCard = ({ race, onPress, date, time }) => {
@@ -118,120 +120,185 @@ const RaceCard = ({ race, onPress, date, time }) => {
   // Format the displayed date
   const formattedDate = formatDate(race.date);
 
+  // Format time to 12-hour format with AM/PM
+  const formatTime = (timeString) => {
+    if (!timeString) return "";
+    
+    const [hours, minutes] = timeString.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Get formatted time
+  const formattedTime = formatTime(race.time || time);
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-      <Surface
-        style={[
-          styles.container,
-          { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
-        ]}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <Text
-                style={[
-                  styles.title,
-                  { color: isDarkMode ? "#ffffff" : "#333333" },
-                ]}
-              >
-                {race.name}
-              </Text>
-              <Text
-                style={[
-                  styles.details,
-                  { color: isDarkMode ? "#e0e0e0" : "#666666" },
-                ]}
-              >
-                {race.distance} {race.distanceUnit} • {formattedDate}
-              </Text>
+      <Surface style={styles.container}>
+        <LinearGradient
+          colors={
+            isDarkMode
+              ? [theme.colors.surface, theme.colors.surfaceVariant]
+              : ["#ffffff", "#f8f9fa"]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View style={styles.titleContainer}>
+                <Text
+                  style={[
+                    styles.title,
+                    { color: isDarkMode ? "#ffffff" : "#333333" },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {race.name}
+                </Text>
+                
+                <View style={styles.detailsRow}>
+                  <MaterialCommunityIcons
+                    name="map-marker"
+                    size={16}
+                    color={theme.colors.primary}
+                    style={styles.icon}
+                  />
+                  <Text
+                    style={[
+                      styles.details,
+                      { color: isDarkMode ? "#e0e0e0" : "#666666" },
+                    ]}
+                  >
+                    {race.distance} {race.distanceUnit} • {formattedDate}
+                  </Text>
+                </View>
+                
+                <View style={styles.detailsRow}>
+                  <MaterialCommunityIcons
+                    name="clock-outline"
+                    size={16}
+                    color={theme.colors.primary}
+                    style={styles.icon}
+                  />
+                  <Text
+                    style={[
+                      styles.details,
+                      { color: isDarkMode ? "#e0e0e0" : "#666666" },
+                    ]}
+                  >
+                    Start time: {formattedTime}
+                  </Text>
+                </View>
+              </View>
+              
+              <IconButton
+                icon="chevron-right"
+                iconColor={theme.colors.primary}
+                size={24}
+                onPress={onPress}
+                style={styles.chevron}
+              />
             </View>
-            <IconButton
-              icon="chevron-right"
-              color={theme.colors.primary}
-              size={24}
-              onPress={onPress}
-            />
-          </View>
 
-          {/* Countdown Timer Section */}
-          <View style={styles.countdownContainer}>
-            <View style={styles.countdownRow}>
-              <View style={styles.countdownItem}>
-                <Text
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View
                   style={[
-                    styles.countdownValue,
-                    { color: theme.colors.primary },
+                    styles.progressFill,
+                    {
+                      width: `${countdown.progressPercent}%`,
+                      backgroundColor: theme.colors.primary,
+                    },
                   ]}
-                >
-                  {countdown.days}
-                </Text>
-                <Text
-                  style={[
-                    styles.countdownLabel,
-                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
-                  ]}
-                >
-                  days
-                </Text>
+                />
               </View>
-              <View style={styles.countdownItem}>
-                <Text
-                  style={[
-                    styles.countdownValue,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  {countdown.hours}
-                </Text>
-                <Text
-                  style={[
-                    styles.countdownLabel,
-                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
-                  ]}
-                >
-                  hours
-                </Text>
-              </View>
-              <View style={styles.countdownItem}>
-                <Text
-                  style={[
-                    styles.countdownValue,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  {countdown.minutes}
-                </Text>
-                <Text
-                  style={[
-                    styles.countdownLabel,
-                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
-                  ]}
-                >
-                  min
-                </Text>
-              </View>
-              <View style={styles.countdownItem}>
-                <Text
-                  style={[
-                    styles.countdownValue,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  {countdown.seconds}
-                </Text>
-                <Text
-                  style={[
-                    styles.countdownLabel,
-                    { color: isDarkMode ? "#9e9e9e" : "#757575" },
-                  ]}
-                >
-                  sec
-                </Text>
+            </View>
+
+            {/* Countdown Timer Section */}
+            <View style={styles.countdownContainer}>
+              <View style={styles.countdownRow}>
+                <View style={styles.countdownItem}>
+                  <Text
+                    style={[
+                      styles.countdownValue,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    {countdown.days}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.countdownLabel,
+                      { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                    ]}
+                  >
+                    days
+                  </Text>
+                </View>
+                <View style={styles.countdownItem}>
+                  <Text
+                    style={[
+                      styles.countdownValue,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    {countdown.hours}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.countdownLabel,
+                      { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                    ]}
+                  >
+                    hours
+                  </Text>
+                </View>
+                <View style={styles.countdownItem}>
+                  <Text
+                    style={[
+                      styles.countdownValue,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    {countdown.minutes}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.countdownLabel,
+                      { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                    ]}
+                  >
+                    min
+                  </Text>
+                </View>
+                <View style={styles.countdownItem}>
+                  <Text
+                    style={[
+                      styles.countdownValue,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    {countdown.seconds}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.countdownLabel,
+                      { color: isDarkMode ? "#9e9e9e" : "#757575" },
+                    ]}
+                  >
+                    sec
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        </LinearGradient>
       </Surface>
     </TouchableOpacity>
   );
@@ -241,33 +308,56 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 16,
     marginBottom: 16,
-    elevation: 2,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: "hidden",
+  },
+  gradient: {
+    borderRadius: 16,
+    overflow: "hidden",
   },
   content: {
-    padding: 16,
+    padding: 18,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+  },
+  titleContainer: {
+    flex: 1,
+    paddingRight: 16,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: 0.25,
+  },
+  detailsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  icon: {
+    marginRight: 6,
   },
   details: {
     fontSize: 14,
+    lineHeight: 20,
+  },
+  chevron: {
+    marginTop: -8,
+    marginRight: -8,
   },
   countdownContainer: {
     marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 4,
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "center",
   },
   countdownTitle: {
     fontSize: 18,
@@ -276,21 +366,30 @@ const styles = StyleSheet.create({
   },
   countdownRow: {
     flexDirection: "row",
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    justifyContent: "space-around",
+    width: "100%",
   },
   countdownItem: {
     alignItems: "center",
-    minWidth: 50,
+    minWidth: 60,
   },
   countdownValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
   },
   countdownLabel: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   progressContainer: {
-    marginTop: 16,
+    marginTop: 20,
+    marginBottom: 4,
   },
   progressBar: {
     height: 6,
@@ -305,6 +404,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 12,
     marginTop: 6,
+    textAlign: "right",
   },
 });
 

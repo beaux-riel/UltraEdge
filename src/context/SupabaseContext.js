@@ -220,7 +220,39 @@ export const SupabaseProvider = ({ children }) => {
         return existingMapping;
       }
       
-      // If no mapping exists, create a new UUID
+      // If no mapping exists, check if we have a race with the same name in Supabase
+      if (supabase && user) {
+        try {
+          // Get the race details from AsyncStorage
+          const storedRaces = await AsyncStorage.getItem('races');
+          if (storedRaces) {
+            const racesObject = JSON.parse(storedRaces);
+            const race = racesObject[raceId];
+            
+            if (race && race.name) {
+              // Look for a race with the same name in Supabase
+              const { data: existingRaces, error } = await supabase
+                .from('races')
+                .select('id, name')
+                .eq('user_id', user.id)
+                .eq('name', race.name);
+                
+              if (!error && existingRaces && existingRaces.length > 0) {
+                // Use the existing Supabase UUID for this race
+                const supabaseUuid = existingRaces[0].id;
+                await AsyncStorage.setItem(mappingKey, supabaseUuid);
+                console.log(`Found existing race "${race.name}" in Supabase with ID ${supabaseUuid}`);
+                return supabaseUuid;
+              }
+            }
+          }
+        } catch (lookupError) {
+          console.error('Error looking up race in Supabase:', lookupError);
+          // Continue with creating a new UUID
+        }
+      }
+      
+      // If no mapping exists and no match found in Supabase, create a new UUID
       const newUuid = generateUUID();
       await AsyncStorage.setItem(mappingKey, newUuid);
       return newUuid;
@@ -833,8 +865,66 @@ export const SupabaseProvider = ({ children }) => {
           const result = await fetchRacesFromSupabase();
           
           if (result.success && result.data && Object.keys(result.data).length > 0) {
-            // Merge with local data, preferring Supabase data
-            racesObject = { ...racesObject, ...result.data };
+            // Get all existing UUID mappings
+            const keys = await AsyncStorage.getAllKeys();
+            const uuidMappingKeys = keys.filter(key => key.startsWith('race_uuid_'));
+            const uuidMappings = {};
+            
+            // Build a mapping of app race IDs to Supabase UUIDs
+            for (const key of uuidMappingKeys) {
+              const appRaceId = key.replace('race_uuid_', '');
+              const supabaseUuid = await AsyncStorage.getItem(key);
+              if (supabaseUuid) {
+                uuidMappings[supabaseUuid] = appRaceId;
+              }
+            }
+            
+            // Process Supabase races
+            const supabaseRaces = result.data;
+            const mergedRaces = { ...racesObject };
+            
+            // For each Supabase race, find its corresponding app race ID
+            for (const supabaseUuid in supabaseRaces) {
+              const supabaseRace = supabaseRaces[supabaseUuid];
+              const appRaceId = uuidMappings[supabaseUuid] || supabaseUuid;
+              
+              // If we have a local race with this ID, merge them (prefer Supabase data)
+              if (racesObject[appRaceId]) {
+                // Preserve local data that might not be in Supabase
+                const localRace = racesObject[appRaceId];
+                
+                // Merge preparation data
+                if (!supabaseRace.preparation) supabaseRace.preparation = {};
+                if (localRace.preparation) {
+                  // Merge gear items
+                  if (!supabaseRace.preparation.gearItems && localRace.preparation.gearItems) {
+                    supabaseRace.preparation.gearItems = localRace.preparation.gearItems;
+                  }
+                  
+                  // Merge nutrition plans
+                  if (!supabaseRace.preparation.nutritionPlans && localRace.preparation.nutritionPlans) {
+                    supabaseRace.preparation.nutritionPlans = localRace.preparation.nutritionPlans;
+                  }
+                  
+                  // Merge hydration plans
+                  if (!supabaseRace.preparation.hydrationPlans && localRace.preparation.hydrationPlans) {
+                    supabaseRace.preparation.hydrationPlans = localRace.preparation.hydrationPlans;
+                  }
+                }
+                
+                // Store the merged race
+                mergedRaces[appRaceId] = supabaseRace;
+                
+                // Ensure the UUID mapping is stored
+                await AsyncStorage.setItem(`race_uuid_${appRaceId}`, supabaseUuid);
+              } else {
+                // This is a new race from Supabase
+                mergedRaces[appRaceId] = supabaseRace;
+              }
+            }
+            
+            // Update racesObject with merged data
+            racesObject = mergedRaces;
           } else {
             // Fall back to legacy race_backups table
             const { data, error } = await supabase

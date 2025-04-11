@@ -281,7 +281,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                   { color: isDarkMode ? "#ffffff" : "#000000" },
                 ]}
               >
-                {raceData.numAidStations}
+                {raceData.aidStations ? raceData.aidStations.length : 0}
               </Text>
             </View>
           </View>
@@ -447,7 +447,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               } race with approximately ${raceData.elevation} ${
                 raceData.elevationUnit || "ft"
               } of elevation gain. The race features ${
-                raceData.numAidStations
+                raceData.aidStations ? raceData.aidStations.length : 0
               } aid stations along the course.`}
           </Text>
 

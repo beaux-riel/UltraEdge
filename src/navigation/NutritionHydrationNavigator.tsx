@@ -4,6 +4,7 @@ import { useAppTheme } from '../context/ThemeContext';
 
 // Import screens
 import PlanOverviewScreen from '../screens/nutrition/PlanOverviewScreen';
+import PlanAnalyticsScreen from '../screens/analytics/PlanAnalyticsScreen';
 
 // Define navigation types
 export type NutritionHydrationStackParamList = {
@@ -40,6 +41,11 @@ const NutritionHydrationNavigator = () => {
         name="PlanOverview"
         component={PlanOverviewScreen}
         options={{ title: 'Nutrition & Hydration Plans' }}
+      />
+      <Stack.Screen
+        name="PlanAnalytics"
+        component={PlanAnalyticsScreen}
+        options={{ title: 'Plan Analytics' }}
       />
     </Stack.Navigator>
   );

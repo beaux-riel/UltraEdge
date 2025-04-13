@@ -8,6 +8,7 @@ import { useAppTheme } from '../context/ThemeContext';
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
 import NutritionHydrationNavigator from './NutritionHydrationNavigator';
+import RaceIntegrationScreen from '../screens/sharing/RaceIntegrationScreen';
 
 // Define navigation types
 export type RootStackParamList = {
@@ -114,6 +115,11 @@ const AppNavigator = () => {
           name="NutritionHydration" 
           component={NutritionHydrationNavigator} 
           options={{ title: 'Nutrition & Hydration', headerShown: false }}
+        />
+        <Stack.Screen 
+          name="RaceIntegration" 
+          component={RaceIntegrationScreen} 
+          options={{ title: 'Race Integration & Sharing' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

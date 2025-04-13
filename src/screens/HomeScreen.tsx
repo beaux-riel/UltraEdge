@@ -37,13 +37,28 @@ const HomeScreen = () => {
       
       <Card style={styles.card}>
         <Card.Content>
+          <Title>Race Integration</Title>
+          <Paragraph>Connect your nutrition and hydration plans to races</Paragraph>
+        </Card.Content>
+        <Card.Actions>
+          <Button 
+            mode="contained" 
+            onPress={() => navigation.navigate('RaceIntegration')}
+          >
+            Race Integration
+          </Button>
+        </Card.Actions>
+      </Card>
+      
+      <Card style={styles.card}>
+        <Card.Content>
           <Title>Quick Start</Title>
           <Paragraph>Create your first nutrition and hydration plan</Paragraph>
         </Card.Content>
         <Card.Actions>
           <Button 
             mode="outlined" 
-            onPress={() => {}}
+            onPress={() => navigation.navigate('NutritionHydration')}
           >
             Create Plan
           </Button>

@@ -5,18 +5,14 @@ import { useAppTheme } from '../context/ThemeContext';
 // Import screens
 import PlanOverviewScreen from '../screens/nutrition/PlanOverviewScreen';
 import PlanAnalyticsScreen from '../screens/analytics/PlanAnalyticsScreen';
+import HydrationPlanScreen from '../screens/hydration/HydrationPlanScreen';
+import NutritionPlanScreen from '../screens/nutrition/NutritionPlanScreen';
 
 // Define navigation types
 export type NutritionHydrationStackParamList = {
   PlanOverview: undefined;
-  NutritionPlan: { planId: string; editMode?: boolean };
-  HydrationPlan: { planId: string; editMode?: boolean };
-  CreateNutritionPlan: undefined;
-  CreateHydrationPlan: undefined;
-  AddNutritionEntry: { planId: string; addingEntry?: boolean };
-  EditNutritionEntry: { planId: string; entryId: string; editingEntry?: boolean };
-  AddHydrationEntry: { planId: string; addingEntry?: boolean };
-  EditHydrationEntry: { planId: string; entryId: string; editingEntry?: boolean };
+  NutritionPlan: { planId?: string; editMode?: boolean };
+  HydrationPlan: { planId?: string; editMode?: boolean };
   PlanAnalytics: { planId: string; planType: 'nutrition' | 'hydration' };
 };
 
@@ -41,6 +37,16 @@ const NutritionHydrationNavigator = () => {
         name="PlanOverview"
         component={PlanOverviewScreen}
         options={{ title: 'Nutrition & Hydration Plans' }}
+      />
+      <Stack.Screen
+        name="NutritionPlan"
+        component={NutritionPlanScreen}
+        options={{ title: 'Nutrition Plan' }}
+      />
+      <Stack.Screen
+        name="HydrationPlan"
+        component={HydrationPlanScreen}
+        options={{ title: 'Hydration Plan' }}
       />
       <Stack.Screen
         name="PlanAnalytics"

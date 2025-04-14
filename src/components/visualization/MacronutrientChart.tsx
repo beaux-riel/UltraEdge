@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { VictoryPie, VictoryLabel, VictoryLegend } from 'victory-native';
+import Legend, { Pie } from 'victory-native';
 import { useAppTheme } from '../../context/ThemeContext';
 import { NutritionEntry } from '../../context/NutritionHydrationContext';
 
@@ -70,7 +70,7 @@ const MacronutrientChart: React.FC<MacronutrientChartProps> = ({
       </Text>
       
       <View style={styles.chartContainer}>
-        <VictoryPie
+        <Pie
           data={chartData}
           width={size}
           height={size}
@@ -98,7 +98,7 @@ const MacronutrientChart: React.FC<MacronutrientChartProps> = ({
       </View>
       
       {showLegend && (
-        <VictoryLegend
+        <Legend
           x={0}
           y={0}
           width={width * 0.9}

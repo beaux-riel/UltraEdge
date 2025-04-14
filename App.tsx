@@ -1,11 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { View, Text, ActivityIndicator } from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
-import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
-import { NutritionHydrationProvider } from './src/context/NutritionHydrationContext';
+import React, { useState, useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Provider as PaperProvider } from "react-native-paper";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  useColorScheme,
+  Button,
+} from "react-native";
+import AppNavigator from "./src/navigation/AppNavigator";
+import { RaceProvider } from "./src/context/RaceContext";
+import { ThemeProvider, useAppTheme } from "./src/context/ThemeContext";
+import { SupabaseProvider } from "./src/context/SupabaseContext";
+import { UserProvider } from "./src/context/UserContext";
+import { RevenueCatProvider } from "./src/context/RevenueCatContext";
+import { SettingsProvider } from "./src/context/SettingsContext";
+import { GearProvider } from "./src/context/GearContext";
+import { NutritionHydrationProvider } from "./src/context/NutritionHydrationContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -24,9 +36,9 @@ const AppContent = () => {
       <View
         style={{
           flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: isDarkMode ? '#121212' : '#f5f5f5',
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: isDarkMode ? "#121212" : "#f5f5f5",
         }}
       >
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -34,7 +46,7 @@ const AppContent = () => {
           style={{
             marginTop: 16,
             fontSize: 16,
-            color: isDarkMode ? '#ffffff' : '#000000',
+            color: isDarkMode ? "#ffffff" : "#000000",
           }}
         >
           Loading UltraEdge...
@@ -45,7 +57,7 @@ const AppContent = () => {
 
   return (
     <>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
       <AppNavigator />
     </>
   );
@@ -67,9 +79,21 @@ const PaperProviderWithTheme = () => {
 
   return (
     <PaperProvider theme={theme}>
-      <NutritionHydrationProvider>
-        <AppContent />
-      </NutritionHydrationProvider>
+      <SettingsProvider>
+        <NutritionHydrationProvider>
+          <SupabaseProvider>
+            <RevenueCatProvider>
+              <UserProvider>
+                <RaceProvider>
+                  <GearProvider>
+                    <AppContent />
+                  </GearProvider>
+                </RaceProvider>
+              </UserProvider>
+            </RevenueCatProvider>
+          </SupabaseProvider>
+        </NutritionHydrationProvider>
+      </SettingsProvider>
     </PaperProvider>
   );
 };

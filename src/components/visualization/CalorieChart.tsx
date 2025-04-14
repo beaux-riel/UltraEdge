@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { VictoryBar, VictoryChart, VictoryAxis, VictoryTheme, VictoryLabel } from 'victory-native';
+import * as Victory from "victory-native";
 import { useAppTheme } from '../../context/ThemeContext';
 import { NutritionEntry } from '../../context/NutritionHydrationContext';
 
@@ -54,14 +54,9 @@ const CalorieChart: React.FC<CalorieChartProps> = ({
       calories,
     }));
   }, [entries, timeIntervals]);
+
+  console.log({ Victory });
   
-  // Calculate total calories
-  const totalCalories = entries.reduce((sum, entry) => sum + (entry.calories || 0), 0);
-  
-  // Calculate average calories per hour
-  const avgCaloriesPerHour = totalCalories / 24;
-  
-  // If no data, show empty state
   if (entries.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -74,83 +69,64 @@ const CalorieChart: React.FC<CalorieChartProps> = ({
   
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}>
+      <Text style={[styles.title, { color: isDarkMode ? "#fff" : "#000" }]}>
         Calorie Intake Over Time
       </Text>
-      
-      <VictoryChart
+
+      <Victory.CartesianChart
         width={width * 0.9}
         height={250}
         domainPadding={{ x: 20 }}
-        theme={VictoryTheme.material}
+        padding={{ top: 20, bottom: 50, left: 50, right: 20 }}
       >
-        <VictoryAxis
+        <Victory.CartesianAxis
           tickFormat={(t) => t}
           style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { 
-              fill: isDarkMode ? '#fff' : '#000',
+            axis: { stroke: isDarkMode ? "#fff" : "#000" },
+            tickLabels: {
+              fill: isDarkMode ? "#fff" : "#000",
               fontSize: 10,
               angle: -45,
-              textAnchor: 'end'
-            }
+              textAnchor: "end",
+            },
+            grid: {
+              stroke: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+            },
           }}
         />
-        <VictoryAxis
+        <Victory.CartesianAxis
           dependentAxis
           tickFormat={(t) => `${t}`}
           style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { fill: isDarkMode ? '#fff' : '#000' }
+            axis: { stroke: isDarkMode ? "#fff" : "#000" },
+            tickLabels: {
+              fill: isDarkMode ? "#fff" : "#000",
+              fontSize: 10,
+            },
+            grid: {
+              stroke: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+            },
           }}
         />
-        <VictoryBar
+        <Victory.Bar
           data={groupedEntries}
           x="interval"
           y="calories"
           style={{
             data: {
-              fill: ({ datum }) => datum.calories >= targetCalories / timeIntervals 
-                ? theme.colors.primary 
-                : theme.colors.error,
-              width: 20
-            }
+              fill: ({ datum }) =>
+                datum.calories >= targetCalories / timeIntervals
+                  ? theme.colors.primary
+                  : theme.colors.error,
+              width: 20,
+            },
           }}
           animate={{
             duration: 500,
-            onLoad: { duration: 300 }
+            onLoad: { duration: 300 },
           }}
         />
-      </VictoryChart>
-      
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-            {totalCalories}
-          </Text>
-          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
-            Total Calories
-          </Text>
-        </View>
-        
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-            {Math.round(avgCaloriesPerHour)}
-          </Text>
-          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
-            Avg Cal/Hour
-          </Text>
-        </View>
-        
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-            {targetCalories}
-          </Text>
-          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
-            Target Calories
-          </Text>
-        </View>
-      </View>
+      </Victory.CartesianChart>
     </View>
   );
 };
@@ -158,34 +134,19 @@ const CalorieChart: React.FC<CalorieChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    padding: 16,
+    padding: 16
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 16,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 14,
+    marginBottom: 16
   },
   emptyContainer: {
-    height: 200,
     alignItems: 'center',
     justifyContent: 'center',
-  },
+    padding: 16,
+    height: 250
+  }
 });
 
 export default CalorieChart;

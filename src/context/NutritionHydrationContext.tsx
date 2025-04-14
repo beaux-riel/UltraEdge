@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define types for nutrition and hydration plans
@@ -98,6 +98,7 @@ interface NutritionHydrationContextType {
   addHydrationEntry: (planId: string, entry: Omit<HydrationEntry, 'id'>) => Promise<{ success: boolean; entryId?: string; error?: string }>;
   updateHydrationEntry: (planId: string, entryId: string, entry: Partial<HydrationEntry>) => Promise<{ success: boolean; error?: string }>;
   deleteHydrationEntry: (planId: string, entryId: string) => Promise<{ success: boolean; error?: string }>;
+  getNutritionPlan: (planId: string) => NutritionPlan | undefined;
 }
 
 // Create the context
@@ -525,6 +526,10 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
     }
   };
 
+  const getNutritionPlan = useCallback((planId: string) => {
+    return nutritionPlans[planId];
+  }, [nutritionPlans]);
+
   return (
     <NutritionHydrationContext.Provider
       value={{
@@ -543,7 +548,8 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
         deleteNutritionEntry,
         addHydrationEntry,
         updateHydrationEntry,
-        deleteHydrationEntry
+        deleteHydrationEntry,
+        getNutritionPlan
       }}
     >
       {children}

@@ -37,18 +37,30 @@ const PlanOverviewScreen = () => {
   // Handle plan selection
   const handleSelectPlan = (planId: string) => {
     if (activeTab === 'nutrition') {
-      navigation.navigate('NutritionPlan', { planId });
+      navigation.navigate('NutritionHydration', {
+        screen: 'NutritionPlan',
+        params: { planId }
+      });
     } else {
-      navigation.navigate('HydrationPlan', { planId });
+      navigation.navigate('NutritionHydration', {
+        screen: 'HydrationPlan',
+        params: { planId }
+      });
     }
   };
   
   // Handle create plan
   const handleCreatePlan = () => {
     if (activeTab === 'nutrition') {
-      navigation.navigate('CreateNutritionPlan');
+      navigation.navigate('NutritionHydration', {
+        screen: 'NutritionPlan',
+        params: { editMode: true }
+      });
     } else {
-      navigation.navigate('CreateHydrationPlan');
+      navigation.navigate('NutritionHydration', {
+        screen: 'HydrationPlan',
+        params: { editMode: true }
+      });
     }
   };
   

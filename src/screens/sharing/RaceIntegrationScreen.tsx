@@ -52,40 +52,7 @@ const RaceIntegrationScreen: React.FC<RaceIntegrationScreenProps> = ({ route, na
   const [activeTab, setActiveTab] = useState<'assign' | 'aid' | 'share'>('assign');
   const [selectedRace, setSelectedRace] = useState<Race | null>(null);
   const [raceModalVisible, setRaceModalVisible] = useState(false);
-  const [races, setRaces] = useState<Race[]>([
-    {
-      id: '1',
-      name: 'Mountain Trail 100',
-      date: '2023-06-15',
-      distance: 100,
-      distanceUnit: 'miles',
-      aidStations: [
-        { id: 'a1', name: 'Start', distance: 0, crew: true, dropBags: true },
-        { id: 'a2', name: 'River Crossing', distance: 15.5, cutoff: '4:00' },
-        { id: 'a3', name: 'Summit Pass', distance: 32.1, cutoff: '8:30', crew: true },
-        { id: 'a4', name: 'Valley View', distance: 47.8, cutoff: '13:00', dropBags: true },
-        { id: 'a5', name: 'Turnaround', distance: 50, cutoff: '14:00', crew: true, dropBags: true },
-        { id: 'a6', name: 'Valley View', distance: 52.2, cutoff: '15:00', dropBags: true },
-        { id: 'a7', name: 'Summit Pass', distance: 67.9, cutoff: '20:00', crew: true },
-        { id: 'a8', name: 'River Crossing', distance: 84.5, cutoff: '26:00' },
-        { id: 'a9', name: 'Finish', distance: 100, cutoff: '30:00', crew: true, dropBags: true }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Desert Ultra 50k',
-      date: '2023-09-22',
-      distance: 50,
-      distanceUnit: 'kilometers',
-      aidStations: [
-        { id: 'b1', name: 'Start', distance: 0, crew: true },
-        { id: 'b2', name: 'Oasis', distance: 12.5, cutoff: '2:30' },
-        { id: 'b3', name: 'Canyon Edge', distance: 25, cutoff: '5:00', crew: true, dropBags: true },
-        { id: 'b4', name: 'Last Water', distance: 37.5, cutoff: '7:30' },
-        { id: 'b5', name: 'Finish', distance: 50, cutoff: '10:00', crew: true }
-      ]
-    }
-  ]);
+  const [races, setRaces] = useState<Race[]>([]);
   
   // Initialize selected race from route params if provided
   useEffect(() => {

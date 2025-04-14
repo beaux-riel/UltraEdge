@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { 
   Text, 
@@ -13,7 +13,12 @@ import {
   RadioButton
 } from 'react-native-paper';
 import { useAppTheme } from '../../context/ThemeContext';
-import { NutritionPlan, HydrationPlan } from '../../context/NutritionHydrationContext';
+import { 
+  NutritionPlan, 
+  HydrationPlan, 
+  RacePlanAssignment as RacePlanAssignmentType,
+  useNutritionHydration 
+} from '../../context/NutritionHydrationContext';
 
 interface Race {
   id: string;
@@ -37,15 +42,6 @@ interface RacePlanAssignmentProps {
   hydrationPlans: HydrationPlan[];
 }
 
-interface RacePlanAssignment {
-  raceId: string;
-  nutritionPlanId?: string;
-  hydrationPlanId?: string;
-  startTime?: string;
-  endTime?: string;
-  isActive: boolean;
-}
-
 /**
  * Component for assigning nutrition and hydration plans to races
  */
@@ -55,36 +51,54 @@ const RacePlanAssignment: React.FC<RacePlanAssignmentProps> = ({
   hydrationPlans 
 }) => {
   const { theme, isDarkMode } = useAppTheme();
+  const { 
+    racePlanAssignments, 
+    createRacePlanAssignment, 
+    updateRacePlanAssignment, 
+    getRacePlanAssignmentsByRaceId 
+  } = useNutritionHydration();
   
-  const [assignment, setAssignment] = useState<RacePlanAssignment | null>(
-    race ? {
-      raceId: race.id,
-      nutritionPlanId: undefined,
-      hydrationPlanId: undefined,
-      startTime: '00:00',
-      endTime: '24:00',
-      isActive: true
-    } : null
-  );
-  
+  const [assignment, setAssignment] = useState<Partial<RacePlanAssignmentType> | null>(null);
+  const [existingAssignmentId, setExistingAssignmentId] = useState<string | null>(null);
   const [nutritionModalVisible, setNutritionModalVisible] = useState(false);
   const [hydrationModalVisible, setHydrationModalVisible] = useState(false);
   
-  // Update assignment when race changes
-  React.useEffect(() => {
+  // Load existing assignment when race changes
+  useEffect(() => {
     if (race) {
-      setAssignment({
-        raceId: race.id,
-        nutritionPlanId: assignment?.nutritionPlanId,
-        hydrationPlanId: assignment?.hydrationPlanId,
-        startTime: assignment?.startTime || '00:00',
-        endTime: assignment?.endTime || '24:00',
-        isActive: assignment?.isActive || true
-      });
+      const existingAssignments = getRacePlanAssignmentsByRaceId(race.id);
+      
+      if (existingAssignments.length > 0) {
+        // Use the first active assignment if available
+        const activeAssignment = existingAssignments.find(a => a.isActive);
+        const assignmentToUse = activeAssignment || existingAssignments[0];
+        
+        setAssignment({
+          raceId: assignmentToUse.raceId,
+          nutritionPlanId: assignmentToUse.nutritionPlanId,
+          hydrationPlanId: assignmentToUse.hydrationPlanId,
+          startTime: assignmentToUse.startTime || '00:00',
+          endTime: assignmentToUse.endTime || '24:00',
+          isActive: assignmentToUse.isActive
+        });
+        setExistingAssignmentId(assignmentToUse.id);
+      } else {
+        // Create a new assignment object
+        setAssignment({
+          raceId: race.id,
+          nutritionPlanId: undefined,
+          hydrationPlanId: undefined,
+          startTime: '00:00',
+          endTime: '24:00',
+          isActive: true
+        });
+        setExistingAssignmentId(null);
+      }
     } else {
       setAssignment(null);
+      setExistingAssignmentId(null);
     }
-  }, [race]);
+  }, [race, getRacePlanAssignmentsByRaceId]);
   
   // Handle selecting a nutrition plan
   const handleSelectNutritionPlan = (planId: string) => {
@@ -119,8 +133,8 @@ const RacePlanAssignment: React.FC<RacePlanAssignmentProps> = ({
   };
   
   // Handle saving the assignment
-  const handleSaveAssignment = () => {
-    if (!assignment) return;
+  const handleSaveAssignment = async () => {
+    if (!assignment || !race) return;
     
     // Validate assignment
     if (!assignment.nutritionPlanId && !assignment.hydrationPlanId) {
@@ -128,8 +142,29 @@ const RacePlanAssignment: React.FC<RacePlanAssignmentProps> = ({
       return;
     }
     
-    // Here you would save the assignment to your storage/backend
-    Alert.alert('Success', 'Plan assignment saved successfully');
+    try {
+      let result;
+      
+      if (existingAssignmentId) {
+        // Update existing assignment
+        result = await updateRacePlanAssignment(existingAssignmentId, assignment);
+      } else {
+        // Create new assignment
+        result = await createRacePlanAssignment(assignment as Omit<RacePlanAssignmentType, 'id' | 'createdAt' | 'updatedAt'>);
+        if (result.success && result.assignmentId) {
+          setExistingAssignmentId(result.assignmentId);
+        }
+      }
+      
+      if (result.success) {
+        Alert.alert('Success', 'Plan assignment saved successfully');
+      } else {
+        Alert.alert('Error', result.error || 'Failed to save plan assignment');
+      }
+    } catch (error) {
+      console.error('Error saving plan assignment:', error);
+      Alert.alert('Error', 'An unexpected error occurred while saving the plan assignment');
+    }
   };
   
   // Render nutrition plan selection modal

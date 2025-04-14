@@ -80,10 +80,24 @@ export interface HydrationPlan {
   rules?: Rule[];
 }
 
+// Define race plan assignment interface
+export interface RacePlanAssignment {
+  id: string;
+  raceId: string;
+  nutritionPlanId?: string;
+  hydrationPlanId?: string;
+  startTime?: string;
+  endTime?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Define context type
 interface NutritionHydrationContextType {
   nutritionPlans: Record<string, NutritionPlan>;
   hydrationPlans: Record<string, HydrationPlan>;
+  racePlanAssignments: Record<string, RacePlanAssignment>;
   loading: boolean;
   error: string | null;
   createNutritionPlan: (plan: Omit<NutritionPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean; planId?: string; error?: string }>;
@@ -99,6 +113,11 @@ interface NutritionHydrationContextType {
   updateHydrationEntry: (planId: string, entryId: string, entry: Partial<HydrationEntry>) => Promise<{ success: boolean; error?: string }>;
   deleteHydrationEntry: (planId: string, entryId: string) => Promise<{ success: boolean; error?: string }>;
   getNutritionPlan: (planId: string) => NutritionPlan | undefined;
+  getHydrationPlan: (planId: string) => HydrationPlan | undefined;
+  createRacePlanAssignment: (assignment: Omit<RacePlanAssignment, 'id' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean; assignmentId?: string; error?: string }>;
+  updateRacePlanAssignment: (assignmentId: string, assignment: Partial<RacePlanAssignment>) => Promise<{ success: boolean; error?: string }>;
+  deleteRacePlanAssignment: (assignmentId: string) => Promise<{ success: boolean; error?: string }>;
+  getRacePlanAssignmentsByRaceId: (raceId: string) => RacePlanAssignment[];
 }
 
 // Create the context
@@ -113,6 +132,7 @@ interface NutritionHydrationProviderProps {
 export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProps> = ({ children }) => {
   const [nutritionPlans, setNutritionPlans] = useState<Record<string, NutritionPlan>>({});
   const [hydrationPlans, setHydrationPlans] = useState<Record<string, HydrationPlan>>({});
+  const [racePlanAssignments, setRacePlanAssignments] = useState<Record<string, RacePlanAssignment>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,6 +152,12 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
         const hydrationPlansJson = await AsyncStorage.getItem('hydrationPlans');
         if (hydrationPlansJson) {
           setHydrationPlans(JSON.parse(hydrationPlansJson));
+        }
+        
+        // Load race plan assignments
+        const racePlanAssignmentsJson = await AsyncStorage.getItem('racePlanAssignments');
+        if (racePlanAssignmentsJson) {
+          setRacePlanAssignments(JSON.parse(racePlanAssignmentsJson));
         }
         
         setError(null);
@@ -162,6 +188,16 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
       await AsyncStorage.setItem('hydrationPlans', JSON.stringify(plans));
     } catch (err) {
       console.error('Error saving hydration plans:', err);
+      throw err;
+    }
+  };
+  
+  // Save race plan assignments to storage
+  const saveRacePlanAssignments = async (assignments: Record<string, RacePlanAssignment>) => {
+    try {
+      await AsyncStorage.setItem('racePlanAssignments', JSON.stringify(assignments));
+    } catch (err) {
+      console.error('Error saving race plan assignments:', err);
       throw err;
     }
   };
@@ -525,6 +561,99 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
       return { success: false, error: 'Failed to delete hydration entry' };
     }
   };
+  
+  // Get a nutrition plan by ID
+  const getNutritionPlan = (planId: string) => {
+    return nutritionPlans[planId];
+  };
+  
+  // Get a hydration plan by ID
+  const getHydrationPlan = (planId: string) => {
+    return hydrationPlans[planId];
+  };
+  
+  // Create a new race plan assignment
+  const createRacePlanAssignment = async (assignment: Omit<RacePlanAssignment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const now = new Date().toISOString();
+      const id = Date.now().toString();
+      
+      const newAssignment: RacePlanAssignment = {
+        ...assignment,
+        id,
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      const updatedAssignments = {
+        ...racePlanAssignments,
+        [id]: newAssignment
+      };
+      
+      setRacePlanAssignments(updatedAssignments);
+      await saveRacePlanAssignments(updatedAssignments);
+      
+      return { success: true, assignmentId: id };
+    } catch (err) {
+      console.error('Error creating race plan assignment:', err);
+      return { success: false, error: 'Failed to create race plan assignment' };
+    }
+  };
+  
+  // Update an existing race plan assignment
+  const updateRacePlanAssignment = async (assignmentId: string, assignment: Partial<RacePlanAssignment>) => {
+    try {
+      if (!racePlanAssignments[assignmentId]) {
+        return { success: false, error: 'Race plan assignment not found' };
+      }
+      
+      const updatedAssignment: RacePlanAssignment = {
+        ...racePlanAssignments[assignmentId],
+        ...assignment,
+        updatedAt: new Date().toISOString()
+      };
+      
+      const updatedAssignments = {
+        ...racePlanAssignments,
+        [assignmentId]: updatedAssignment
+      };
+      
+      setRacePlanAssignments(updatedAssignments);
+      await saveRacePlanAssignments(updatedAssignments);
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating race plan assignment:', err);
+      return { success: false, error: 'Failed to update race plan assignment' };
+    }
+  };
+  
+  // Delete a race plan assignment
+  const deleteRacePlanAssignment = async (assignmentId: string) => {
+    try {
+      if (!racePlanAssignments[assignmentId]) {
+        return { success: false, error: 'Race plan assignment not found' };
+      }
+      
+      const updatedAssignments = { ...racePlanAssignments };
+      delete updatedAssignments[assignmentId];
+      
+      setRacePlanAssignments(updatedAssignments);
+      await saveRacePlanAssignments(updatedAssignments);
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Error deleting race plan assignment:', err);
+      return { success: false, error: 'Failed to delete race plan assignment' };
+    }
+  };
+  
+  // Get race plan assignments by race ID
+  const getRacePlanAssignmentsByRaceId = (raceId: string) => {
+    return Object.values(racePlanAssignments).filter(
+      assignment => assignment.raceId === raceId
+    );
+  };
 
   const getNutritionPlan = useCallback((planId: string) => {
     return nutritionPlans[planId];
@@ -535,6 +664,7 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
       value={{
         nutritionPlans,
         hydrationPlans,
+        racePlanAssignments,
         loading,
         error,
         createNutritionPlan,
@@ -549,7 +679,12 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
         addHydrationEntry,
         updateHydrationEntry,
         deleteHydrationEntry,
-        getNutritionPlan
+        getNutritionPlan,
+        getHydrationPlan,
+        createRacePlanAssignment,
+        updateRacePlanAssignment,
+        deleteRacePlanAssignment,
+        getRacePlanAssignmentsByRaceId
       }}
     >
       {children}

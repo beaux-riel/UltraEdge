@@ -824,7 +824,7 @@ const RacePrepScreen = ({ navigation, route }) => {
                 mode="outlined"
                 onPress={backupAllGearItems}
                 style={{ marginRight: 8 }}
-                color={theme.colors.primary}
+                buttonColor={theme.colors.secondary}
               >
                 Backup Gear
               </Button>
@@ -841,7 +841,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               ? "Your gear is automatically backed up to the cloud."
               : ""}
           </Paragraph>
-          
+
           <View style={styles.switchContainer}>
             <Text style={[styles.switchLabel, { color: theme.colors.text }]}>
               Show Retired Items
@@ -858,7 +858,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="hiking"
                 size={48}
-                color={theme.colors.disabled}
+                color={theme.colors.secondary}
               />
               <Text
                 style={[
@@ -891,152 +891,161 @@ const RacePrepScreen = ({ navigation, route }) => {
           ) : (
             // Filter gear items based on showRetiredItems toggle
             gearItems
-              .filter(item => showRetiredItems || !item.retired)
+              .filter((item) => showRetiredItems || !item.retired)
               .map((item, index) => (
-              <Surface
-                key={index}
-                style={[
-                  styles.itemCard,
-                  {
-                    backgroundColor: isDarkMode
-                      ? theme.colors.surfaceVariant
-                      : theme.colors.surfaceVariant,
-                  },
-                ]}
-              >
-                <View style={styles.itemCardHeader}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text
-                      style={[
-                        styles.itemCardTitle, 
-                        { 
-                          color: item.retired ? theme.colors.disabled : theme.colors.text,
-                          textDecorationLine: item.retired ? 'line-through' : 'none'
-                        }
-                      ]}
+                <Surface
+                  key={index}
+                  style={[
+                    styles.itemCard,
+                    {
+                      backgroundColor: isDarkMode
+                        ? theme.colors.surfaceVariant
+                        : theme.colors.surfaceVariant,
+                    },
+                  ]}
+                >
+                  <View style={styles.itemCardHeader}>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      {item.name}
-                    </Text>
-                    {item.retired && (
-                      <Chip
+                      <Text
                         style={[
-                          styles.tagChip,
-                          { backgroundColor: theme.colors.error + "20", marginLeft: 8 }
+                          styles.itemCardTitle,
+                          {
+                            color: item.retired
+                              ? theme.colors.disabled
+                              : theme.colors.text,
+                            textDecorationLine: item.retired
+                              ? "line-through"
+                              : "none",
+                          },
                         ]}
-                        textStyle={{ color: theme.colors.error }}
                       >
-                        Retired
-                      </Chip>
-                    )}
+                        {item.name}
+                      </Text>
+                      {item.retired && (
+                        <Chip
+                          style={[
+                            styles.tagChip,
+                            {
+                              backgroundColor: theme.colors.error + "20",
+                              marginLeft: 8,
+                            },
+                          ]}
+                          textStyle={{ color: theme.colors.error }}
+                        >
+                          Retired
+                        </Chip>
+                      )}
+                    </View>
+                    <View style={styles.itemCardActions}>
+                      <TouchableOpacity
+                        onPress={() => handleEditGearItem(index)}
+                        style={styles.itemCardAction}
+                      >
+                        <MaterialCommunityIcons
+                          name="pencil"
+                          size={20}
+                          color={theme.colors.primary}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteGearItem(index)}
+                        style={styles.itemCardAction}
+                      >
+                        <MaterialCommunityIcons
+                          name="delete"
+                          size={20}
+                          color={theme.colors.error}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.itemCardActions}>
-                    <TouchableOpacity
-                      onPress={() => handleEditGearItem(index)}
-                      style={styles.itemCardAction}
-                    >
-                      <MaterialCommunityIcons
-                        name="pencil"
-                        size={20}
-                        color={theme.colors.primary}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteGearItem(index)}
-                      style={styles.itemCardAction}
-                    >
-                      <MaterialCommunityIcons
-                        name="delete"
-                        size={20}
-                        color={theme.colors.error}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <Divider style={styles.itemCardDivider} />
-                <View style={styles.itemCardContent}>
-                  <View style={styles.planDetailRow}>
-                    <Text
-                      style={[
-                        styles.planDetailLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      Brand:
-                    </Text>
-                    <Text
-                      style={[
-                        styles.planDetailValue,
-                        { color: theme.colors.text },
-                      ]}
-                    >
-                      {item.brand || "Not specified"}
-                    </Text>
-                  </View>
-                  <View style={styles.planDetailRow}>
-                    <Text
-                      style={[
-                        styles.planDetailLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      Weight:
-                    </Text>
-                    <Text
-                      style={[
-                        styles.planDetailValue,
-                        { color: theme.colors.text },
-                      ]}
-                    >
-                      {item.weight
-                        ? `${item.weight} ${item.weightUnit || "g"}`
-                        : "Not specified"}
-                    </Text>
-                  </View>
-                  <View style={styles.planDetailRow}>
-                    <Text
-                      style={[
-                        styles.planDetailLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      Quantity:
-                    </Text>
-                    <Text
-                      style={[
-                        styles.planDetailValue,
-                        { color: theme.colors.text },
-                      ]}
-                    >
-                      {item.quantity || 1}
-                    </Text>
-                  </View>
-                  <View style={styles.itemTags}>
-                    {item.isNutrition && (
-                      <Chip
+                  <Divider style={styles.itemCardDivider} />
+                  <View style={styles.itemCardContent}>
+                    <View style={styles.planDetailRow}>
+                      <Text
                         style={[
-                          styles.tagChip,
-                          { backgroundColor: theme.colors.success + "20" },
+                          styles.planDetailLabel,
+                          { color: theme.colors.textSecondary },
                         ]}
-                        textStyle={{ color: theme.colors.success }}
                       >
-                        Nutrition
-                      </Chip>
-                    )}
-                    {item.isHydration && (
-                      <Chip
+                        Brand:
+                      </Text>
+                      <Text
                         style={[
-                          styles.tagChip,
-                          { backgroundColor: theme.colors.tertiary + "20" },
+                          styles.planDetailValue,
+                          { color: theme.colors.text },
                         ]}
-                        textStyle={{ color: theme.colors.tertiary }}
                       >
-                        Hydration
-                      </Chip>
-                    )}
+                        {item.brand || "Not specified"}
+                      </Text>
+                    </View>
+                    <View style={styles.planDetailRow}>
+                      <Text
+                        style={[
+                          styles.planDetailLabel,
+                          { color: theme.colors.textSecondary },
+                        ]}
+                      >
+                        Weight:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.planDetailValue,
+                          { color: theme.colors.text },
+                        ]}
+                      >
+                        {item.weight
+                          ? `${item.weight} ${item.weightUnit || "g"}`
+                          : "Not specified"}
+                      </Text>
+                    </View>
+                    <View style={styles.planDetailRow}>
+                      <Text
+                        style={[
+                          styles.planDetailLabel,
+                          { color: theme.colors.textSecondary },
+                        ]}
+                      >
+                        Quantity:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.planDetailValue,
+                          { color: theme.colors.text },
+                        ]}
+                      >
+                        {item.quantity || 1}
+                      </Text>
+                    </View>
+                    <View style={styles.itemTags}>
+                      {item.isNutrition && (
+                        <Chip
+                          style={[
+                            styles.tagChip,
+                            { backgroundColor: theme.colors.success + "20" },
+                          ]}
+                          textStyle={{ color: theme.colors.success }}
+                        >
+                          Nutrition
+                        </Chip>
+                      )}
+                      {item.isHydration && (
+                        <Chip
+                          style={[
+                            styles.tagChip,
+                            { backgroundColor: theme.colors.tertiary + "20" },
+                          ]}
+                          textStyle={{ color: theme.colors.tertiary }}
+                        >
+                          Hydration
+                        </Chip>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </Surface>
-            ))
+                </Surface>
+              ))
           )}
         </Surface>
 
@@ -1076,7 +1085,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="bag-personal-outline"
                 size={48}
-                color={theme.colors.disabled}
+                color={theme.colors.primary}
               />
               <Text
                 style={[
@@ -1367,7 +1376,6 @@ const RacePrepScreen = ({ navigation, route }) => {
             )
           )}
         </Surface>
-
       </ScrollView>
 
       {/* FAB for quick actions */}

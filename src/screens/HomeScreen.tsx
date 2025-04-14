@@ -203,8 +203,8 @@ const HomeScreen = ({ navigation }) => {
                 styles.actionDescription,
                 {
                   color: isDarkMode
-                    ? theme.colors.textSecondary
-                    : theme.colors.textSecondary,
+                    ? theme.colors.text
+                    : theme.colors.text,
                 },
               ]}
             >

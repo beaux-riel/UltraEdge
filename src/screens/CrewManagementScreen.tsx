@@ -307,21 +307,22 @@ const CrewManagementScreen = ({ route, navigation }) => {
   return (
     <Portal.Host>
       <View style={[dynamicStyles.container, { flex: 1 }]}>
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 80
+            paddingBottom: insets.bottom + 80,
           }}
         >
           <View style={styles.content}>
             <Text style={dynamicStyles.title}>Crew Management</Text>
             <Text style={dynamicStyles.subtitle}>
-              {raceData.name} - {raceData.distance} {raceData.distanceUnit || 'miles'}
+              {raceData.name} - {raceData.distance}{" "}
+              {raceData.distanceUnit || "miles"}
             </Text>
-            
+
             <Card style={dynamicStyles.card}>
               <Card.Content>
                 <Text style={dynamicStyles.sectionLabel}>Crew Members</Text>
-                
+
                 {crewMembers.length > 0 ? (
                   crewMembers.map((crew, index) => (
                     <List.Item
@@ -331,19 +332,29 @@ const CrewManagementScreen = ({ route, navigation }) => {
                       description={
                         <>
                           <Text style={dynamicStyles.listItemDescription}>
-                            {crew.customRole || crew.role || 'No role specified'}
+                            {crew.customRole ||
+                              crew.role ||
+                              "No role specified"}
                           </Text>
-                          {crew.responsibilities && crew.responsibilities.length > 0 && (
-                            <Text style={dynamicStyles.listItemDescription}>
-                              Responsibilities: {crew.responsibilities.join(', ')}
-                            </Text>
-                          )}
+                          {crew.responsibilities &&
+                            crew.responsibilities.length > 0 && (
+                              <Text style={dynamicStyles.listItemDescription}>
+                                Responsibilities:{" "}
+                                {crew.responsibilities.join(", ")}
+                              </Text>
+                            )}
                         </>
                       }
                       descriptionNumberOfLines={3}
                       descriptionStyle={dynamicStyles.listItemDescription}
-                      left={props => <Avatar.Text {...props} size={40} label={crew.name.substring(0, 2).toUpperCase()} />}
-                      right={props => (
+                      left={(props) => (
+                        <Avatar.Text
+                          {...props}
+                          size={40}
+                          label={crew.name.substring(0, 2).toUpperCase()}
+                        />
+                      )}
+                      right={(props) => (
                         <View style={styles.actionButtons}>
                           <Menu
                             visible={crew.menuVisible}
@@ -404,7 +415,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
                               }}
                               title="Delete"
                               leadingIcon="delete"
-                              titleStyle={{ color: 'red' }}
+                              titleStyle={{ color: "red" }}
                             />
                           </Menu>
                         </View>
@@ -414,37 +425,44 @@ const CrewManagementScreen = ({ route, navigation }) => {
                   ))
                 ) : (
                   <Text style={dynamicStyles.emptyText}>
-                    No crew members added yet. Add crew members to assign them to aid stations.
+                    No crew members added yet. Add crew members to assign them
+                    to aid stations.
                   </Text>
                 )}
               </Card.Content>
             </Card>
-            
+
             <Card style={dynamicStyles.card}>
               <Card.Content>
-                <Text style={dynamicStyles.sectionLabel}>Crew Instructions</Text>
-                
+                <Text style={dynamicStyles.sectionLabel}>
+                  Crew Instructions
+                </Text>
+
                 {crewInstructions ? (
-                  <Text style={dynamicStyles.instructionsText} numberOfLines={5}>
+                  <Text
+                    style={dynamicStyles.instructionsText}
+                    numberOfLines={5}
+                  >
                     {crewInstructions}
                   </Text>
                 ) : (
                   <Text style={dynamicStyles.emptyText}>
-                    No instructions added yet. Tap the button below to add detailed instructions for your crew.
+                    No instructions added yet. Tap the button below to add
+                    detailed instructions for your crew.
                   </Text>
                 )}
               </Card.Content>
               <Card.Actions>
-                <Button 
-                  mode="outlined" 
+                <Button
+                  mode="outlined"
                   onPress={openInstructionsModal}
                   color={theme.colors.primary}
                 >
-                  {crewInstructions ? 'Edit Instructions' : 'Add Instructions'}
+                  {crewInstructions ? "Edit Instructions" : "Add Instructions"}
                 </Button>
               </Card.Actions>
             </Card>
-            
+
             <Button
               mode="contained"
               onPress={handleSaveAll}
@@ -454,7 +472,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
             </Button>
           </View>
         </ScrollView>
-        
+
         <FAB
           style={[styles.fab, { backgroundColor: theme.colors.primary }]}
           icon="plus"
@@ -462,7 +480,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
           color="#ffffff"
         />
       </View>
-      
+
       {/* Crew Member Modal */}
       <Portal>
         <Modal
@@ -471,64 +489,85 @@ const CrewManagementScreen = ({ route, navigation }) => {
           contentContainerStyle={dynamicStyles.modalContainer}
         >
           <Text style={dynamicStyles.modalTitle}>
-            {editingCrewIndex !== null ? 'Edit Crew Member' : 'Add Crew Member'}
+            {editingCrewIndex !== null ? "Edit Crew Member" : "Add Crew Member"}
           </Text>
-          
+
           <ScrollView>
             <TextInput
               label="Name"
               value={currentCrew.name}
-              onChangeText={(text) => setCurrentCrew({...currentCrew, name: text})}
+              onChangeText={(text) =>
+                setCurrentCrew({ ...currentCrew, name: text })
+              }
               style={dynamicStyles.input}
               mode="outlined"
               theme={paperTheme}
             />
-            
+
             <TextInput
               label="Phone"
               value={currentCrew.phone}
-              onChangeText={(text) => setCurrentCrew({...currentCrew, phone: text})}
+              onChangeText={(text) =>
+                setCurrentCrew({ ...currentCrew, phone: text })
+              }
               style={dynamicStyles.input}
               mode="outlined"
               keyboardType="phone-pad"
               theme={paperTheme}
             />
-            
+
             <TextInput
               label="Email"
               value={currentCrew.email}
-              onChangeText={(text) => setCurrentCrew({...currentCrew, email: text})}
+              onChangeText={(text) =>
+                setCurrentCrew({ ...currentCrew, email: text })
+              }
               style={dynamicStyles.input}
               mode="outlined"
               keyboardType="email-address"
               theme={paperTheme}
             />
-            
+
             <CrewRoleSelector
               selectedRole={currentCrew.role}
-              onRoleChange={(role) => setCurrentCrew({...currentCrew, role})}
+              onRoleChange={(role) =>
+                setCurrentCrew((prevCrew) => ({
+                  ...prevCrew,
+                  role,
+                  customRole: "",
+                }))
+              }
               selectedResponsibilities={currentCrew.responsibilities || []}
-              onResponsibilitiesChange={(responsibilities) => setCurrentCrew({...currentCrew, responsibilities})}
-              customRole={currentCrew.customRole || ''}
-              onCustomRoleChange={(customRole) => setCurrentCrew({...currentCrew, customRole})}
+              onResponsibilitiesChange={(responsibilities) =>
+                setCurrentCrew((prevCrew) => ({
+                  ...prevCrew,
+                  responsibilities,
+                }))
+              }
+              customRole={currentCrew.customRole || ""}
+              onCustomRoleChange={(customRole) =>
+                setCurrentCrew((prevCrew) => ({ ...prevCrew, customRole }))
+              }
             />
-            
+
             <CrewNotes
-              notes={currentCrew.notes || ''}
-              onNotesChange={(notes) => setCurrentCrew({...currentCrew, notes})}
+              notes={currentCrew.notes || ""}
+              onNotesChange={(notes) =>
+                setCurrentCrew({ ...currentCrew, notes })
+              }
             />
           </ScrollView>
-          
+
           <View style={styles.modalButtons}>
-            <Button 
-              mode="outlined" 
+            <Button
+              mode="outlined"
               onPress={() => setModalVisible(false)}
               style={styles.modalButton}
             >
               Cancel
             </Button>
-            <Button 
-              mode="contained" 
+            <Button
+              mode="contained"
               onPress={handleSaveCrew}
               style={styles.modalButton}
             >
@@ -537,7 +576,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
           </View>
         </Modal>
       </Portal>
-      
+
       {/* Station Assignment Modal */}
       <Portal>
         <Modal
@@ -546,35 +585,42 @@ const CrewManagementScreen = ({ route, navigation }) => {
           contentContainerStyle={dynamicStyles.modalContainer}
         >
           <Text style={dynamicStyles.modalTitle}>Assign to Aid Stations</Text>
-          
+
           {editingCrewIndex !== null && (
             <Text style={dynamicStyles.modalSubtitle}>
-              Select aid stations where {crewMembers[editingCrewIndex].name} will be present:
+              Select aid stations where {crewMembers[editingCrewIndex].name}{" "}
+              will be present:
             </Text>
           )}
-          
+
           <ScrollView style={styles.modalScroll}>
-            {raceData.aidStations && raceData.aidStations.map((station, index) => {
-              // Only show stations that allow crew access
-              if (!station.crewAllowed) return null;
-              
-              const isAssigned = editingCrewIndex !== null && 
-                crewMembers[editingCrewIndex].assignedStations && 
-                crewMembers[editingCrewIndex].assignedStations.includes(station.id);
-              
-              return (
-                <Checkbox.Item
-                  key={station.id}
-                  label={`${station.name} (${station.distance} ${station.distanceUnit || 'miles'})`}
-                  status={isAssigned ? 'checked' : 'unchecked'}
-                  onPress={() => toggleStationAssignment(station.id)}
-                />
-              );
-            })}
+            {raceData.aidStations &&
+              raceData.aidStations.map((station, index) => {
+                // Only show stations that allow crew access
+                if (!station.crewAllowed) return null;
+
+                const isAssigned =
+                  editingCrewIndex !== null &&
+                  crewMembers[editingCrewIndex].assignedStations &&
+                  crewMembers[editingCrewIndex].assignedStations.includes(
+                    station.id
+                  );
+
+                return (
+                  <Checkbox.Item
+                    key={station.id}
+                    label={`${station.name} (${station.distance} ${
+                      station.distanceUnit || "miles"
+                    })`}
+                    status={isAssigned ? "checked" : "unchecked"}
+                    onPress={() => toggleStationAssignment(station.id)}
+                  />
+                );
+              })}
           </ScrollView>
-          
-          <Button 
-            mode="contained" 
+
+          <Button
+            mode="contained"
             onPress={() => setStationModalVisible(false)}
             style={styles.modalButton}
           >
@@ -582,7 +628,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
           </Button>
         </Modal>
       </Portal>
-      
+
       {/* Instructions Modal */}
       <Portal>
         <Modal
@@ -592,9 +638,10 @@ const CrewManagementScreen = ({ route, navigation }) => {
         >
           <Text style={dynamicStyles.modalTitle}>Crew Instructions</Text>
           <Text style={dynamicStyles.modalSubtitle}>
-            Add detailed instructions for your crew, including meeting points, driving directions, and what to bring.
+            Add detailed instructions for your crew, including meeting points,
+            driving directions, and what to bring.
           </Text>
-          
+
           <TextInput
             label="Instructions"
             value={crewInstructions}
@@ -604,9 +651,9 @@ const CrewManagementScreen = ({ route, navigation }) => {
             multiline
             theme={paperTheme}
           />
-          
-          <Button 
-            mode="contained" 
+
+          <Button
+            mode="contained"
             onPress={handleSaveInstructions}
             style={styles.modalButton}
           >
@@ -614,7 +661,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
           </Button>
         </Modal>
       </Portal>
-      
+
       {/* Share Event Plan Modal */}
       <Portal>
         <Modal
@@ -623,16 +670,16 @@ const CrewManagementScreen = ({ route, navigation }) => {
           contentContainerStyle={dynamicStyles.modalContainer}
         >
           <Text style={dynamicStyles.modalTitle}>Share Event Plan</Text>
-          
+
           {editingCrewIndex !== null && (
             <ShareEventPlan
               crewMember={crewMembers[editingCrewIndex]}
               onShare={handleSharePlan}
             />
           )}
-          
-          <Button 
-            mode="outlined" 
+
+          <Button
+            mode="outlined"
             onPress={() => setShareModalVisible(false)}
             style={styles.modalButton}
             color={theme.colors.primary}

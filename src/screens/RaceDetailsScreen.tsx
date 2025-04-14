@@ -117,6 +117,10 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const { getRaceById, deleteRace, loading } = useRaces();
   const didMountRef = useRef(false);
 
+  // Retrieve race data first
+  const raceData = getRaceById(id) || {};
+
+  // Then use useEffect that references raceData
   useEffect(() => {
     // Skip on the first render
     if (!didMountRef.current) {
@@ -133,11 +137,8 @@ const RaceDetailsScreen = ({ route, navigation }) => {
     }
   }, [loading, raceData, navigation]);
 
-  // Local state for managing the active tab.
+  // Then declare other state
   const [activeTab, setActiveTab] = useState("overview");
-
-  // Retrieve race data.
-  const raceData = getRaceById(id) || {};
 
   // Format the race date
   const formattedDate = formatDate(raceData.date);

@@ -563,9 +563,7 @@ export const NutritionHydrationProvider: React.FC<NutritionHydrationProviderProp
   };
   
   // Get a nutrition plan by ID
-  const getNutritionPlan = (planId: string) => {
-    return nutritionPlans[planId];
-  };
+
   
   // Get a hydration plan by ID
   const getHydrationPlan = (planId: string) => {

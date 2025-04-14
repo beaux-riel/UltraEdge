@@ -819,16 +819,6 @@ const RacePrepScreen = ({ navigation, route }) => {
                 Gear List
               </Title>
             </View>
-            {user && isPremium && (
-              <Button
-                mode="outlined"
-                onPress={backupAllGearItems}
-                style={{ marginRight: 8 }}
-                buttonColor={theme.colors.secondary}
-              >
-                Backup Gear
-              </Button>
-            )}
           </View>
           <Paragraph
             style={[

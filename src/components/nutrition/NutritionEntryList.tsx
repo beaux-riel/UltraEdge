@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   entryCard: {
     marginHorizontal: 16,
-    marginVertical: 4,
+    marginVertical: 16,
   },
   entryHeader: {
     flexDirection: 'row',

@@ -143,7 +143,6 @@ const HomeScreen = ({ navigation }) => {
         { backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa" },
       ]}
       contentContainerStyle={{
-        paddingTop: insets.top > 0 ? 0 : 16,
         paddingBottom: insets.bottom + 16,
       }}
       showsVerticalScrollIndicator={false}
@@ -355,6 +354,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginTop: 4,
+    marginBottom: 16,
   },
   actionCard: {
     marginHorizontal: 16,

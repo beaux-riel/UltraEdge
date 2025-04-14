@@ -1094,26 +1094,24 @@ const RaceDetailsScreen = ({ route, navigation }) => {
       </ScrollView>
       <View style={[styles.fabContainer, { bottom: insets.bottom }]}>
         <FAB.Group
+          visible={true}
           open={false}
           icon="plus"
           actions={[
             {
-              icon: "pencil",
-              label: "Edit Race",
-              onPress: () =>
-                navigation.navigate("CreateRace", { editMode: true, raceData }),
+              icon: 'pencil',
+              label: 'Edit Race',
+              onPress: () => navigation.navigate("CreateRace", { editMode: true, raceData }),
             },
             {
-              icon: "link",
-              label: "Race Integration",
-              onPress: () =>
-                navigation.navigate("RaceIntegration", { raceId: id }),
+              icon: 'link',
+              label: 'Race Integration',
+              onPress: () => navigation.navigate("RaceIntegration", { raceId: id }),
             },
             {
-              icon: "account-group",
-              label: "Crew Management",
-              onPress: () =>
-                navigation.navigate("CrewManagement", { raceId: id }),
+              icon: 'account-group',
+              label: 'Crew Management',
+              onPress: () => navigation.navigate("CrewManagement", { raceId: id }),
             },
           ]}
           onStateChange={() => {}}

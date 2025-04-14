@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { VictoryLine, VictoryChart, VictoryAxis, VictoryTheme, VictoryArea, VictoryScatter } from 'victory-native';
+import { LineChart } from 'react-native-gifted-charts';
 import { useAppTheme } from '../../context/ThemeContext';
 import { HydrationEntry } from '../../context/NutritionHydrationContext';
 
@@ -48,7 +48,7 @@ const HydrationChart: React.FC<HydrationChartProps> = ({
       }
     });
     
-    // Convert to array format for VictoryLine
+    // Convert to array format for LineChart
     return Object.entries(groups).map(([time, volume]) => ({
       time: parseFloat(time),
       volume,
@@ -66,6 +66,19 @@ const HydrationChart: React.FC<HydrationChartProps> = ({
       };
     });
   }, [groupedEntries]);
+  
+  // Format data for react-native-gifted-charts
+  const lineData = cumulativeData.map(entry => ({
+    value: entry.volume,
+    label: `${entry.time}h`,
+    dataPointText: entry.volume.toString(),
+  }));
+  
+  // Create target line data
+  const targetLineData = [
+    { value: 0, label: '0h' },
+    { value: targetVolume, label: '24h' }
+  ];
   
   // Calculate total volume
   const totalVolume = entries.reduce((sum, entry) => sum + (entry.volume || 0), 0);
@@ -90,76 +103,44 @@ const HydrationChart: React.FC<HydrationChartProps> = ({
         Hydration Intake Over Time
       </Text>
       
-      <VictoryChart
-        width={width * 0.9}
-        height={250}
-        theme={VictoryTheme.material}
-      >
-        <VictoryAxis
-          tickFormat={(t) => `${t}h`}
-          style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { fill: isDarkMode ? '#fff' : '#000' }
+      <View style={{ marginVertical: 10 }}>
+        <LineChart
+          data={lineData}
+          width={width * 0.9}
+          height={250}
+          areaChart
+          curved
+          color={theme.colors.blue}
+          dataPointsColor={theme.colors.blue}
+          startFillColor={theme.colors.blue}
+          endFillColor={isDarkMode ? '#1e1e1e' : '#fff'}
+          startOpacity={0.4}
+          endOpacity={0.1}
+          spacing={width * 0.9 / (timeIntervals + 1)}
+          thickness={3}
+          hideRules
+          yAxisColor={isDarkMode ? '#fff' : '#000'}
+          xAxisColor={isDarkMode ? '#fff' : '#000'}
+          yAxisTextStyle={{ color: isDarkMode ? '#fff' : '#000' }}
+          xAxisTextStyle={{ color: isDarkMode ? '#fff' : '#000' }}
+          yAxisLabelSuffix="ml"
+          backgroundColor={isDarkMode ? '#1e1e1e' : '#fff'}
+          rulesColor={isDarkMode ? '#444' : '#e0e0e0'}
+          rulesType="dashed"
+          showYAxisIndices={true}
+          showAnimation={true}
+          animationDuration={500}
+          disableScroll={true}
+          secondaryData={targetLineData}
+          secondaryLineConfig={{
+            color: theme.colors.secondary,
+            thickness: 2,
+            dashWidth: 5,
+            dashGap: 5,
+            dataPointsRadius: 0,
           }}
         />
-        <VictoryAxis
-          dependentAxis
-          tickFormat={(t) => `${t}ml`}
-          style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { fill: isDarkMode ? '#fff' : '#000' }
-          }}
-        />
-        
-        {/* Target volume line */}
-        <VictoryLine
-          data={[
-            { time: 0, volume: 0 },
-            { time: 24, volume: targetVolume }
-          ]}
-          x="time"
-          y="volume"
-          style={{
-            data: { 
-              stroke: theme.colors.secondary,
-              strokeDasharray: '5,5',
-              strokeWidth: 2
-            }
-          }}
-        />
-        
-        {/* Cumulative volume area */}
-        <VictoryArea
-          data={cumulativeData}
-          x="time"
-          y="volume"
-          style={{
-            data: { 
-              fill: theme.colors.blue,
-              fillOpacity: 0.3,
-              stroke: theme.colors.blue,
-              strokeWidth: 2
-            }
-          }}
-          animate={{
-            duration: 500,
-            onLoad: { duration: 300 }
-          }}
-        />
-        
-        {/* Data points */}
-        <VictoryScatter
-          data={cumulativeData}
-          x="time"
-          y="volume"
-          size={5}
-          style={{
-            data: { 
-              fill: theme.colors.blue
-            }
-          }}
-        />
-      </VictoryChart>
+      </View>
       
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import Legend, { Pie } from 'victory-native';
+import { PieChart } from 'react-native-gifted-charts';
 import { useAppTheme } from '../../context/ThemeContext';
 import { NutritionEntry } from '../../context/NutritionHydrationContext';
 
@@ -39,14 +39,14 @@ const MacronutrientChart: React.FC<MacronutrientChartProps> = ({
   const fatPercentage = totalCalories > 0 ? Math.round((fatCalories / totalCalories) * 100) : 0;
   
   // Prepare data for the pie chart
-  const chartData = [
-    { x: `Carbs\n${carbPercentage}%`, y: carbCalories, color: theme.colors.primary },
-    { x: `Protein\n${proteinPercentage}%`, y: proteinCalories, color: theme.colors.secondary },
-    { x: `Fat\n${fatPercentage}%`, y: fatCalories, color: theme.colors.tertiary }
-  ].filter(item => item.y > 0);
+  const pieData = [
+    { value: carbCalories, color: theme.colors.primary, text: `${carbPercentage}%`, name: 'Carbs' },
+    { value: proteinCalories, color: theme.colors.secondary, text: `${proteinPercentage}%`, name: 'Protein' },
+    { value: fatCalories, color: theme.colors.tertiary, text: `${fatPercentage}%`, name: 'Fat' }
+  ].filter(item => item.value > 0);
   
   // If no data, show empty state
-  if (chartData.length === 0 || totalCalories === 0) {
+  if (pieData.length === 0 || totalCalories === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>
@@ -56,13 +56,6 @@ const MacronutrientChart: React.FC<MacronutrientChartProps> = ({
     );
   }
   
-  // Legend data
-  const legendData = [
-    { name: `Carbs: ${totalCarbs}g (${carbPercentage}%)`, symbol: { fill: theme.colors.primary } },
-    { name: `Protein: ${totalProtein}g (${proteinPercentage}%)`, symbol: { fill: theme.colors.secondary } },
-    { name: `Fat: ${totalFat}g (${fatPercentage}%)`, symbol: { fill: theme.colors.tertiary } }
-  ];
-  
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: isDarkMode ? '#fff' : '#000' }]}>
@@ -70,47 +63,45 @@ const MacronutrientChart: React.FC<MacronutrientChartProps> = ({
       </Text>
       
       <View style={styles.chartContainer}>
-        <Pie
-          data={chartData}
-          width={size}
-          height={size}
-          colorScale={chartData.map(d => d.color)}
+        <PieChart
+          data={pieData}
+          donut
+          showGradient={false}
+          sectionAutoFocus
+          radius={size / 2.5}
           innerRadius={size / 5}
-          labelRadius={size / 3}
-          style={{
-            labels: {
-              fill: isDarkMode ? '#fff' : '#000',
-              fontSize: 14,
-              fontWeight: 'bold'
-            }
-          }}
-          animate={{ duration: 500 }}
+          innerCircleColor={isDarkMode ? '#1e1e1e' : '#fff'}
+          centerLabelComponent={() => (
+            <View style={styles.calorieContainer}>
+              <Text style={[styles.calorieValue, { color: isDarkMode ? '#fff' : '#000' }]}>
+                {totalCalories}
+              </Text>
+              <Text style={[styles.calorieLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
+                calories
+              </Text>
+            </View>
+          )}
+          textColor={isDarkMode ? '#fff' : '#000'}
+          textSize={14}
+          fontWeight="bold"
+          strokeWidth={0}
+          focusOnPress
+          showValuesAsLabels={false}
+          showText
         />
-        
-        <View style={styles.calorieContainer}>
-          <Text style={[styles.calorieValue, { color: isDarkMode ? '#fff' : '#000' }]}>
-            {totalCalories}
-          </Text>
-          <Text style={[styles.calorieLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
-            calories
-          </Text>
-        </View>
       </View>
       
       {showLegend && (
-        <Legend
-          x={0}
-          y={0}
-          width={width * 0.9}
-          height={80}
-          centerTitle
-          orientation="horizontal"
-          gutter={20}
-          style={{
-            labels: { fill: isDarkMode ? '#fff' : '#000' }
-          }}
-          data={legendData}
-        />
+        <View style={styles.legendContainer}>
+          {pieData.map((item, index) => (
+            <View key={index} style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+              <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>
+                {item.name}: {item.text}
+              </Text>
+            </View>
+          ))}
+        </View>
       )}
       
       <View style={styles.macroDetails}>
@@ -161,7 +152,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   calorieContainer: {
-    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -171,6 +161,25 @@ const styles = StyleSheet.create({
   },
   calorieLabel: {
     fontSize: 14,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 16,
+    width: '100%',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 8,
+    marginVertical: 4,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 4,
   },
   macroDetails: {
     flexDirection: 'row',

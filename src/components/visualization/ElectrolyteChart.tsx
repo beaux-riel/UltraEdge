@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import { VictoryBar, VictoryChart, VictoryAxis, VictoryTheme, VictoryGroup } from 'victory-native';
+import { BarChart } from 'react-native-gifted-charts';
 import { useAppTheme } from '../../context/ThemeContext';
 import { NutritionEntry, HydrationEntry } from '../../context/NutritionHydrationContext';
 
@@ -41,23 +41,67 @@ const ElectrolyteChart: React.FC<ElectrolyteChartProps> = ({
   const totalPotassium = nutritionPotassium + hydrationPotassium;
   const totalMagnesium = nutritionMagnesium + hydrationMagnesium;
   
-  // Prepare data for the chart
-  const nutritionData = [
-    { electrolyte: 'Sodium', amount: nutritionSodium },
-    { electrolyte: 'Potassium', amount: nutritionPotassium },
-    { electrolyte: 'Magnesium', amount: nutritionMagnesium }
-  ];
-  
-  const hydrationData = [
-    { electrolyte: 'Sodium', amount: hydrationSodium },
-    { electrolyte: 'Potassium', amount: hydrationPotassium },
-    { electrolyte: 'Magnesium', amount: hydrationMagnesium }
-  ];
-  
-  const targetData = [
-    { electrolyte: 'Sodium', amount: targetSodium },
-    { electrolyte: 'Potassium', amount: targetPotassium },
-    { electrolyte: 'Magnesium', amount: targetMagnesium }
+  // Prepare data for the chart using the format required by react-native-gifted-charts
+  const barData = [
+    {
+      value: nutritionSodium,
+      label: 'Sodium',
+      frontColor: theme.colors.primary,
+      spacing: 6,
+      labelTextStyle: { color: isDarkMode ? '#fff' : '#000' },
+    },
+    {
+      value: hydrationSodium,
+      frontColor: theme.colors.blue,
+      spacing: 6,
+    },
+    {
+      value: targetSodium,
+      frontColor: 'transparent',
+      borderWidth: 2,
+      borderColor: theme.colors.secondary,
+      borderDashPattern: [5, 5],
+      spacing: 20,
+    },
+    {
+      value: nutritionPotassium,
+      label: 'Potassium',
+      frontColor: theme.colors.primary,
+      spacing: 6,
+      labelTextStyle: { color: isDarkMode ? '#fff' : '#000' },
+    },
+    {
+      value: hydrationPotassium,
+      frontColor: theme.colors.blue,
+      spacing: 6,
+    },
+    {
+      value: targetPotassium,
+      frontColor: 'transparent',
+      borderWidth: 2,
+      borderColor: theme.colors.secondary,
+      borderDashPattern: [5, 5],
+      spacing: 20,
+    },
+    {
+      value: nutritionMagnesium,
+      label: 'Magnesium',
+      frontColor: theme.colors.primary,
+      spacing: 6,
+      labelTextStyle: { color: isDarkMode ? '#fff' : '#000' },
+    },
+    {
+      value: hydrationMagnesium,
+      frontColor: theme.colors.blue,
+      spacing: 6,
+    },
+    {
+      value: targetMagnesium,
+      frontColor: 'transparent',
+      borderWidth: 2,
+      borderColor: theme.colors.secondary,
+      borderDashPattern: [5, 5],
+    },
   ];
   
   // If no data, show empty state
@@ -77,69 +121,28 @@ const ElectrolyteChart: React.FC<ElectrolyteChartProps> = ({
         Electrolyte Intake
       </Text>
       
-      <VictoryChart
-        width={width * 0.9}
-        height={250}
-        domainPadding={{ x: 30 }}
-        theme={VictoryTheme.material}
-      >
-        <VictoryAxis
-          tickFormat={['Sodium', 'Potassium', 'Magnesium']}
-          style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { fill: isDarkMode ? '#fff' : '#000' }
-          }}
+      <View style={{ marginVertical: 10 }}>
+        <BarChart
+          data={barData}
+          width={width * 0.9}
+          height={250}
+          barWidth={20}
+          spacing={0}
+          barBorderRadius={4}
+          yAxisTextStyle={{ color: isDarkMode ? '#fff' : '#000' }}
+          yAxisLabelSuffix="mg"
+          noOfSections={5}
+          yAxisColor={isDarkMode ? '#fff' : '#000'}
+          xAxisColor={isDarkMode ? '#fff' : '#000'}
+          backgroundColor={isDarkMode ? '#1e1e1e' : '#fff'}
+          rulesColor={isDarkMode ? '#444' : '#e0e0e0'}
+          rulesType="dashed"
+          showYAxisIndices={true}
+          showAnimation={true}
+          animationDuration={500}
+          disableScroll={true}
         />
-        <VictoryAxis
-          dependentAxis
-          tickFormat={(t) => `${t}mg`}
-          style={{
-            axis: { stroke: isDarkMode ? '#fff' : '#000' },
-            tickLabels: { fill: isDarkMode ? '#fff' : '#000' }
-          }}
-        />
-        
-        <VictoryGroup
-          offset={20}
-          colorScale={[theme.colors.primary, theme.colors.blue, theme.colors.secondary]}
-        >
-          <VictoryBar
-            data={nutritionData}
-            x="electrolyte"
-            y="amount"
-            animate={{
-              duration: 500,
-              onLoad: { duration: 300 }
-            }}
-          />
-          <VictoryBar
-            data={hydrationData}
-            x="electrolyte"
-            y="amount"
-            animate={{
-              duration: 500,
-              onLoad: { duration: 300 }
-            }}
-          />
-          <VictoryBar
-            data={targetData}
-            x="electrolyte"
-            y="amount"
-            style={{
-              data: {
-                fill: 'transparent',
-                stroke: theme.colors.secondary,
-                strokeWidth: 2,
-                strokeDasharray: '5,5'
-              }
-            }}
-            animate={{
-              duration: 500,
-              onLoad: { duration: 300 }
-            }}
-          />
-        </VictoryGroup>
-      </VictoryChart>
+      </View>
       
       <View style={styles.legend}>
         <View style={styles.legendItem}>

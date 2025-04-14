@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import * as Victory from "victory-native";
+import { BarChart } from 'react-native-gifted-charts';
 import { useAppTheme } from '../../context/ThemeContext';
 import { NutritionEntry } from '../../context/NutritionHydrationContext';
 
@@ -48,14 +48,28 @@ const CalorieChart: React.FC<CalorieChartProps> = ({
       }
     });
     
-    // Convert to array format for VictoryBar
+    // Convert to array format for BarChart
     return Object.entries(groups).map(([interval, calories]) => ({
-      interval,
-      calories,
+      label: interval,
+      value: calories,
+      frontColor: calories >= targetCalories / timeIntervals ? theme.colors.primary : theme.colors.error,
+      topLabelComponent: () => (
+        <Text style={{ 
+          color: isDarkMode ? '#fff' : '#000', 
+          fontSize: 10,
+          marginBottom: 4
+        }}>
+          {calories}
+        </Text>
+      )
     }));
-  }, [entries, timeIntervals]);
-
-  console.log({ Victory });
+  }, [entries, timeIntervals, targetCalories, theme.colors.primary, theme.colors.error, isDarkMode]);
+  
+  // Calculate total calories
+  const totalCalories = entries.reduce((sum, entry) => sum + (entry.calories || 0), 0);
+  
+  // Calculate percentage of target
+  const percentOfTarget = Math.round((totalCalories / targetCalories) * 100);
   
   if (entries.length === 0) {
     return (
@@ -73,60 +87,62 @@ const CalorieChart: React.FC<CalorieChartProps> = ({
         Calorie Intake Over Time
       </Text>
 
-      <Victory.CartesianChart
-        width={width * 0.9}
-        height={250}
-        domainPadding={{ x: 20 }}
-        padding={{ top: 20, bottom: 50, left: 50, right: 20 }}
-      >
-        <Victory.CartesianAxis
-          tickFormat={(t) => t}
-          style={{
-            axis: { stroke: isDarkMode ? "#fff" : "#000" },
-            tickLabels: {
-              fill: isDarkMode ? "#fff" : "#000",
-              fontSize: 10,
-              angle: -45,
-              textAnchor: "end",
-            },
-            grid: {
-              stroke: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-            },
-          }}
-        />
-        <Victory.CartesianAxis
-          dependentAxis
-          tickFormat={(t) => `${t}`}
-          style={{
-            axis: { stroke: isDarkMode ? "#fff" : "#000" },
-            tickLabels: {
-              fill: isDarkMode ? "#fff" : "#000",
-              fontSize: 10,
-            },
-            grid: {
-              stroke: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-            },
-          }}
-        />
-        <Victory.Bar
+      <View style={{ marginVertical: 10 }}>
+        <BarChart
           data={groupedEntries}
-          x="interval"
-          y="calories"
-          style={{
-            data: {
-              fill: ({ datum }) =>
-                datum.calories >= targetCalories / timeIntervals
-                  ? theme.colors.primary
-                  : theme.colors.error,
-              width: 20,
-            },
-          }}
-          animate={{
-            duration: 500,
-            onLoad: { duration: 300 },
-          }}
+          width={width * 0.9}
+          height={250}
+          barWidth={30}
+          spacing={10}
+          barBorderRadius={4}
+          yAxisTextStyle={{ color: isDarkMode ? '#fff' : '#000' }}
+          xAxisTextStyle={{ color: isDarkMode ? '#fff' : '#000', fontSize: 8 }}
+          noOfSections={5}
+          yAxisColor={isDarkMode ? '#fff' : '#000'}
+          xAxisColor={isDarkMode ? '#fff' : '#000'}
+          backgroundColor={isDarkMode ? '#1e1e1e' : '#fff'}
+          rulesColor={isDarkMode ? '#444' : '#e0e0e0'}
+          rulesType="dashed"
+          showYAxisIndices={true}
+          showAnimation={true}
+          animationDuration={500}
+          disableScroll={true}
+          rotateLabel={true}
+          xAxisLabelTextStyle={{ color: isDarkMode ? '#fff' : '#000', fontSize: 8 }}
+          hideAxesAndRules={false}
         />
-      </Victory.CartesianChart>
+      </View>
+      
+      <View style={styles.statsContainer}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: isDarkMode ? '#fff' : '#000' }]}>
+            {totalCalories}
+          </Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
+            Total Calories
+          </Text>
+        </View>
+        
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: isDarkMode ? '#fff' : '#000' }]}>
+            {targetCalories}
+          </Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
+            Target Calories
+          </Text>
+        </View>
+        
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { 
+            color: percentOfTarget >= 100 ? theme.colors.success : theme.colors.error 
+          }]}>
+            {percentOfTarget}%
+          </Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? '#ccc' : '#666' }]}>
+            of Target
+          </Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -146,6 +162,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     height: 250
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 14,
   }
 });
 

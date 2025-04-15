@@ -111,6 +111,12 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [raceStatus, setRaceStatus] = useState("planned");
   const [resultTime, setResultTime] = useState("");
   const [resultNotes, setResultNotes] = useState("");
+  
+  // Location information
+  const [locationType, setLocationType] = useState("address"); // "address" or "coordinates"
+  const [locationAddress, setLocationAddress] = useState("");
+  const [locationLatitude, setLocationLatitude] = useState("");
+  const [locationLongitude, setLocationLongitude] = useState("");
 
   // Important dates/times
   const [importantDates, setImportantDates] = useState([]);
@@ -148,6 +154,18 @@ const CreateRaceScreen = ({ route, navigation }) => {
       setRaceName(existingRace.name);
       setEventType(existingRace.eventType || "run");
       setDistance(existingRace.distance.toString());
+      
+      // Set location data if it exists
+      if (existingRace.location) {
+        if (existingRace.location.address) {
+          setLocationType("address");
+          setLocationAddress(existingRace.location.address);
+        } else if (existingRace.location.latitude && existingRace.location.longitude) {
+          setLocationType("coordinates");
+          setLocationLatitude(existingRace.location.latitude.toString());
+          setLocationLongitude(existingRace.location.longitude.toString());
+        }
+      }
       setDistanceUnit(existingRace.distanceUnit || "miles");
       setElevation(
         existingRace.elevation ? existingRace.elevation.toString() : ""
@@ -478,6 +496,17 @@ const CreateRaceScreen = ({ route, navigation }) => {
   };
 
   const handleCreateRace = () => {
+    // Create location object based on the selected type
+    let locationData = null;
+    if (locationType === "address" && locationAddress.trim()) {
+      locationData = { address: locationAddress.trim() };
+    } else if (locationType === "coordinates" && locationLatitude && locationLongitude) {
+      locationData = {
+        latitude: parseFloat(locationLatitude),
+        longitude: parseFloat(locationLongitude)
+      };
+    }
+
     const newRaceData = {
       id: existingRace ? existingRace.id : Date.now().toString(),
       name: raceName,
@@ -489,6 +518,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       date: raceDate,
       startTime: startTimeString,
       finishTime: finishTimeString,
+      location: locationData,
       cutoffTime: cutoffTime
         ? { value: parseFloat(cutoffTime), unit: cutoffTimeUnit }
         : null,
@@ -668,6 +698,78 @@ const CreateRaceScreen = ({ route, navigation }) => {
               style={styles.segmentedButton}
             />
           </View>
+          
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000", marginTop: 16 },
+            ]}
+          >
+            Location
+          </Text>
+          
+          <SegmentedButtons
+            value={locationType}
+            onValueChange={setLocationType}
+            buttons={[
+              { value: "address", label: "Address" },
+              { value: "coordinates", label: "Lat/Long" },
+            ]}
+            style={[styles.segmentedButton, { marginBottom: 12 }]}
+          />
+          
+          {locationType === "address" ? (
+            <TextInput
+              label="Race Location Address"
+              value={locationAddress}
+              onChangeText={setLocationAddress}
+              style={[
+                styles.input,
+                { backgroundColor: isDarkMode ? "#1e1e1e" : "white", marginBottom: 16 },
+              ]}
+              mode="outlined"
+              theme={inputTheme}
+              labelStyle={labelStyle}
+              outlineColor={isDarkMode ? "#333333" : "#111112"}
+              activeOutlineColor={theme.colors.primary}
+              placeholder="e.g. Chamonix, France"
+            />
+          ) : (
+            <View>
+              <TextInput
+                label="Latitude"
+                value={locationLatitude}
+                onChangeText={setLocationLatitude}
+                style={[
+                  styles.input,
+                  { backgroundColor: isDarkMode ? "#1e1e1e" : "white", marginBottom: 12 },
+                ]}
+                keyboardType="numeric"
+                mode="outlined"
+                theme={inputTheme}
+                labelStyle={labelStyle}
+                outlineColor={isDarkMode ? "#333333" : "#111112"}
+                activeOutlineColor={theme.colors.primary}
+                placeholder="e.g. 45.923697"
+              />
+              <TextInput
+                label="Longitude"
+                value={locationLongitude}
+                onChangeText={setLocationLongitude}
+                style={[
+                  styles.input,
+                  { backgroundColor: isDarkMode ? "#1e1e1e" : "white", marginBottom: 16 },
+                ]}
+                keyboardType="numeric"
+                mode="outlined"
+                theme={inputTheme}
+                labelStyle={labelStyle}
+                outlineColor={isDarkMode ? "#333333" : "#111112"}
+                activeOutlineColor={theme.colors.primary}
+                placeholder="e.g. 6.869433"
+              />
+            </View>
+          )}
 
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
             <View pointerEvents="none">

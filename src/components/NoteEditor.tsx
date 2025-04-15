@@ -17,7 +17,14 @@ import { useAppTheme } from "../context/ThemeContext";
 import { useNotes, NOTE_TYPES } from "../context/NotesContext";
 
 const NoteEditor = ({ route }) => {
-  const { entityType = NOTE_TYPES.RACE, entityId, entityName, initialContent = "", noteId = null } = route.params;
+  const { 
+    entityType = NOTE_TYPES.RACE, 
+    entityId, 
+    entityName, 
+    initialContent = "", 
+    noteId = null,
+    isNewNote = false 
+  } = route.params;
   
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(initialContent);
@@ -31,6 +38,11 @@ const NoteEditor = ({ route }) => {
 
   // For backward compatibility with the old notes system
   const handleLegacyRaceNotes = async () => {
+    // Skip legacy handling if this is explicitly a new note
+    if (isNewNote) {
+      return false;
+    }
+    
     if (entityType === NOTE_TYPES.RACE && route.params.raceData) {
       setIsLoading(true);
       try {
@@ -144,9 +156,9 @@ const NoteEditor = ({ route }) => {
             <Text
               style={[styles.title, { color: isDarkMode ? "#ffffff" : "#333333" }]}
             >
-              {route.params.entityName 
-                ? `${route.params.entityName} - Notes` 
-                : `${getEntityTypeLabel()} Notes`}
+              {isNewNote 
+                ? `Add New Note for ${entityName || getEntityTypeLabel()}`
+                : `${entityName ? `${entityName} - Notes` : `${getEntityTypeLabel()} Notes`}`}
             </Text>
 
             {!route.params.raceData && (
@@ -196,7 +208,7 @@ const NoteEditor = ({ route }) => {
                 color={paperTheme.colors.primary}
                 disabled={isLoading}
               >
-                Save Notes
+                {isNewNote ? 'Add Note' : 'Save Notes'}
               </Button>
             </View>
           </View>

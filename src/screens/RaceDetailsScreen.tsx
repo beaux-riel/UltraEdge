@@ -1315,13 +1315,24 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             },
             {
               icon: 'note-text',
-              label: 'Race Notes',
+              label: 'Edit Notes',
               onPress: () => navigation.navigate("NoteEditor", { 
                 entityType: NOTE_TYPES.RACE,
                 entityId: id,
                 entityName: raceData.name,
                 initialContent: raceData.notes || "",
                 raceData: raceData, // For backward compatibility
+              }),
+            },
+            {
+              icon: 'note-plus',
+              label: 'Add New Note',
+              onPress: () => navigation.navigate("NoteEditor", { 
+                entityType: NOTE_TYPES.RACE,
+                entityId: id,
+                entityName: raceData.name,
+                initialContent: "",
+                isNewNote: true
               }),
             },
             {

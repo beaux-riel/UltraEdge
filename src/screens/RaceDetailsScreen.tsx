@@ -7,6 +7,7 @@ import {
   Alert,
   ImageBackground,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import {
   Text,
@@ -27,6 +28,7 @@ import { useAppTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSettings } from "../context/SettingsContext";
 import { useNotes, NOTE_TYPES } from "../context/NotesContext";
+import GPXViewer from "../components/visualization/GPXViewer";
 
 // Define feature colors for aid station chips
 // const featureColors = {
@@ -145,6 +147,9 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const [fabOpen, setFabOpen] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  
+  // Get screen dimensions for GPX viewer
+  const screenWidth = Dimensions.get('window').width;
 
   // Format the race date
   const formattedDate = formatDate(raceData.date);
@@ -159,7 +164,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
     setWeatherLoading(true);
     try {
       // OpenWeather API key - in a real app, this should be stored securely
-      const apiKey = "4da2a6f4a4bb4e9296c184440232711"; // Example key, replace with a real one
+      const apiKey = "13ff7d7d408640fe1f81ee3e9bf8da6d"; // Example key, replace with a real one
       
       // Extract location information
       const location = raceData.location;
@@ -1100,6 +1105,69 @@ const RaceDetailsScreen = ({ route, navigation }) => {
     </View>
   );
 
+  const renderRouteTab = () => (
+    <View style={styles.tabContent}>
+      <Card
+        style={[
+          styles.routeCard,
+          { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+        ]}
+      >
+        <Card.Title
+          title="Race Route"
+          titleStyle={{
+            color: isDarkMode ? "#ffffff" : "#000000",
+            fontWeight: "bold",
+          }}
+          left={(props) => (
+            <Avatar.Icon
+              {...props}
+              icon="map"
+              color="#ffffff"
+              style={{ backgroundColor: theme.colors.primary }}
+            />
+          )}
+        />
+        <Card.Content>
+          {raceData.gpxFile ? (
+            <View style={styles.gpxContainer}>
+              <GPXViewer 
+                gpxFile={raceData.gpxFile}
+                width={screenWidth - 64} 
+                height={300}
+                strokeColor={theme.colors.primary}
+                strokeWidth={3}
+                backgroundColor={isDarkMode ? "#333333" : "#f5f5f5"}
+              />
+            </View>
+          ) : (
+            <View style={styles.noGpxContainer}>
+              <IconButton
+                icon="map-marker-off"
+                size={48}
+                color={isDarkMode ? "#666666" : "#cccccc"}
+              />
+              <Text style={{ 
+                color: isDarkMode ? "#aaaaaa" : "#666666", 
+                textAlign: "center",
+                marginTop: 8
+              }}>
+                No GPX route data available for this race.
+              </Text>
+              <Button
+                mode="outlined"
+                style={{ marginTop: 16 }}
+                onPress={() => navigation.navigate("CreateRace", { editMode: true, raceData })}
+              >
+                Add GPX Route
+              </Button>
+            </View>
+          )}
+        </Card.Content>
+      </Card>
+    </View>
+  );
+
   const renderCrewTab = () => (
     <View style={styles.tabContent}>
       <Card
@@ -1266,6 +1334,20 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           Overview
         </Button>
         <Button
+          mode={activeTab === "route" ? "contained" : "text"}
+          onPress={() => setActiveTab("route")}
+          style={styles.tabButton}
+          labelStyle={[
+            styles.tabLabel,
+            activeTab !== "route" && {
+              color: isDarkMode ? "#ffffff" : "#111112",
+            },
+          ]}
+          color={theme.colors.primary}
+        >
+          Route
+        </Button>
+        <Button
           mode={activeTab === "aidStations" ? "contained" : "text"}
           onPress={() => setActiveTab("aidStations")}
           style={styles.tabButton}
@@ -1298,6 +1380,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         style={{ backgroundColor: isDarkMode ? "#121212" : "#f5f5f5" }}
       >
         {activeTab === "overview" && renderOverviewTab()}
+        {activeTab === "route" && renderRouteTab()}
         {activeTab === "aidStations" && renderAidStationsTab()}
         {activeTab === "crew" && renderCrewTab()}
       </ScrollView>
@@ -1557,6 +1640,24 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 8,
     elevation: 4,
+  },
+  routeCard: {
+    marginBottom: 16,
+    borderRadius: 8,
+    elevation: 4,
+  },
+  gpxContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  noGpxContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    marginVertical: 16,
   },
   emptyState: {
     textAlign: "center",

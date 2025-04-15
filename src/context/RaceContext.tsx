@@ -183,6 +183,34 @@ export const RaceProvider = ({ children }) => {
     return races[raceId];
   };
 
+  // Update race notes
+  const updateRaceNotes = async (raceId, notes) => {
+    return new Promise((resolve, reject) => {
+      try {
+        setRaces(prevRaces => ({
+          ...prevRaces,
+          [raceId]: {
+            ...prevRaces[raceId],
+            notes
+          }
+        }));
+        
+        // Backup to Supabase if user is premium
+        if (user && isPremium) {
+          // Wait a bit to ensure state is updated
+          setTimeout(() => {
+            backupRacesToSupabase();
+          }, 300);
+        }
+        
+        resolve(true);
+      } catch (error) {
+        console.error('Failed to update race notes:', error);
+        reject(error);
+      }
+    });
+  };
+
   return (
     <RaceContext.Provider value={{
       races,
@@ -192,7 +220,8 @@ export const RaceProvider = ({ children }) => {
       deleteRace,
       getRacesArray,
       getRaceById,
-      backupRacesToSupabase
+      backupRacesToSupabase,
+      updateRaceNotes
     }}>
       {children}
     </RaceContext.Provider>

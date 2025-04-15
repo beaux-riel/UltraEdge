@@ -1075,7 +1075,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="bag-personal-outline"
                 size={48}
-                color={theme.colors.primary}
+                color={theme.colors.text}
               />
               <Text
                 style={[
@@ -1096,7 +1096,7 @@ const RacePrepScreen = ({ navigation, route }) => {
                   setShowDropBagDialog(true);
                 }}
                 style={styles.emptyStateButton}
-                color={theme.colors.primary}
+                buttonColor={theme.colors.primary}
               >
                 Create Drop Bag
               </Button>

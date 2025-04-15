@@ -451,6 +451,30 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 raceData.aidStations ? raceData.aidStations.length : 0
               } aid stations along the course.`}
           </Text>
+          
+          {raceData.notes && (
+            <>
+              <Divider style={[styles.divider, { marginVertical: 16 }]} />
+              <Text
+                style={[
+                  styles.sectionSubtitle,
+                  { color: isDarkMode ? "#ffffff" : "#000000" },
+                ]}
+              >
+                Race Notes
+              </Text>
+              <Text
+                style={{
+                  color: isDarkMode ? "#e0e0e0" : "#000000",
+                  lineHeight: 22,
+                  fontStyle: "italic",
+                  marginTop: 8,
+                }}
+              >
+                {raceData.notes}
+              </Text>
+            </>
+          )}
 
           <Divider style={[styles.divider, { marginVertical: 16 }]} />
 
@@ -1109,6 +1133,11 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               icon: 'pencil',
               label: 'Edit Race',
               onPress: () => navigation.navigate("CreateRace", { editMode: true, raceData }),
+            },
+            {
+              icon: 'note-text',
+              label: 'Race Notes',
+              onPress: () => navigation.navigate("NoteEditor", { raceData }),
             },
             {
               icon: 'link',

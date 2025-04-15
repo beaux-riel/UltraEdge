@@ -1303,7 +1303,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
             disabled={!raceName || !distance || !numAidStations}
             color={theme.colors.primary}
           >
-            {existingRace ? "Save Changes" : "Continue to Aid Station Setup"}
+            {existingRace ? "Save Changes" : "Create Event"}
           </Button>
 
           {existingRace && (

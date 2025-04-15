@@ -159,7 +159,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
     setWeatherLoading(true);
     try {
       // OpenWeather API key - in a real app, this should be stored securely
-      const apiKey = "4da2a6f4a4bb4e9296c184440232711"; // Example key, replace with a real one
+      const apiKey = "13ff7d7d408640fe1f81ee3e9bf8da6d"; // Example key, replace with a real one
       
       // Extract location information
       const location = raceData.location;

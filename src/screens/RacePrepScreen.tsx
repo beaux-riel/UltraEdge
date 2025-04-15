@@ -848,7 +848,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="hiking"
                 size={48}
-                color={theme.colors.secondary}
+                color={theme.colors.text}
               />
               <Text
                 style={[
@@ -1096,7 +1096,7 @@ const RacePrepScreen = ({ navigation, route }) => {
                   setShowDropBagDialog(true);
                 }}
                 style={styles.emptyStateButton}
-                buttonColor={theme.colors.primary}
+                color={theme.colors.primary}
               >
                 Create Drop Bag
               </Button>
@@ -1263,7 +1263,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="food-apple-outline"
                 size={48}
-                color={theme.colors.disabled}
+                color={theme.colors.text}
               />
               <Text
                 style={[
@@ -1333,7 +1333,7 @@ const RacePrepScreen = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="water-outline"
                 size={48}
-                color={theme.colors.disabled}
+                color={theme.colors.text}
               />
               <Text
                 style={[

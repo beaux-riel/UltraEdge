@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 // Import custom components
 import EmptyState from "../components/EmptyState";

@@ -116,7 +116,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
-  const { getNotesForEntity } = useNotes();
+  const { getNotesForEntity, deleteNote } = useNotes();
   const didMountRef = useRef(false);
 
   // Retrieve race data first
@@ -621,15 +621,52 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           {/* Display additional notes from the notes system */}
           {getNotesForEntity(NOTE_TYPES.RACE, id).map((note) => (
             <View key={note.id} style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDarkMode ? "#333333" : "#e0e0e0" }}>
-              {note.title && (
-                <Text style={{ 
-                  fontWeight: 'bold', 
-                  marginBottom: 5,
-                  color: isDarkMode ? "#e0e0e0" : "#000000"
-                }}>
-                  {note.title}
-                </Text>
-              )}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                {note.title && (
+                  <Text style={{ 
+                    fontWeight: 'bold', 
+                    marginBottom: 5,
+                    color: isDarkMode ? "#e0e0e0" : "#000000",
+                    flex: 1
+                  }}>
+                    {note.title}
+                  </Text>
+                )}
+                <View style={{ flexDirection: 'row' }}>
+                  <IconButton
+                    icon="pencil"
+                    size={16}
+                    color={theme.colors.primary}
+                    onPress={() => navigation.navigate("NoteEditor", {
+                      entityType: NOTE_TYPES.RACE,
+                      entityId: id,
+                      entityName: raceData.name,
+                      noteId: note.id,
+                    })}
+                  />
+                  <IconButton
+                    icon="delete"
+                    size={16}
+                    color={isDarkMode ? "#f44336" : "#d32f2f"}
+                    onPress={() => {
+                      Alert.alert(
+                        "Delete Note",
+                        "Are you sure you want to delete this note?",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          { 
+                            text: "Delete", 
+                            style: "destructive",
+                            onPress: async () => {
+                              await deleteNote(note.id);
+                            }
+                          }
+                        ]
+                      );
+                    }}
+                  />
+                </View>
+              </View>
               <Text style={{ 
                 color: isDarkMode ? "#e0e0e0" : "#000000",
                 fontStyle: 'italic'
@@ -1208,6 +1245,12 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               icon: 'account-group',
               label: 'Crew Management',
               onPress: () => navigation.navigate("CrewManagement", { raceId: id }),
+            },
+            {
+              icon: 'delete',
+              label: 'Delete Race',
+              onPress: handleDeleteRace,
+              color: '#f44336', // Red color for delete action
             },
           ]}
           onStateChange={() => {}}

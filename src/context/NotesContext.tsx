@@ -190,7 +190,7 @@ export const NotesProvider = ({ children }) => {
   // Get notes for a specific entity
   const getNotesForEntity = (entityType, entityId) => {
     return notes.filter(
-      note => note.entity_type === entityType && note.entity_id === entityId
+      note => note.entityType === entityType && note.entityId === entityId
     );
   };
 

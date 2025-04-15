@@ -9,6 +9,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "../context/ThemeContext";
+import { NOTE_TYPES } from "../context/NotesContext";
 
 // Import screens
 import HomeScreen from "../screens/HomeScreen";
@@ -210,7 +211,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="NoteEditor"
           component={NoteEditor}
-          options={{ title: "Race Notes" }}
+          options={({ route }) => ({ 
+            title: route.params?.entityType === NOTE_TYPES.CREW 
+              ? "Crew Notes" 
+              : "Race Notes" 
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>

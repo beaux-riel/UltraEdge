@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRaces } from '../context/RaceContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { useSupabase } from '../context/SupabaseContext';
+import { useNotes, NOTE_TYPES } from '../context/NotesContext';
 import CrewRoleSelector from '../components/CrewRoleSelector';
 import CrewNotes from '../components/CrewNotes';
 import ShareEventPlan from '../components/ShareEventPlan';
@@ -15,6 +16,7 @@ const CrewManagementScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, updateRace } = useRaces();
+  const { addNote, getNotesForEntity } = useNotes();
   
   const raceData = getRaceById(raceId) || {};
   const [crewMembers, setCrewMembers] = useState([]);
@@ -220,6 +222,29 @@ const CrewManagementScreen = ({ route, navigation }) => {
     
     // Navigate back to the race details screen
     navigation.goBack();
+  };
+  
+  // Function to view crew notes
+  const viewCrewNotes = () => {
+    const crewNotes = getNotesForEntity(NOTE_TYPES.CREW, raceId);
+    if (crewNotes && crewNotes.length > 0) {
+      // If there are existing notes, navigate to the first one
+      navigation.navigate("NoteEditor", {
+        entityType: NOTE_TYPES.CREW,
+        entityId: raceId,
+        entityName: `${raceData.name} Crew`,
+        initialContent: crewNotes[0].content,
+        noteId: crewNotes[0].id
+      });
+    } else {
+      // If no notes exist, create a new one
+      navigation.navigate("NoteEditor", {
+        entityType: NOTE_TYPES.CREW,
+        entityId: raceId,
+        entityName: `${raceData.name} Crew`,
+        initialContent: "",
+      });
+    }
   };
 
   // Create dynamic styles based on theme
@@ -459,6 +484,13 @@ const CrewManagementScreen = ({ route, navigation }) => {
                   color={theme.colors.primary}
                 >
                   {crewInstructions ? "Edit Instructions" : "Add Instructions"}
+                </Button>
+                <Button
+                  mode="outlined"
+                  onPress={viewCrewNotes}
+                  color={theme.colors.primary}
+                >
+                  Crew Notes
                 </Button>
               </Card.Actions>
             </Card>

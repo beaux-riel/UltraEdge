@@ -274,15 +274,13 @@ const PremiumScreen = ({ navigation }) => {
         paddingBottom: insets.bottom + 16,
       }}
     >
-      {/* Header */}
       <View style={dynamicStyles.headerContainer}>
         <Text style={dynamicStyles.headerTitle}>Upgrade to Premium</Text>
         <Text style={dynamicStyles.headerSubtitle}>
           Unlock advanced features to take your ultra running to the next level
         </Text>
       </View>
-      
-      {/* Features Card */}
+
       <Card style={dynamicStyles.card}>
         <Card.Content>
           <Text style={dynamicStyles.featureTitle}>Premium Features</Text>
@@ -323,8 +321,7 @@ const PremiumScreen = ({ navigation }) => {
           </View>
         </Card.Content>
       </Card>
-      
-      {/* Subscription Options */}
+
       {currentOffering ? (
         <>
           {/* Monthly Package */}

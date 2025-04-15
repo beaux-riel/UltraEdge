@@ -1125,6 +1125,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: '12%',
     flex: 1,
   },
   addButton: {

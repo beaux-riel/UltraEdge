@@ -432,7 +432,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               { color: isDarkMode ? "#ffffff" : "#000000" },
             ]}
           >
-            {existingRace ? "Edit Race Plan" : "Create New Race Plan"}
+            {existingRace ? "Edit Plan" : "Create New Adventure Plan"}
           </Text>
 
           <TextInput

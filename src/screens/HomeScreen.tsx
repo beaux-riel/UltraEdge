@@ -207,7 +207,7 @@ const HomeScreen = ({ navigation }) => {
                 },
               ]}
             >
-              Plan, prepare, and conquer your next ultra marathon with
+              Plan, prepare, and conquer your next marathon, ultra marathon, endurance event or multi day hike with
               confidence.
             </Paragraph>
             <Button
@@ -218,7 +218,7 @@ const HomeScreen = ({ navigation }) => {
               labelStyle={styles.actionButtonLabel}
               buttonColor={theme.colors.primary}
             >
-              Create New Race Plan
+              Create New Adventure Plan
             </Button>
           </View>
         </Surface>

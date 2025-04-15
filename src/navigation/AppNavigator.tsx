@@ -153,7 +153,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="RaceDetails"
           component={RaceDetailsScreen}
-          options={{ title: "Race Details" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="About"
@@ -188,7 +188,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="CreateRace"
           component={CreateRaceScreen}
-          options={{ title: "Create Race" }}
+          options={{ title: "Create Event" }}
         />
         <Stack.Screen
           name="ProfileScreen"

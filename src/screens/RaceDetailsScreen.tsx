@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   ImageBackground,
+  TouchableOpacity,
 } from "react-native";
 import {
   Text,
@@ -141,9 +142,46 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 
   // Then declare other state
   const [activeTab, setActiveTab] = useState("overview");
+  const [fabOpen, setFabOpen] = useState(false);
+  const [weatherData, setWeatherData] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   // Format the race date
   const formattedDate = formatDate(raceData.date);
+
+  // Function to fetch weather data
+  const fetchWeatherData = async () => {
+    if (!raceData.location) {
+      Alert.alert("Error", "No location data available for this race");
+      return;
+    }
+
+    setWeatherLoading(true);
+    try {
+      // OpenWeather API key - in a real app, this should be stored securely
+      const apiKey = "4da2a6f4a4bb4e9296c184440232711"; // Example key, replace with a real one
+      
+      // Extract location information
+      const location = raceData.location;
+      
+      // Fetch current weather data
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&units=metric&appid=${apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Weather data not available");
+      }
+      
+      const data = await response.json();
+      setWeatherData(data);
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+      Alert.alert("Error", "Failed to fetch weather data. Please try again later.");
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
 
   // Conditional returns after hooks are declared.
   if (loading) {
@@ -679,7 +717,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
         <Card.Actions>
           <Button
             mode="contained"
-            icon="pencil"
+            icon="plus"
             color={theme.colors.primary}
             style={{ borderRadius: 20 }}
             onPress={() =>
@@ -687,12 +725,12 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 entityType: NOTE_TYPES.RACE,
                 entityId: id,
                 entityName: raceData.name,
-                initialContent: raceData.notes || "",
-                raceData: raceData, // For backward compatibility
+                initialContent: "",
+                isNewNote: true,
               })
             }
           >
-            {raceData.notes ? "Edit Notes" : "Add Notes"}
+            Add New Note
           </Button>
         </Card.Actions>
       </Card>
@@ -720,14 +758,60 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           )}
         />
         <Card.Content>
-          <Text
-            style={{
-              color: isDarkMode ? "#e0e0e0" : "#000000",
-              fontStyle: "italic",
-            }}
-          >
-            Weather data will be available closer to race day.
-          </Text>
+          {weatherLoading ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : weatherData ? (
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                <Avatar.Icon 
+                  size={40} 
+                  icon="weather-partly-cloudy"
+                  style={{ backgroundColor: 'transparent' }}
+                  color={isDarkMode ? "#e0e0e0" : "#000000"}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontWeight: 'bold', fontSize: 16 }}>
+                    {weatherData.weather[0].main}
+                  </Text>
+                  <Text style={{ color: isDarkMode ? "#9e9e9e" : "#666666" }}>
+                    {weatherData.weather[0].description}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ color: isDarkMode ? "#9e9e9e" : "#666666" }}>Temperature</Text>
+                  <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontWeight: 'bold' }}>
+                    {Math.round(weatherData.main.temp)}C
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ color: isDarkMode ? "#9e9e9e" : "#666666" }}>Humidity</Text>
+                  <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontWeight: 'bold' }}>
+                    {weatherData.main.humidity}%
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ color: isDarkMode ? "#9e9e9e" : "#666666" }}>Wind</Text>
+                  <Text style={{ color: isDarkMode ? "#e0e0e0" : "#000000", fontWeight: 'bold' }}>
+                    {Math.round(weatherData.wind.speed)} m/s
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Text
+              style={{
+                color: isDarkMode ? "#e0e0e0" : "#000000",
+                fontStyle: "italic",
+              }}
+            >
+              {raceData.location ? 
+                "Tap the button below to check the current weather forecast." : 
+                "No location data available for this race."}
+            </Text>
+          )}
         </Card.Content>
         <Card.Actions>
           <Button
@@ -735,6 +819,9 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             icon="refresh"
             color={theme.colors.primary}
             style={{ borderRadius: 20 }}
+            onPress={fetchWeatherData}
+            loading={weatherLoading}
+            disabled={!raceData.location || weatherLoading}
           >
             Check Forecast
           </Button>
@@ -1217,8 +1304,9 @@ const RaceDetailsScreen = ({ route, navigation }) => {
       <View style={[styles.fabContainer, { bottom: insets.bottom }]}>
         <FAB.Group
           visible={true}
-          open={false}
-          icon="plus"
+          open={fabOpen}
+          icon={fabOpen ? "close" : "plus"}
+          onStateChange={({ open }) => setFabOpen(open)}
           actions={[
             {
               icon: 'pencil',

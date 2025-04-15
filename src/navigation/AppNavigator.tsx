@@ -28,13 +28,22 @@ import PremiumScreen from "../screens/PremiumScreen";
 import RacePrepScreen from "../screens/RacePrepScreen";
 import PlanOverviewScreen from "../screens/nutrition/PlanOverviewScreen";
 import NoteEditor from "../components/NoteEditor";
+import AllRacesScreen from "../screens/AllRacesScreen";
 
 // Define navigation types
 export type RootStackParamList = {
   Main: undefined;
   NutritionHydration: NavigatorScreenParams<NutritionHydrationStackParamList>;
   RaceIntegration: { raceId?: string };
-  NoteEditor: { raceData: any };
+  NoteEditor: { 
+    raceData?: any, 
+    entityType?: string, 
+    entityId?: string, 
+    entityName?: string, 
+    initialContent?: string, 
+    noteId?: string,
+    isNewNote?: boolean 
+  };
 };
 
 export type MainTabParamList = {
@@ -216,6 +225,11 @@ const AppNavigator = () => {
               ? "Crew Notes" 
               : "Race Notes" 
           })}
+        />
+        <Stack.Screen
+          name="AllRaces"
+          component={AllRacesScreen}
+          options={{ title: "All Races" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

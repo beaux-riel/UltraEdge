@@ -33,7 +33,7 @@ const HomeScreen = ({ navigation }) => {
   const paperTheme = usePaperTheme();
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { getRacesArray, loading } = useRaces();
+  const { getRacesArray, loading, deleteRace } = useRaces();
 
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -234,8 +234,8 @@ const HomeScreen = ({ navigation }) => {
               Upcoming Races
             </Text>
             {races.length > 0 && (
-              <TouchableOpacity>
-                <Text style={{ color: theme.colors.primary }}>See All</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("AllRaces")}>
+                <Text style={{ color: theme.colors.primary }}>View All</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -249,18 +249,37 @@ const HomeScreen = ({ navigation }) => {
               onButtonPress={() => navigation.navigate("CreateRace")}
             />
           ) : (
-            races.map((race) => (
-              <RaceCard
-                key={race.id}
-                race={race}
-                progress={60}
-                date={race.date}
-                time={race.startTime}
-                onPress={() =>
-                  navigation.navigate("RaceDetails", { id: race.id })
-                }
-              />
+            races.slice(0, 3).map((race) => (
+              <View key={race.id} style={styles.raceCardContainer}>
+                <RaceCard
+                  race={race}
+                  progress={60}
+                  date={race.date}
+                  time={race.startTime}
+                  onPress={() =>
+                    navigation.navigate("RaceDetails", { id: race.id })
+                  }
+                />
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={() => {
+                    deleteRace(race.id);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
             ))
+          )}
+          {races.length > 3 && (
+            <Button
+              mode="outlined"
+              onPress={() => navigation.navigate("AllRaces")}
+              style={styles.viewAllButton}
+              labelStyle={{ color: theme.colors.primary }}
+            >
+              View All Races
+            </Button>
           )}
         </View>
 
@@ -406,6 +425,25 @@ const styles = StyleSheet.create({
   tipsScrollContainer: {
     paddingBottom: 8,
     paddingRight: 16,
+  },
+  raceCardContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
+  },
+  viewAllButton: {
+    marginTop: 8,
+    marginBottom: 16,
+    borderColor: '#ccc',
+    borderRadius: 8,
   },
 });
 

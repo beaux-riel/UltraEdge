@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, Dimensions } from 'react-native';
 import { Canvas, Path, useCanvasRef, SkPath, Skia } from '@shopify/react-native-skia';
 import * as FileSystem from 'expo-file-system';
-import { DOMParser } from 'xmldom';
+import { DOMParser } from '@xmldom/xmldom';
 import { useAppTheme } from '../../context/ThemeContext';
 
 interface GPXPoint {

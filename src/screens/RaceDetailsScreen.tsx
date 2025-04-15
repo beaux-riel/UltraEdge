@@ -1010,15 +1010,44 @@ const RaceDetailsScreen = ({ route, navigation }) => {
           <Divider
             style={{ backgroundColor: isDarkMode ? "#333333" : "#e0e0e0" }}
           />
-          <Text
-            style={[
-              styles.emptyState,
-              { color: isDarkMode ? "#9e9e9e" : "#000000" },
-            ]}
-          >
-            No crew members added yet. Add crew members to assign them to aid
-            stations.
-          </Text>
+          {raceData.crewMembers && raceData.crewMembers.length > 0 ? (
+            <View style={styles.crewMembersList}>
+              {raceData.crewMembers.map((crewMember, index) => (
+                <View key={index} style={styles.crewMemberItem}>
+                  <Avatar.Icon 
+                    size={36} 
+                    icon="account" 
+                    style={{ backgroundColor: theme.colors.primary }}
+                  />
+                  <View style={styles.crewMemberDetails}>
+                    <Text style={{ 
+                      color: isDarkMode ? "#ffffff" : "#000000",
+                      fontWeight: "bold",
+                      fontSize: 16
+                    }}>
+                      {crewMember.name}
+                    </Text>
+                    <Text style={{ 
+                      color: isDarkMode ? "#9e9e9e" : "#666666",
+                      fontSize: 14
+                    }}>
+                      {crewMember.role || "No role assigned"}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text
+              style={[
+                styles.emptyState,
+                { color: isDarkMode ? "#9e9e9e" : "#000000" },
+              ]}
+            >
+              No crew members added yet. Add crew members to assign them to aid
+              stations.
+            </Text>
+          )}
         </Card.Content>
       </Card>
       <Card
@@ -1486,6 +1515,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 8,
     elevation: 4,
+  },
+  crewMembersList: {
+    marginTop: 8,
+  },
+  crewMemberItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  crewMemberDetails: {
+    marginLeft: 12,
+    flex: 1,
   },
 });
 

@@ -883,7 +883,6 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     flexDirection: "column",
-    paddingTop: 70,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomLeftRadius: 30,

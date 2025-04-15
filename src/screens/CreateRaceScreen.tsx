@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -38,11 +38,35 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const { addRace, getRaceById, updateRace, deleteRace } = useRaces();
   const { settings } = useSettings();
 
+  // Preset distance options
+  const presetDistances = useMemo(
+    () => [
+      { label: "Marathon", value: 26.2, unit: "miles" },
+      { label: "50K", value: 50, unit: "km" },
+      { label: "50 Miles", value: 50, unit: "miles" },
+      { label: "100K", value: 100, unit: "km" },
+      { label: "100 Miles", value: 100, unit: "miles" },
+    ],
+    []
+  );
+
+  // Preset time goal options
+  const presetTimeGoals = useMemo(
+    () => [
+      { label: "12 Hour Event", value: 12, unit: "hours" },
+      { label: "24 Hour Event", value: 24, unit: "hours" },
+      { label: "48 Hour Event", value: 48, unit: "hours" },
+      { label: "6 Day Event", value: 6, unit: "days" },
+    ],
+    []
+  );
+
   // Check if we're in edit mode
   const { editMode, raceData: existingRaceData } = route.params || {};
   const existingRace = editMode && existingRaceData ? existingRaceData : null;
 
   const [raceName, setRaceName] = useState("");
+  const [eventType, setEventType] = useState("run"); // "run", "hike", "multisport"
   const [distance, setDistance] = useState("");
   const [distanceUnit, setDistanceUnit] = useState(settings.distanceUnit);
   const [elevation, setElevation] = useState("");
@@ -59,11 +83,25 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [startTimeString, setStartTimeString] = useState("");
 
+  // Finish time calculation
+  const [finishTime, setFinishTime] = useState(new Date());
+  const [finishTimeString, setFinishTimeString] = useState("");
+
   const [cutoffTime, setCutoffTime] = useState("");
   const [cutoffTimeUnit, setCutoffTimeUnit] = useState("hours");
 
   const [goalTime, setGoalTime] = useState("");
   const [goalTimeUnit, setGoalTimeUnit] = useState("hours");
+
+  // Preset distance options
+  const [usePresetDistance, setUsePresetDistance] = useState(false);
+  const [presetDistanceModalVisible, setPresetDistanceModalVisible] =
+    useState(false);
+
+  // Preset time goals
+  const [usePresetTimeGoal, setUsePresetTimeGoal] = useState(false);
+  const [presetTimeGoalModalVisible, setPresetTimeGoalModalVisible] =
+    useState(false);
 
   const [hikingPolesAllowed, setHikingPolesAllowed] = useState(false);
   const [pacerAllowed, setPacerAllowed] = useState(false);
@@ -99,10 +137,16 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [newPacerGearItem, setNewPacerGearItem] = useState("");
   const [newPacerGearIsMandatory, setNewPacerGearIsMandatory] = useState(true);
 
+  // Update finish time when cutoff time or goal time changes
+  useEffect(() => {
+    updateFinishTime();
+  }, [cutoffTime, cutoffTimeUnit, goalTime, goalTimeUnit]);
+
   // If in edit mode, populate the form with existing data
   useEffect(() => {
     if (existingRace) {
       setRaceName(existingRace.name);
+      setEventType(existingRace.eventType || "run");
       setDistance(existingRace.distance.toString());
       setDistanceUnit(existingRace.distanceUnit || "miles");
       setElevation(
@@ -115,9 +159,9 @@ const CreateRaceScreen = ({ route, navigation }) => {
       if (existingRace.date) {
         let parts;
         let newDate;
-        
+
         // Check if date is in YYYY-MM-DD format
-        if (existingRace.date.includes('-')) {
+        if (existingRace.date.includes("-")) {
           parts = existingRace.date.split("-");
           if (parts.length === 3) {
             newDate = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -142,6 +186,18 @@ const CreateRaceScreen = ({ route, navigation }) => {
           newStartTime.setMinutes(parseInt(timeParts[1], 10));
           setStartTime(newStartTime);
           setStartTimeString(existingRace.startTime);
+        }
+      }
+
+      // Set finish time if it exists
+      if (existingRace.finishTime) {
+        const timeParts = existingRace.finishTime.split(":");
+        if (timeParts.length === 2) {
+          const newFinishTime = new Date();
+          newFinishTime.setHours(parseInt(timeParts[0], 10));
+          newFinishTime.setMinutes(parseInt(timeParts[1], 10));
+          setFinishTime(newFinishTime);
+          setFinishTimeString(existingRace.finishTime);
         }
       }
 
@@ -199,7 +255,11 @@ const CreateRaceScreen = ({ route, navigation }) => {
       setImportantDates(existingRace.importantDates || []);
 
       // Set basic race info
-      setNumAidStations(existingRace.numAidStations ? existingRace.numAidStations.toString() : "0");
+      setNumAidStations(
+        existingRace.numAidStations
+          ? existingRace.numAidStations.toString()
+          : "0"
+      );
       setDropBagsAllowed(existingRace.dropBagsAllowed === true);
       setCrewAllowed(existingRace.crewAllowed === true);
 
@@ -230,6 +290,38 @@ const CreateRaceScreen = ({ route, navigation }) => {
     const hours = currentTime.getHours().toString().padStart(2, "0");
     const minutes = currentTime.getMinutes().toString().padStart(2, "0");
     setStartTimeString(`${hours}:${minutes}`);
+
+    // Update finish time if cutoff time is set
+    updateFinishTime(currentTime);
+  };
+
+  // Calculate finish time based on start time and cutoff/goal time
+  const updateFinishTime = (startTimeValue = startTime) => {
+    if (!cutoffTime && !goalTime) return;
+
+    const timeToUse = cutoffTime || goalTime;
+    const unitToUse = cutoffTimeUnit || goalTimeUnit;
+
+    if (!timeToUse) return;
+
+    const newFinishTime = new Date(startTimeValue);
+    const timeValue = parseFloat(timeToUse);
+
+    if (unitToUse === "hours") {
+      const hoursToAdd = Math.floor(timeValue);
+      const minutesToAdd = Math.round((timeValue - hoursToAdd) * 60);
+      newFinishTime.setHours(newFinishTime.getHours() + hoursToAdd);
+      newFinishTime.setMinutes(newFinishTime.getMinutes() + minutesToAdd);
+    } else if (unitToUse === "days") {
+      newFinishTime.setDate(newFinishTime.getDate() + timeValue);
+    }
+
+    setFinishTime(newFinishTime);
+
+    // Format time as HH:MM
+    const hours = newFinishTime.getHours().toString().padStart(2, "0");
+    const minutes = newFinishTime.getMinutes().toString().padStart(2, "0");
+    setFinishTimeString(`${hours}:${minutes}`);
   };
 
   const onImportantDateTimeChange = (event, selectedDateTime) => {
@@ -245,7 +337,19 @@ const CreateRaceScreen = ({ route, navigation }) => {
         .padStart(2, "0");
       const day = currentDateTime.getDate().toString().padStart(2, "0");
       const year = currentDateTime.getFullYear();
-      setNewImportantDateTimeString(`${month}/${day}/${year}`);
+
+      // If we already have a time, preserve it
+      const existingTimePart = newImportantDateTimeString
+        .split(" ")
+        .slice(1)
+        .join(" ");
+      if (existingTimePart) {
+        setNewImportantDateTimeString(
+          `${month}/${day}/${year} ${existingTimePart}`
+        );
+      } else {
+        setNewImportantDateTimeString(`${month}/${day}/${year}`);
+      }
 
       // Switch to time picker after date is selected
       if (Platform.OS !== "ios") {
@@ -260,7 +364,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
       const minutes = currentDateTime.getMinutes().toString().padStart(2, "0");
 
       // Combine with existing date
-      const existingDate = newImportantDateTimeString.split(" ")[0];
+      const existingDate = newImportantDateTimeString.split(" ")[0] || "";
       const ampm = currentDateTime.getHours() >= 12 ? "PM" : "AM";
       const hours12 = (currentDateTime.getHours() % 12 || 12).toString();
 
@@ -338,6 +442,21 @@ const CreateRaceScreen = ({ route, navigation }) => {
     setPacerGear(updatedPacerGear);
   };
 
+  // Handle preset distance selection
+  const handlePresetDistanceSelect = (preset) => {
+    setDistance(preset.value.toString());
+    setDistanceUnit(preset.unit);
+    setPresetDistanceModalVisible(false);
+  };
+
+  // Handle preset time goal selection
+  const handlePresetTimeGoalSelect = (preset) => {
+    setGoalTime(preset.value.toString());
+    setGoalTimeUnit(preset.unit);
+    setPresetTimeGoalModalVisible(false);
+    updateFinishTime();
+  };
+
   const handleDeleteRace = () => {
     if (!existingRace) return;
 
@@ -362,12 +481,14 @@ const CreateRaceScreen = ({ route, navigation }) => {
     const newRaceData = {
       id: existingRace ? existingRace.id : Date.now().toString(),
       name: raceName,
+      eventType,
       distance: parseFloat(distance),
       distanceUnit,
       elevation: elevation ? parseFloat(elevation) : 0,
       elevationUnit,
       date: raceDate,
       startTime: startTimeString,
+      finishTime: finishTimeString,
       cutoffTime: cutoffTime
         ? { value: parseFloat(cutoffTime), unit: cutoffTimeUnit }
         : null,
@@ -432,7 +553,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
               { color: isDarkMode ? "#ffffff" : "#000000" },
             ]}
           >
-            {existingRace ? "Edit Plan" : "Create New Adventure Plan"}
+            {existingRace ? "Edit Race Plan" : "Create New Race Plan"}
           </Text>
 
           <TextInput
@@ -449,6 +570,48 @@ const CreateRaceScreen = ({ route, navigation }) => {
             outlineColor={isDarkMode ? "#333333" : "#111112"}
             activeOutlineColor={theme.colors.primary}
           />
+
+          <View style={styles.sectionHeader}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Event Type
+            </Text>
+          </View>
+
+          <SegmentedButtons
+            value={eventType}
+            onValueChange={setEventType}
+            buttons={[
+              { value: "run", label: "Run" },
+              { value: "hike", label: "Hike" },
+              { value: "multisport", label: "MultiSport" },
+            ]}
+            style={styles.segmentedButtonFull}
+          />
+
+          <View style={styles.sectionHeader}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Distance
+            </Text>
+            <Button
+              mode="contained"
+              onPress={() => setPresetDistanceModalVisible(true)}
+              style={styles.addButton}
+              icon="ruler"
+              color={theme.colors.primary}
+            >
+              Presets
+            </Button>
+          </View>
 
           <View style={styles.inputRow}>
             <TextInput
@@ -574,11 +737,54 @@ const CreateRaceScreen = ({ route, navigation }) => {
             />
           )}
 
+          {/* Finish Time Display */}
+          {finishTimeString && (cutoffTime || goalTime) && (
+            <View pointerEvents="none">
+              <TextInput
+                label="Estimated Finish Time"
+                value={finishTimeString}
+                style={[
+                  styles.input,
+                  { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+                ]}
+                mode="outlined"
+                theme={inputTheme}
+                labelStyle={labelStyle}
+                outlineColor={isDarkMode ? "#333333" : "#111112"}
+                activeOutlineColor={theme.colors.primary}
+                right={
+                  <TextInput.Icon
+                    icon="flag-checkered"
+                    color={isDarkMode ? "#ffffff" : "#111112"}
+                  />
+                }
+                disabled={true}
+              />
+            </View>
+          )}
+
+          <View style={styles.sectionHeader}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Cutoff Time
+            </Text>
+          </View>
+
           <View style={styles.inputRow}>
             <TextInput
               label="Cutoff Time"
               value={cutoffTime}
-              onChangeText={setCutoffTime}
+              onChangeText={(text) => {
+                setCutoffTime(text);
+                // Update finish time when cutoff time changes
+                if (text && startTimeString) {
+                  updateFinishTime();
+                }
+              }}
               style={[
                 styles.input,
                 styles.flexInput,
@@ -593,7 +799,13 @@ const CreateRaceScreen = ({ route, navigation }) => {
             />
             <SegmentedButtons
               value={cutoffTimeUnit}
-              onValueChange={setCutoffTimeUnit}
+              onValueChange={(value) => {
+                setCutoffTimeUnit(value);
+                // Update finish time when unit changes
+                if (cutoffTime && startTimeString) {
+                  updateFinishTime();
+                }
+              }}
               buttons={[
                 { value: "hours", label: "hrs" },
                 { value: "days", label: "days" },
@@ -602,11 +814,37 @@ const CreateRaceScreen = ({ route, navigation }) => {
             />
           </View>
 
+          <View style={styles.sectionHeader}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDarkMode ? "#ffffff" : "#000000" },
+              ]}
+            >
+              Goal Time
+            </Text>
+            <Button
+              mode="contained"
+              onPress={() => setPresetTimeGoalModalVisible(true)}
+              style={styles.addButton}
+              icon="clock-outline"
+              color={theme.colors.primary}
+            >
+              Presets
+            </Button>
+          </View>
+
           <View style={styles.inputRow}>
             <TextInput
               label="Goal Time"
               value={goalTime}
-              onChangeText={setGoalTime}
+              onChangeText={(text) => {
+                setGoalTime(text);
+                // Update finish time when goal time changes
+                if (text && startTimeString) {
+                  updateFinishTime();
+                }
+              }}
               style={[
                 styles.input,
                 styles.flexInput,
@@ -621,7 +859,13 @@ const CreateRaceScreen = ({ route, navigation }) => {
             />
             <SegmentedButtons
               value={goalTimeUnit}
-              onValueChange={setGoalTimeUnit}
+              onValueChange={(value) => {
+                setGoalTimeUnit(value);
+                // Update finish time when unit changes
+                if (goalTime && startTimeString) {
+                  updateFinishTime();
+                }
+              }}
               buttons={[
                 { value: "hours", label: "hrs" },
                 { value: "days", label: "days" },
@@ -986,6 +1230,86 @@ const CreateRaceScreen = ({ route, navigation }) => {
       </ScrollView>
 
       <Portal>
+        {/* Preset Distance Modal */}
+        <Modal
+          visible={presetDistanceModalVisible}
+          onDismiss={() => setPresetDistanceModalVisible(false)}
+          contentContainerStyle={[
+            styles.modalContainer,
+            { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.modalTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Select Preset Distance
+          </Text>
+
+          {presetDistances.map((preset, index) => (
+            <List.Item
+              key={index}
+              title={preset.label}
+              description={`${preset.value} ${preset.unit}`}
+              onPress={() => handlePresetDistanceSelect(preset)}
+              left={(props) => <List.Icon {...props} icon="ruler" />}
+              titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+              descriptionStyle={{ color: isDarkMode ? "#cccccc" : "#666666" }}
+            />
+          ))}
+
+          <View style={styles.modalButtons}>
+            <Button
+              onPress={() => setPresetDistanceModalVisible(false)}
+              color={isDarkMode ? "#e0e0e0" : "#111112"}
+            >
+              Cancel
+            </Button>
+          </View>
+        </Modal>
+
+        {/* Preset Time Goal Modal */}
+        <Modal
+          visible={presetTimeGoalModalVisible}
+          onDismiss={() => setPresetTimeGoalModalVisible(false)}
+          contentContainerStyle={[
+            styles.modalContainer,
+            { backgroundColor: isDarkMode ? "#1e1e1e" : "white" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.modalTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000" },
+            ]}
+          >
+            Select Preset Time Goal
+          </Text>
+
+          {presetTimeGoals.map((preset, index) => (
+            <List.Item
+              key={index}
+              title={preset.label}
+              description={`${preset.value} ${preset.unit}`}
+              onPress={() => handlePresetTimeGoalSelect(preset)}
+              left={(props) => <List.Icon {...props} icon="clock-outline" />}
+              titleStyle={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+              descriptionStyle={{ color: isDarkMode ? "#cccccc" : "#666666" }}
+            />
+          ))}
+
+          <View style={styles.modalButtons}>
+            <Button
+              onPress={() => setPresetTimeGoalModalVisible(false)}
+              color={isDarkMode ? "#e0e0e0" : "#111112"}
+            >
+              Cancel
+            </Button>
+          </View>
+        </Modal>
+
         {/* Mandatory Equipment Modal */}
         <Modal
           visible={equipmentModalVisible}
@@ -1273,6 +1597,9 @@ const styles = StyleSheet.create({
   },
   segmentedButton: {
     width: 100,
+  },
+  segmentedButtonFull: {
+    marginBottom: 16,
   },
   divider: {
     marginVertical: 16,

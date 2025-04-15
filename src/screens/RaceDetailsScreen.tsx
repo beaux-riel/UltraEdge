@@ -598,6 +598,13 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             icon="pencil"
             color={theme.colors.primary}
             style={{ borderRadius: 20 }}
+            onPress={() =>
+              navigation.navigate("NoteEditor", {
+                raceId: id,
+                notes: raceData.notes || "",
+                raceName: raceData.name,
+              })
+            }
           >
             {raceData.notes ? "Edit Notes" : "Add Notes"}
           </Button>
@@ -1125,7 +1132,6 @@ const RaceDetailsScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: '12%',
     flex: 1,
   },
   addButton: {

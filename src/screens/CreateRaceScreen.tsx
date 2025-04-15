@@ -27,6 +27,8 @@ import {
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system";
 import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { useSettings } from "../context/SettingsContext";
@@ -112,6 +114,10 @@ const CreateRaceScreen = ({ route, navigation }) => {
   const [resultTime, setResultTime] = useState("");
   const [resultNotes, setResultNotes] = useState("");
   
+  // GPX file state
+  const [gpxFile, setGpxFile] = useState(null);
+  const [gpxFileName, setGpxFileName] = useState("");
+  
   // Location information
   const [locationType, setLocationType] = useState("address"); // "address" or "coordinates"
   const [locationAddress, setLocationAddress] = useState("");
@@ -148,12 +154,52 @@ const CreateRaceScreen = ({ route, navigation }) => {
     updateFinishTime();
   }, [cutoffTime, cutoffTimeUnit, goalTime, goalTimeUnit]);
 
+  // Function to pick a GPX file
+  const pickGpxFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/gpx+xml",
+        copyToCacheDirectory: true,
+      });
+      
+      if (result.canceled) {
+        console.log('Document picker was canceled');
+        return;
+      }
+      
+      const fileUri = result.assets[0].uri;
+      const fileName = result.assets[0].name;
+      
+      // Check if it's a GPX file
+      if (!fileName.toLowerCase().endsWith('.gpx')) {
+        Alert.alert('Invalid File', 'Please select a GPX file (.gpx extension)');
+        return;
+      }
+      
+      // Save the file URI and name
+      setGpxFile(fileUri);
+      setGpxFileName(fileName);
+      
+    } catch (error) {
+      console.error('Error picking GPX file:', error);
+      Alert.alert('Error', 'Failed to pick GPX file');
+    }
+  };
+  
   // If in edit mode, populate the form with existing data
   useEffect(() => {
     if (existingRace) {
       setRaceName(existingRace.name);
       setEventType(existingRace.eventType || "run");
       setDistance(existingRace.distance.toString());
+      
+      // Set GPX file if it exists
+      if (existingRace.gpxFile) {
+        setGpxFile(existingRace.gpxFile);
+        // Extract filename from path
+        const fileName = existingRace.gpxFile.split('/').pop() || 'race-route.gpx';
+        setGpxFileName(fileName);
+      }
       
       // Set location data if it exists
       if (existingRace.location) {
@@ -495,7 +541,7 @@ const CreateRaceScreen = ({ route, navigation }) => {
     );
   };
 
-  const handleCreateRace = () => {
+  const handleCreateRace = async () => {
     // Create location object based on the selected type
     let locationData = null;
     if (locationType === "address" && locationAddress.trim()) {
@@ -505,6 +551,33 @@ const CreateRaceScreen = ({ route, navigation }) => {
         latitude: parseFloat(locationLatitude),
         longitude: parseFloat(locationLongitude)
       };
+    }
+    
+    // Handle GPX file - copy to app's documents directory for persistence
+    let persistentGpxUri = null;
+    if (gpxFile) {
+      try {
+        // Generate a unique filename
+        const raceId = existingRace ? existingRace.id : Date.now().toString();
+        const newFileName = `race_${raceId}_route.gpx`;
+        const destinationUri = `${FileSystem.documentDirectory}gpx/${newFileName}`;
+        
+        // Ensure the directory exists
+        await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory}gpx/`, { 
+          intermediates: true 
+        }).catch(e => console.log('Directory already exists'));
+        
+        // Copy the file to the permanent location
+        await FileSystem.copyAsync({
+          from: gpxFile,
+          to: destinationUri
+        });
+        
+        persistentGpxUri = destinationUri;
+      } catch (error) {
+        console.error('Error saving GPX file:', error);
+        Alert.alert('Warning', 'Failed to save GPX file, but race will still be created');
+      }
     }
 
     const newRaceData = {
@@ -539,6 +612,8 @@ const CreateRaceScreen = ({ route, navigation }) => {
       mandatoryEquipment,
       // Keep any existing aid stations if we're editing, otherwise initialize with empty array
       aidStations: existingRace?.aidStations || [],
+      // Add GPX file URI if available
+      gpxFile: persistentGpxUri || (existingRace ? existingRace.gpxFile : null),
     };
 
     if (existingRace) {
@@ -770,6 +845,56 @@ const CreateRaceScreen = ({ route, navigation }) => {
               />
             </View>
           )}
+          
+          {/* GPX File Upload Section */}
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDarkMode ? "#ffffff" : "#000000", marginTop: 16, marginBottom: 8 },
+            ]}
+          >
+            Course GPX File
+          </Text>
+          
+          <View style={styles.gpxUploadContainer}>
+            <TouchableOpacity
+              style={[
+                styles.gpxUploadButton,
+                { backgroundColor: isDarkMode ? "#333333" : "#f0f0f0" }
+              ]}
+              onPress={pickGpxFile}
+            >
+              <IconButton
+                icon="map-marker-path"
+                size={24}
+                color={theme.colors.primary}
+              />
+              <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
+                {gpxFileName ? "Change GPX File" : "Upload GPX File"}
+              </Text>
+            </TouchableOpacity>
+            
+            {gpxFileName ? (
+              <View style={styles.gpxFileInfo}>
+                <Text style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
+                  Selected file: {gpxFileName}
+                </Text>
+                <IconButton
+                  icon="close-circle"
+                  size={20}
+                  color={isDarkMode ? "#ff6b6b" : "#d32f2f"}
+                  onPress={() => {
+                    setGpxFile(null);
+                    setGpxFileName("");
+                  }}
+                />
+              </View>
+            ) : (
+              <Text style={{ color: isDarkMode ? "#aaaaaa" : "#666666", fontStyle: "italic", textAlign: "center" }}>
+                Upload a GPX file to visualize your race route
+              </Text>
+            )}
+          </View>
 
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
             <View pointerEvents="none">
@@ -1676,6 +1801,25 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+  },
+  gpxUploadContainer: {
+    marginBottom: 16,
+  },
+  gpxUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  gpxFileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   title: {
     fontSize: 24,

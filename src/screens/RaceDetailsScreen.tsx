@@ -1139,6 +1139,13 @@ const RaceDetailsScreen = ({ route, navigation }) => {
                 strokeWidth={3}
                 backgroundColor={isDarkMode ? "#333333" : "#f5f5f5"}
               />
+              <Button
+                mode="text"
+                style={{ marginTop: 8 }}
+                onPress={() => navigation.navigate("AddGPXRoute", { raceData })}
+              >
+                Change GPX Route
+              </Button>
             </View>
           ) : (
             <View style={styles.noGpxContainer}>
@@ -1157,7 +1164,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
               <Button
                 mode="outlined"
                 style={{ marginTop: 16 }}
-                onPress={() => navigation.navigate("CreateRace", { editMode: true, raceData })}
+                onPress={() => navigation.navigate("AddGPXRoute", { raceData })}
               >
                 Add GPX Route
               </Button>

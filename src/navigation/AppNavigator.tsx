@@ -29,6 +29,7 @@ import RacePrepScreen from "../screens/RacePrepScreen";
 import PlanOverviewScreen from "../screens/nutrition/PlanOverviewScreen";
 import NoteEditor from "../components/NoteEditor";
 import AllRacesScreen from "../screens/AllRacesScreen";
+import AddGPXRouteScreen from "../screens/AddGPXRouteScreen";
 
 // Define navigation types
 export type RootStackParamList = {
@@ -44,6 +45,7 @@ export type RootStackParamList = {
     noteId?: string,
     isNewNote?: boolean 
   };
+  AddGPXRoute: { raceData: any };
 };
 
 export type MainTabParamList = {
@@ -230,6 +232,11 @@ const AppNavigator = () => {
           name="AllRaces"
           component={AllRacesScreen}
           options={{ title: "All Races" }}
+        />
+        <Stack.Screen
+          name="AddGPXRoute"
+          component={AddGPXRouteScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

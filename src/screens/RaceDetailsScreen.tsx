@@ -25,6 +25,7 @@ import { useRaces } from "../context/RaceContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSettings } from "../context/SettingsContext";
+import { useNotes, NOTE_TYPES } from "../context/NotesContext";
 
 // Define feature colors for aid station chips
 // const featureColors = {
@@ -115,6 +116,7 @@ const RaceDetailsScreen = ({ route, navigation }) => {
   const { isDarkMode, theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { getRaceById, deleteRace, loading } = useRaces();
+  const { getNotesForEntity } = useNotes();
   const didMountRef = useRef(false);
 
   // Retrieve race data first
@@ -615,6 +617,27 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             {raceData.notes ||
               "Tap to add notes about race strategy, gear requirements, or other important details."}
           </Text>
+          
+          {/* Display additional notes from the notes system */}
+          {getNotesForEntity(NOTE_TYPES.RACE, id).map((note) => (
+            <View key={note.id} style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDarkMode ? "#333333" : "#e0e0e0" }}>
+              {note.title && (
+                <Text style={{ 
+                  fontWeight: 'bold', 
+                  marginBottom: 5,
+                  color: isDarkMode ? "#e0e0e0" : "#000000"
+                }}>
+                  {note.title}
+                </Text>
+              )}
+              <Text style={{ 
+                color: isDarkMode ? "#e0e0e0" : "#000000",
+                fontStyle: 'italic'
+              }}>
+                {note.content}
+              </Text>
+            </View>
+          ))}
         </Card.Content>
         <Card.Actions>
           <Button
@@ -624,9 +647,11 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             style={{ borderRadius: 20 }}
             onPress={() =>
               navigation.navigate("NoteEditor", {
-                raceId: id,
-                notes: raceData.notes || "",
-                raceName: raceData.name,
+                entityType: NOTE_TYPES.RACE,
+                entityId: id,
+                entityName: raceData.name,
+                initialContent: raceData.notes || "",
+                raceData: raceData, // For backward compatibility
               })
             }
           >
@@ -1137,7 +1162,13 @@ const RaceDetailsScreen = ({ route, navigation }) => {
             {
               icon: 'note-text',
               label: 'Race Notes',
-              onPress: () => navigation.navigate("NoteEditor", { raceData }),
+              onPress: () => navigation.navigate("NoteEditor", { 
+                entityType: NOTE_TYPES.RACE,
+                entityId: id,
+                entityName: raceData.name,
+                initialContent: raceData.notes || "",
+                raceData: raceData, // For backward compatibility
+              }),
             },
             {
               icon: 'link',

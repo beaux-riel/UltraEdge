@@ -33,7 +33,8 @@ export const SupabaseProvider = ({ children }) => {
     races: false,
     gearItems: false,
     aidStations: false,
-    dropBags: false
+    dropBags: false,
+    notes: false
   });
 
   // Initialize Supabase client
@@ -1299,10 +1300,105 @@ export const SupabaseProvider = ({ children }) => {
           // This is handled as part of races
           setDataFetched(prev => ({ ...prev, dropBags: true }));
           break;
+        case 'notes':
+          await restoreNotes();
+          break;
       }
     }
   };
   
+  // Notes functions
+  const saveNoteToSupabase = async (note) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      if (!isPremium) throw new Error('Premium subscription required');
+
+      const { data, error } = await supabase
+        .from('notes')
+        .upsert({
+          id: note.id,
+          user_id: user.id,
+          entity_type: note.entityType,
+          entity_id: note.entityId,
+          title: note.title || null,
+          content: note.content,
+          created_at: note.createdAt || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error saving note to Supabase:', error.message);
+      return null;
+    }
+  };
+
+  const deleteNoteFromSupabase = async (noteId) => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      if (!isPremium) throw new Error('Premium subscription required');
+
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting note from Supabase:', error.message);
+      return false;
+    }
+  };
+
+  const fetchNotesFromSupabase = async () => {
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized');
+      if (!user) throw new Error('User not authenticated');
+      if (!isPremium) throw new Error('Premium subscription required');
+
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data.map(note => ({
+        id: note.id,
+        entityType: note.entity_type,
+        entityId: note.entity_id,
+        title: note.title,
+        content: note.content,
+        createdAt: note.created_at,
+        updatedAt: note.updated_at
+      }));
+    } catch (error) {
+      console.error('Error fetching notes from Supabase:', error.message);
+      return [];
+    }
+  };
+
+  const restoreNotes = async () => {
+    try {
+      const notes = await fetchNotesFromSupabase();
+      if (notes && notes.length > 0) {
+        // We'll handle this in the NotesContext
+        console.log(`Restored ${notes.length} notes from Supabase`);
+      }
+      setDataFetched(prev => ({ ...prev, notes: true }));
+      return notes;
+    } catch (error) {
+      console.error('Error restoring notes:', error.message);
+      setDataFetched(prev => ({ ...prev, notes: true }));
+      return [];
+    }
+  };
+
   // Fetch aid stations from Supabase
   const fetchAidStationsFromSupabase = async (raceId) => {
     try {
@@ -1465,6 +1561,11 @@ export const SupabaseProvider = ({ children }) => {
         fetchGearItemsFromSupabase,
         fetchAidStationsFromSupabase,
         fetchDropBagsFromSupabase,
+        // Notes functions
+        saveNoteToSupabase,
+        deleteNoteFromSupabase,
+        fetchNotesFromSupabase,
+        restoreNotes,
       }}
     >
       {children}

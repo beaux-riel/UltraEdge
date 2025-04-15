@@ -18,6 +18,7 @@ import { RevenueCatProvider } from "./src/context/RevenueCatContext";
 import { SettingsProvider } from "./src/context/SettingsContext";
 import { GearProvider } from "./src/context/GearContext";
 import { NutritionHydrationProvider } from "./src/context/NutritionHydrationContext";
+import { NotesProvider } from "./src/context/NotesContext";
 
 const AppContent = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -86,7 +87,9 @@ const PaperProviderWithTheme = () => {
               <UserProvider>
                 <RaceProvider>
                   <GearProvider>
-                    <AppContent />
+                    <NotesProvider>
+                      <AppContent />
+                    </NotesProvider>
                   </GearProvider>
                 </RaceProvider>
               </UserProvider>

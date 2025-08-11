@@ -1,3 +1,27 @@
+-- Migration: Complete schema replacement
+-- Description: Replacing the entire schema with a new structure based on updated requirements
+
+-- Drop existing tables (in reverse order of dependencies)
+DROP TABLE IF EXISTS course_notes;
+DROP TABLE IF EXISTS nutrition_plan_items;
+DROP TABLE IF EXISTS nutrition_plans;
+DROP TABLE IF EXISTS nutrition_items;
+DROP TABLE IF EXISTS pacer_gear;
+DROP TABLE IF EXISTS race_gear;
+DROP TABLE IF EXISTS gear_items;
+DROP TABLE IF EXISTS race_drop_bags;
+DROP TABLE IF EXISTS drop_bag_templates;
+DROP TABLE IF EXISTS aid_station_crew;
+DROP TABLE IF EXISTS race_crew;
+DROP TABLE IF EXISTS crew_members;
+DROP TABLE IF EXISTS aid_station_checkins;
+DROP TABLE IF EXISTS aid_stations;
+DROP TABLE IF EXISTS races;
+DROP TABLE IF EXISTS race_backups;
+DROP TABLE IF EXISTS profiles;
+
+-- Create new schema based on the provided requirements
+
 -- Core Entities
 
 -- Users table
@@ -471,124 +495,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- Function to migrate existing race data from JSONB to relational tables
-CREATE OR REPLACE FUNCTION migrate_race_data()
-RETURNS VOID AS $$
-DECLARE
-  backup_record RECORD;
-  race_record RECORD;
-  new_race_id UUID;
-  aid_station JSONB;
-BEGIN
-  -- Loop through all race backups
-  FOR backup_record IN SELECT * FROM race_backups LOOP
-    -- Loop through each race in the backup
-    FOR race_record IN SELECT * FROM jsonb_array_elements(backup_record.races_data) LOOP
-      -- Insert into races table
-      INSERT INTO races (
-        user_id,
-        name,
-        distance,
-        elevation,
-        date,
-        created_at,
-        updated_at
-      ) VALUES (
-        backup_record.user_id,
-        race_record ->> 'name',
-        (race_record ->> 'distance')::NUMERIC,
-        (race_record ->> 'elevation')::NUMERIC,
-        (race_record ->> 'date')::DATE,
-        NOW(),
-        NOW()
-      ) RETURNING id INTO new_race_id;
-      
-      -- Insert aid stations if they exist
-      IF race_record ? 'aidStations' AND jsonb_array_length(race_record -> 'aidStations') > 0 THEN
-        FOR aid_station IN SELECT * FROM jsonb_array_elements(race_record -> 'aidStations') LOOP
-          INSERT INTO aid_stations (
-            race_id,
-            name,
-            distance,
-            cutoff_time,
-            water_available,
-            sports_drink_available,
-            soda_available,
-            fruit_available,
-            sandwiches_available,
-            soup_available,
-            medical_available,
-            drop_bag_allowed,
-            crew_allowed,
-            created_at,
-            updated_at
-          ) VALUES (
-            new_race_id,
-            aid_station ->> 'name',
-            (aid_station ->> 'distance')::NUMERIC,
-            (aid_station ->> 'cutoffTime')::TIME,
-            (aid_station -> 'supplies' ->> 'water')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'sports_drink')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'soda')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'fruit')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'sandwiches')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'soup')::BOOLEAN,
-            (aid_station -> 'supplies' ->> 'medical')::BOOLEAN,
-            (aid_station ->> 'dropBagAllowed')::BOOLEAN,
-            (aid_station ->> 'crewAllowed')::BOOLEAN,
-            NOW(),
-            NOW()
-          );
-        END LOOP;
-      END IF;
-    END LOOP;
-  END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
--- Add a trigger to update the updated_at timestamp
-CREATE OR REPLACE FUNCTION update_modified_column()
-RETURNS TRIGGER AS $$
-BEGIN
-   NEW.updated_at = NOW();
-   RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Apply the trigger to all tables with updated_at column
-CREATE TRIGGER update_profiles_modtime
-BEFORE UPDATE ON profiles
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_races_modtime
-BEFORE UPDATE ON races
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_aid_stations_modtime
-BEFORE UPDATE ON aid_stations
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_crew_members_modtime
-BEFORE UPDATE ON crew_members
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_drop_bag_templates_modtime
-BEFORE UPDATE ON drop_bag_templates
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_race_drop_bags_modtime
-BEFORE UPDATE ON race_drop_bags
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_gear_items_modtime
-BEFORE UPDATE ON gear_items
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_nutrition_items_modtime
-BEFORE UPDATE ON nutrition_items
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
-CREATE TRIGGER update_nutrition_plans_modtime
-BEFORE UPDATE ON nutrition_plans
-FOR EACH ROW EXECUTE PROCEDURE update_modified_column();

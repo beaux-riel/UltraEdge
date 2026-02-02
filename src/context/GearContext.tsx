@@ -1,158 +1,204 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+/**
+ * GearContext — Local-first gear inventory management
+ * Uses AsyncStorage for persistence (no auth required)
+ */
+
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSupabase } from './SupabaseContext';
 
-// Create the context
-const GearContext = createContext();
+// Types
+export type WeightUnit = 'g' | 'oz' | 'kg' | 'lbs';
+export type GearCategory = 
+  | 'footwear' 
+  | 'clothing' 
+  | 'pack' 
+  | 'hydration' 
+  | 'lighting' 
+  | 'navigation' 
+  | 'safety' 
+  | 'poles' 
+  | 'nutrition' 
+  | 'other';
 
-export const GearProvider = ({ children }) => {
-  const [gearItems, setGearItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user, isPremium, supabase, backupGearItems, restoreGearItems, saveGearItems: saveGearItemsToSupabase, checkAndFetchData } = useSupabase();
+export interface GearItem {
+  id: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  category: GearCategory;
+  weight?: number;
+  weightUnit: WeightUnit;
+  color?: string;
+  size?: string;
+  quantity: number;
+  notes?: string;
+  imageUrl?: string;
+  isActive: boolean;
+  retired: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-  // Load gear items from storage on mount
-  useEffect(() => {
-    const loadGearItems = async () => {
-      try {
-        setLoading(true);
-        
-        // Try to restore from Supabase first if user is premium
-        if (user && isPremium) {
-          const result = await restoreGearItems();
-          if (result.success && result.data) {
-            // Filter out retired items for the initial view
-            const activeItems = result.data.filter(item => !item.retired);
-            setGearItems(activeItems);
-            setLoading(false);
-            return;
-          }
-        }
-        
-        // Fall back to AsyncStorage
-        const storedGearItems = await AsyncStorage.getItem('gearItems');
-        if (storedGearItems) {
-          const parsedItems = JSON.parse(storedGearItems);
-          setGearItems(parsedItems);
-        }
-      } catch (error) {
-        console.error('Failed to load gear items:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+interface GearContextType {
+  gearItems: GearItem[];
+  loading: boolean;
+  error: string | null;
+  addGearItem: (item: Omit<GearItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<GearItem>;
+  updateGearItem: (id: string, updates: Partial<GearItem>) => Promise<GearItem | null>;
+  deleteGearItem: (id: string) => Promise<boolean>;
+  getGearItem: (id: string) => GearItem | undefined;
+  getGearByCategory: (category: GearCategory) => GearItem[];
+  getTotalWeight: (unit?: WeightUnit) => number;
+  refreshGear: () => Promise<void>;
+}
 
-    loadGearItems();
-  }, [user, isPremium]);
+const GearContext = createContext<GearContextType | undefined>(undefined);
 
-  // Save gear items to AsyncStorage and optionally to Supabase
-  const saveGearItems = async (updatedGearItems) => {
-    try {
-      setGearItems(updatedGearItems);
-      
-      // Use the new saveGearItems function from SupabaseContext
-      // This will save to AsyncStorage and to Supabase if user is premium
-      const result = await saveGearItemsToSupabase(updatedGearItems);
-      
-      return result;
-    } catch (error) {
-      console.error('Failed to save gear items:', error);
-      return { success: false, error: error.message };
-    }
-  };
+const STORAGE_KEY = '@ultraedge/gear-items';
+
+// Generate unique ID
+const generateId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+// Weight conversion helper
+const convertWeight = (weight: number, fromUnit: WeightUnit, toUnit: WeightUnit): number => {
+  // Convert to grams first
+  let grams: number;
+  switch (fromUnit) {
+    case 'g': grams = weight; break;
+    case 'oz': grams = weight * 28.3495; break;
+    case 'kg': grams = weight * 1000; break;
+    case 'lbs': grams = weight * 453.592; break;
+    default: grams = weight;
+  }
   
-  // Check for data on Supabase when component mounts
-  useEffect(() => {
-    if (user && isPremium) {
-      // Check if we need to fetch data from Supabase
-      const checkForSupabaseData = async () => {
-        try {
-          await checkAndFetchData('gearItems');
-        } catch (error) {
-          console.error('Error checking for Supabase data:', error);
-        }
-      };
-      
-      checkForSupabaseData();
-    }
-  }, [user, isPremium]);
+  // Convert from grams to target unit
+  switch (toUnit) {
+    case 'g': return grams;
+    case 'oz': return grams / 28.3495;
+    case 'kg': return grams / 1000;
+    case 'lbs': return grams / 453.592;
+    default: return grams;
+  }
+};
 
-  // Add a new gear item
-  const addGearItem = async (newItem) => {
-    // Ensure the new item has quantity and retired properties
-    const itemWithDefaults = {
-      ...newItem,
-      quantity: newItem.quantity || 1,
-      retired: newItem.retired || false
-    };
-    
-    const updatedGearItems = [...gearItems, itemWithDefaults];
-    
-    // If user is premium, push to Supabase immediately
-    if (user && isPremium) {
-      try {
-        await backupGearItems(updatedGearItems);
-      } catch (error) {
-        console.error('Failed to backup new gear item to Supabase:', error);
-      }
-    }
-    
-    return saveGearItems(updatedGearItems);
-  };
+interface GearProviderProps {
+  children: ReactNode;
+}
 
-  // Update an existing gear item
-  const updateGearItem = async (index, updatedItem) => {
-    // Ensure the updated item has quantity and retired properties
-    const itemWithDefaults = {
-      ...updatedItem,
-      quantity: updatedItem.quantity !== undefined ? updatedItem.quantity : 1,
-      retired: updatedItem.retired !== undefined ? updatedItem.retired : false
-    };
-    
-    const updatedGearItems = [...gearItems];
-    updatedGearItems[index] = itemWithDefaults;
-    
-    // If user is premium, push to Supabase immediately
-    if (user && isPremium) {
-      try {
-        await backupGearItems(updatedGearItems);
-      } catch (error) {
-        console.error('Failed to backup updated gear item to Supabase:', error);
-      }
-    }
-    
-    return saveGearItems(updatedGearItems);
-  };
+export function GearProvider({ children }: GearProviderProps) {
+  const [gearItems, setGearItems] = useState<GearItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Delete a gear item
-  const deleteGearItem = async (index) => {
-    const updatedGearItems = [...gearItems];
-    updatedGearItems.splice(index, 1);
-    
-    // If user is premium, push to Supabase immediately
-    if (user && isPremium) {
-      try {
-        await backupGearItems(updatedGearItems);
-      } catch (error) {
-        console.error('Failed to backup gear items after deletion to Supabase:', error);
-      }
-    }
-    
-    return saveGearItems(updatedGearItems);
-  };
-
-  // Manually trigger a backup to Supabase
-  const backupGearItemsToSupabase = async () => {
-    if (!user || !isPremium) {
-      return { success: false, error: 'User not logged in or not premium' };
-    }
-    
+  // Load gear from AsyncStorage
+  const loadGear = async () => {
     try {
-      const result = await backupGearItems(gearItems);
-      return result;
-    } catch (error) {
-      console.error('Failed to backup gear items to Supabase:', error);
-      return { success: false, error: error.message };
+      setLoading(true);
+      setError(null);
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setGearItems(parsed);
+      }
+    } catch (err) {
+      console.error('Failed to load gear:', err);
+      setError('Failed to load gear items');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Save gear to AsyncStorage
+  const saveGear = async (items: GearItem[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      setGearItems(items);
+    } catch (err) {
+      console.error('Failed to save gear:', err);
+      setError('Failed to save gear items');
+      throw err;
+    }
+  };
+
+  // Load on mount
+  useEffect(() => {
+    loadGear();
+  }, []);
+
+  // Add gear item
+  const addGearItem = async (item: Omit<GearItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<GearItem> => {
+    const now = new Date().toISOString();
+    const newItem: GearItem = {
+      ...item,
+      id: generateId(),
+      quantity: item.quantity || 1,
+      isActive: item.isActive ?? true,
+      retired: item.retired ?? false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    const updated = [...gearItems, newItem];
+    await saveGear(updated);
+    return newItem;
+  };
+
+  // Update gear item
+  const updateGearItem = async (id: string, updates: Partial<GearItem>): Promise<GearItem | null> => {
+    const index = gearItems.findIndex(g => g.id === id);
+    if (index === -1) return null;
+    
+    const updatedItem: GearItem = {
+      ...gearItems[index],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    const updated = [...gearItems];
+    updated[index] = updatedItem;
+    await saveGear(updated);
+    return updatedItem;
+  };
+
+  // Delete gear item
+  const deleteGearItem = async (id: string): Promise<boolean> => {
+    const index = gearItems.findIndex(g => g.id === id);
+    if (index === -1) return false;
+    
+    const updated = gearItems.filter(g => g.id !== id);
+    await saveGear(updated);
+    return true;
+  };
+
+  // Get single gear item
+  const getGearItem = (id: string): GearItem | undefined => {
+    return gearItems.find(g => g.id === id);
+  };
+
+  // Get gear by category
+  const getGearByCategory = (category: GearCategory): GearItem[] => {
+    return gearItems.filter(g => g.category === category && !g.retired);
+  };
+
+  // Get total weight (in specified unit, default grams)
+  const getTotalWeight = (unit: WeightUnit = 'g'): number => {
+    return gearItems
+      .filter(g => !g.retired && g.weight)
+      .reduce((total, item) => {
+        const weightInTarget = convertWeight(
+          (item.weight || 0) * item.quantity,
+          item.weightUnit,
+          unit
+        );
+        return total + weightInTarget;
+      }, 0);
+  };
+
+  // Refresh gear from storage
+  const refreshGear = async () => {
+    await loadGear();
   };
 
   return (
@@ -160,23 +206,27 @@ export const GearProvider = ({ children }) => {
       value={{
         gearItems,
         loading,
-        saveGearItems,
+        error,
         addGearItem,
         updateGearItem,
         deleteGearItem,
-        backupGearItemsToSupabase,
+        getGearItem,
+        getGearByCategory,
+        getTotalWeight,
+        refreshGear,
       }}
     >
       {children}
     </GearContext.Provider>
   );
-};
+}
 
-// Custom hook to use the gear context
-export const useGear = () => {
+export function useGear(): GearContextType {
   const context = useContext(GearContext);
   if (!context) {
     throw new Error('useGear must be used within a GearProvider');
   }
   return context;
-};
+}
+
+export default GearContext;

@@ -1,0 +1,53 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' | head -c 50000)
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Claude Code Review
+        uses: anthropics/anthropic-cookbook/.github/actions/claude-code-review@main
+        if: ${{ steps.diff.outputs.diff != '' }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          model: claude-sonnet-4-20250514
+          max_tokens: 4096
+        continue-on-error: true
+
+      - name: Fallback - Basic Review Comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const diff = `${{ steps.diff.outputs.diff }}`.slice(0, 1000);
+            if (diff) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔍 Code Review Pending\n\nClaude code review action encountered an issue. Please ensure:\n- \`ANTHROPIC_API_KEY\` secret is configured in repository settings\n- The PR contains reviewable code changes\n\n<details>\n<summary>Files changed</summary>\n\n\`\`\`\n${diff}\n\`\`\`\n</details>`
+              });
+            }

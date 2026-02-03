@@ -160,14 +160,12 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.parchment }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={[styles.container, { backgroundColor: colors.parchment }]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
           {/* Event Info (Read-only) */}
@@ -436,8 +434,12 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
         </View>
       )}
 
-      {/* Save Button */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+      {/* Save Button - Fixed at bottom */}
+      <View style={[styles.fixedFooter, { 
+        paddingBottom: insets.bottom + spacing.md,
+        backgroundColor: colors.parchment,
+        borderTopColor: colors.border,
+      }]}>
         <Button
           onPress={handleSave}
           loading={saving}
@@ -447,7 +449,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
           Save Changes
         </Button>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -457,6 +459,15 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  fixedFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
   },
   centered: {
     flex: 1,
@@ -579,12 +590,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    backgroundColor: '#FFFFFF',
   },
 });

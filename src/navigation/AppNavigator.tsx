@@ -342,7 +342,7 @@ export default function AppNavigator() {
         <Stack.Screen
           name="DropBags"
           component={DropBagsListScreen}
-          options={{ title: 'Drop Bags' }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="CreateDropBag"

@@ -159,8 +159,21 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.parchment }]}>
+      {/* Navigation Header */}
+      <View style={[styles.navHeader, { paddingTop: insets.top + spacing.xs }]}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.bark + '20' }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.cream} />
+          <Text variant="body" style={{ color: colors.cream, marginLeft: 4 }}>Main</Text>
+        </TouchableOpacity>
+        <Text variant="body" style={{ color: colors.cream }}>Drop Bags</Text>
+        <View style={{ width: 80 }} />
+      </View>
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: spacing.sm }]}>
         <View style={styles.headerTop}>
           <H1>Drop Bags</H1>
           <Button
@@ -314,6 +327,20 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  navHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
   },
   header: {
     paddingHorizontal: 20,

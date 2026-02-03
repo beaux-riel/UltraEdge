@@ -57,6 +57,12 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import WeightLogScreen from '../screens/profile/WeightLogScreen';
 
+// Auth
+import { SignInScreen, SignUpScreen } from '../screens/auth';
+
+// Settings
+import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
+
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
@@ -64,6 +70,13 @@ import WeightLogScreen from '../screens/profile/WeightLogScreen';
 export type RootStackParamList = {
   // Tabs
   Main: undefined;
+  
+  // Auth (optional - accessible from Profile/Settings)
+  SignIn: undefined;
+  SignUp: undefined;
+  
+  // Settings
+  Subscription: undefined;
   
   // Events
   CreateEvent: undefined;
@@ -370,6 +383,31 @@ export default function AppNavigator() {
           name="WeightLog"
           component={WeightLogScreen}
           options={{ headerShown: false }}
+        />
+        
+        {/* Auth Screens (optional - accessible from Profile) */}
+        <Stack.Screen
+          name="SignIn"
+          component={SignInScreen}
+          options={{ 
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUpScreen}
+          options={{ 
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+        
+        {/* Settings Screens */}
+        <Stack.Screen
+          name="Subscription"
+          component={SubscriptionScreen}
+          options={{ title: 'Subscription' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

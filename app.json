@@ -2,6 +2,7 @@
   "expo": {
     "name": "UltraEdge",
     "slug": "ultraedge",
+    "scheme": "ultraedge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +18,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.beaux.ultraedge"
+      "bundleIdentifier": "com.beaux.ultraedge",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -30,6 +32,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-apple-authentication"
     ],
     "extra": {
       "eas": {

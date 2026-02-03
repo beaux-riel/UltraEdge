@@ -29,6 +29,7 @@ import {
   CardContent,
 } from '../../components/ui';
 import { useMover, WeightEntry } from '../../context/MoverContext';
+import { useAuth } from '../../context/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 160;
@@ -158,9 +159,15 @@ export default function ProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   
   const { profile, weightHistory, getWeightTrend, getWeightHistory30Days } = useMover();
+  const { user, isAuthenticated, signOut, isLoading: authLoading } = useAuth();
   
   const trend = getWeightTrend();
   const chartData = getWeightHistory30Days();
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    await signOut();
+  };
   
   // Format date for last updated
   const formatLastUpdated = (dateStr: string | null) => {
@@ -364,6 +371,114 @@ export default function ProfileScreen({ navigation }: any) {
           </Card>
         </View>
 
+        {/* Account Section */}
+        <View style={styles.section}>
+          <H2 style={{ marginBottom: spacing.md }}>Account</H2>
+          
+          <Card>
+            {isAuthenticated && user ? (
+              <>
+                {/* Signed In State */}
+                <View style={styles.preferenceRow}>
+                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.meadow}15` }]}>
+                    <Ionicons name="checkmark-circle" size={20} color={colors.meadow} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Body>Signed In</Body>
+                    <BodySmall color="secondary" numberOfLines={1}>
+                      {user.email}
+                    </BodySmall>
+                  </View>
+                </View>
+                
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                
+                <TouchableOpacity
+                  style={styles.preferenceRow}
+                  onPress={() => navigation.navigate('Subscription')}
+                >
+                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.forest}15` }]}>
+                    <Ionicons name="star" size={20} color={colors.forest} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Body>Subscription</Body>
+                    <BodySmall color="secondary">
+                      Manage your premium features
+                    </BodySmall>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.mist} />
+                </TouchableOpacity>
+                
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                
+                <TouchableOpacity
+                  style={styles.preferenceRow}
+                  onPress={handleSignOut}
+                  disabled={authLoading}
+                >
+                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.clay}15` }]}>
+                    <Ionicons name="log-out-outline" size={20} color={colors.clay} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Body style={{ color: colors.clay }}>Sign Out</Body>
+                    <BodySmall color="tertiary">
+                      Your local data will remain on this device
+                    </BodySmall>
+                  </View>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {/* Signed Out State */}
+                <View style={[styles.accountPromo, { padding: spacing.lg }]}>
+                  <View style={[styles.accountPromoIcon, { backgroundColor: `${colors.forest}15` }]}>
+                    <Ionicons name="cloud-outline" size={32} color={colors.forest} />
+                  </View>
+                  <H3 style={{ marginTop: spacing.md, textAlign: 'center' }}>
+                    Sync Across Devices
+                  </H3>
+                  <BodySmall color="secondary" align="center" style={{ marginTop: spacing.xs }}>
+                    Sign in to backup your race plans and access them anywhere
+                  </BodySmall>
+                  <Button
+                    onPress={() => navigation.navigate('SignIn')}
+                    fullWidth
+                    style={{ marginTop: spacing.lg }}
+                  >
+                    Sign In
+                  </Button>
+                  <TouchableOpacity
+                    style={{ marginTop: spacing.md, padding: spacing.xs }}
+                    onPress={() => navigation.navigate('SignUp')}
+                  >
+                    <BodySmall color="secondary" align="center">
+                      Don't have an account? <BodySmall style={{ color: colors.forest }}>Sign Up</BodySmall>
+                    </BodySmall>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                
+                <TouchableOpacity
+                  style={styles.preferenceRow}
+                  onPress={() => navigation.navigate('Subscription')}
+                >
+                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.sunrise}15` }]}>
+                    <Ionicons name="star" size={20} color={colors.sunrise} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Body>Go Premium</Body>
+                    <BodySmall color="secondary">
+                      Cloud sync, crew features & more
+                    </BodySmall>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.mist} />
+                </TouchableOpacity>
+              </>
+            )}
+          </Card>
+        </View>
+
         {/* Recent Weigh-ins */}
         {weightHistory.length > 0 && (
           <View style={styles.section}>
@@ -542,5 +657,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  accountPromo: {
+    alignItems: 'center',
+  },
+  accountPromoIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

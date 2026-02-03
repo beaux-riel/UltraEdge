@@ -17,12 +17,14 @@ import { ThemeProvider, useTheme } from './src/theme';
 import { useFonts } from './src/hooks/useFonts';
 
 // Data Providers
+import { AuthProvider } from './src/context/AuthContext';
 import { MoverProvider } from './src/context/MoverContext';
 import { EventProvider } from './src/context/EventContext';
 import { CheckpointProvider } from './src/context/CheckpointContext';
 import { GearProvider } from './src/context/GearContext';
 import { CrewProvider } from './src/context/CrewContext';
 import { DropBagProvider } from './src/context/DropBagContext';
+import { SubscriptionProvider } from './src/context/SubscriptionContext';
 
 // Navigation
 import AppNavigator from './src/navigation/AppNavigator';
@@ -62,19 +64,23 @@ export default function App() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <MoverProvider>
-            <EventProvider>
-              <CheckpointProvider>
-                <GearProvider>
-                  <CrewProvider>
-                    <DropBagProvider>
-                      <AppContent />
-                    </DropBagProvider>
-                  </CrewProvider>
-                </GearProvider>
-              </CheckpointProvider>
-            </EventProvider>
-          </MoverProvider>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <MoverProvider>
+                <EventProvider>
+                  <CheckpointProvider>
+                    <GearProvider>
+                      <CrewProvider>
+                        <DropBagProvider>
+                          <AppContent />
+                        </DropBagProvider>
+                      </CrewProvider>
+                    </GearProvider>
+                  </CheckpointProvider>
+                </EventProvider>
+              </MoverProvider>
+            </SubscriptionProvider>
+          </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

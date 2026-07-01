@@ -12,8 +12,10 @@
 // Polyfills for React Native
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Database } from './database.types';
 
 // Get from environment variables (Expo public env vars)
@@ -26,9 +28,104 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// ============================================================================
+// SECURE SESSION STORAGE
+// ============================================================================
+
+// SecureStore values are limited to 2048 bytes on some platforms, so large
+// values (e.g. Supabase sessions) are split into chunks.
+const SECURE_STORE_CHUNK_SIZE = 2000;
+
+// SecureStore keys may only contain alphanumerics, ".", "-" and "_".
+const sanitizeSecureStoreKey = (key: string) => key.replace(/[^A-Za-z0-9._-]/g, '_');
+
+interface StorageAdapter {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
+}
+
+// Storage adapter backed by expo-secure-store so auth sessions are encrypted
+// at rest. Falls back to AsyncStorage on web where SecureStore is unavailable.
+export const createSecureStorageAdapter = (): StorageAdapter => {
+  if (Platform.OS === 'web') {
+    return AsyncStorage;
+  }
+
+  const chunkCountKey = (key: string) => `${key}__chunks`;
+  const chunkKey = (key: string, index: number) => `${key}__chunk_${index}`;
+
+  const removeChunks = async (key: string) => {
+    const countStr = await SecureStore.getItemAsync(chunkCountKey(key));
+    if (countStr) {
+      const count = parseInt(countStr, 10) || 0;
+      for (let i = 0; i < count; i++) {
+        await SecureStore.deleteItemAsync(chunkKey(key, i));
+      }
+      await SecureStore.deleteItemAsync(chunkCountKey(key));
+    }
+  };
+
+  return {
+    getItem: async (key: string) => {
+      try {
+        const safeKey = sanitizeSecureStoreKey(key);
+        const countStr = await SecureStore.getItemAsync(chunkCountKey(safeKey));
+        if (countStr) {
+          const count = parseInt(countStr, 10) || 0;
+          const chunks: string[] = [];
+          for (let i = 0; i < count; i++) {
+            const chunk = await SecureStore.getItemAsync(chunkKey(safeKey, i));
+            if (chunk === null) return null;
+            chunks.push(chunk);
+          }
+          return chunks.join('');
+        }
+        return await SecureStore.getItemAsync(safeKey);
+      } catch (error) {
+        console.error('SecureStore getItem error:', error);
+        return null;
+      }
+    },
+    setItem: async (key: string, value: string) => {
+      try {
+        const safeKey = sanitizeSecureStoreKey(key);
+        // Clear any previously stored chunks/value for this key first
+        await removeChunks(safeKey);
+        if (value.length <= SECURE_STORE_CHUNK_SIZE) {
+          await SecureStore.setItemAsync(safeKey, value);
+          return;
+        }
+        await SecureStore.deleteItemAsync(safeKey);
+        const count = Math.ceil(value.length / SECURE_STORE_CHUNK_SIZE);
+        for (let i = 0; i < count; i++) {
+          await SecureStore.setItemAsync(
+            chunkKey(safeKey, i),
+            value.slice(i * SECURE_STORE_CHUNK_SIZE, (i + 1) * SECURE_STORE_CHUNK_SIZE)
+          );
+        }
+        await SecureStore.setItemAsync(chunkCountKey(safeKey), String(count));
+      } catch (error) {
+        console.error('SecureStore setItem error:', error);
+      }
+    },
+    removeItem: async (key: string) => {
+      try {
+        const safeKey = sanitizeSecureStoreKey(key);
+        await removeChunks(safeKey);
+        await SecureStore.deleteItemAsync(safeKey);
+      } catch (error) {
+        console.error('SecureStore removeItem error:', error);
+      }
+    },
+  };
+};
+
+const secureAuthStorage = createSecureStorageAdapter();
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: secureAuthStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // Important for React Native

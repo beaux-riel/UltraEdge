@@ -29,9 +29,25 @@ export const REVENUECAT_API_KEYS = {
  * Get the appropriate API key for the current platform
  */
 export const getRevenueCatApiKey = (): string => {
-  return Platform.OS === 'ios' 
-    ? REVENUECAT_API_KEYS.ios 
+  return Platform.OS === 'ios'
+    ? REVENUECAT_API_KEYS.ios
     : REVENUECAT_API_KEYS.android;
+};
+
+/**
+ * Whether RevenueCat can actually be used in this environment.
+ *
+ * Returns false when:
+ * - Running on web (react-native-purchases has no web support)
+ * - The API key env vars are unset (placeholder keys are still in place)
+ *
+ * Callers MUST treat an unconfigured environment as "not premium" and
+ * skip all SDK calls — never crash.
+ */
+export const isRevenueCatConfigured = (): boolean => {
+  if (Platform.OS === 'web') return false;
+  const key = getRevenueCatApiKey();
+  return !!key && !key.includes('PLACEHOLDER');
 };
 
 // =============================================================================

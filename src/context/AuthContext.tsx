@@ -19,9 +19,9 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
-import { Platform, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, Alert, Linking } from 'react-native';
 import { createClient, SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
+import { createSecureStorageAdapter } from '../lib/supabase';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -71,14 +71,74 @@ export interface AuthResult {
 // CONFIGURATION
 // ============================================================================
 
-// Supabase credentials from environment variables
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://tybnspiyravdizljzrxw.supabase.co';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5Ym5zcGl5cmF2ZGl6bGp6cnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwNDI4MDksImV4cCI6MjA1OTYxODgwOX0.WrA-XgzKifmw0NZqxkjM2MHCBWSHGWWcsgIawc9dlMQ';
+// Supabase credentials from environment variables. Expo SDK 52 loads .env
+// files automatically and inlines EXPO_PUBLIC_* vars at build time.
+// No hardcoded fallbacks — fail loudly if misconfigured.
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing Supabase configuration. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_KEY in your .env file (see .env.example), then restart the Expo dev server.'
+  );
+}
 
 // Google OAuth config (configure in Supabase dashboard)
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+
+// ============================================================================
+// DEEP LINK / TOKEN VALIDATION
+// ============================================================================
+
+/**
+ * Validate that a string is shaped like a JWT (three base64url segments)
+ * before it is passed to setSession. Never trust raw deep-link params.
+ */
+function isValidJwt(token: string | null | undefined): token is string {
+  return (
+    typeof token === 'string' &&
+    token.length >= 20 &&
+    token.length <= 4096 &&
+    /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+  );
+}
+
+/**
+ * Validate an opaque refresh token (not a JWT): bounded length, safe charset.
+ */
+function isValidRefreshToken(token: string | null | undefined): token is string {
+  return (
+    typeof token === 'string' &&
+    token.length >= 8 &&
+    token.length <= 512 &&
+    /^[A-Za-z0-9._-]+$/.test(token)
+  );
+}
+
+/**
+ * Parse auth params from a deep-link URL. Supabase returns tokens in the
+ * hash fragment; some flows use the query string. Returns null for
+ * unparseable URLs.
+ */
+function parseAuthParamsFromUrl(url: string): URLSearchParams | null {
+  try {
+    const parsed = new URL(url);
+    const fragment = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash;
+    const params = new URLSearchParams(fragment);
+    // Merge query-string params without letting them override fragment params
+    parsed.searchParams.forEach((value, key) => {
+      if (!params.has(key)) {
+        params.set(key, value);
+      }
+    });
+    return params;
+  } catch {
+    return null;
+  }
+}
 
 // ============================================================================
 // CONTEXT
@@ -121,7 +181,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           auth: {
-            storage: AsyncStorage,
+            // Sessions are encrypted at rest via expo-secure-store
+            // (AsyncStorage fallback on web).
+            storage: createSecureStorageAdapter(),
             autoRefreshToken: true,
             persistSession: true,
             detectSessionInUrl: false,
@@ -183,6 +245,65 @@ export function AuthProvider({ children }: AuthProviderProps) {
       handleGoogleIdToken(id_token);
     }
   }, [googleResponse, supabase]);
+
+  // Handle password-reset deep links (ultraedge://auth/reset-password).
+  // Tokens arriving via deep link are attacker-reachable input: validate
+  // shape, type, and error params before establishing a session.
+  useEffect(() => {
+    if (!supabase) return;
+
+    const handleDeepLink = async (url: string | null) => {
+      if (!url || !url.includes('auth/reset-password')) return;
+
+      const params = parseAuthParamsFromUrl(url);
+      if (!params) {
+        console.warn('Ignoring malformed auth deep link');
+        return;
+      }
+
+      // Surface provider errors instead of silently proceeding
+      if (params.get('error') || params.get('error_code')) {
+        Alert.alert(
+          'Password Reset Failed',
+          params.get('error_description') || 'The reset link is invalid or has expired. Please request a new one.'
+        );
+        return;
+      }
+
+      const type = params.get('type');
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      // Only accept recovery-type links with well-formed tokens
+      if (type !== 'recovery' || !isValidJwt(accessToken) || !isValidRefreshToken(refreshToken)) {
+        console.warn('Ignoring auth deep link with invalid or missing recovery tokens');
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (error) {
+        Alert.alert(
+          'Password Reset Failed',
+          'The reset link is invalid or has expired. Please request a new one.'
+        );
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    // Handle the case where the app was cold-started from the reset link
+    Linking.getInitialURL().then(handleDeepLink).catch(() => {});
+
+    return () => {
+      subscription.remove();
+    };
+  }, [supabase]);
 
   // Ensure user profile exists in database
   const ensureProfileExists = async (client: SupabaseClient, user: User) => {
@@ -445,16 +566,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           );
 
           if (result.type === 'success' && result.url) {
-            // Parse tokens from URL
-            const url = new URL(result.url);
-            const accessToken = url.searchParams.get('access_token');
-            const refreshToken = url.searchParams.get('refresh_token');
+            // Parse and validate tokens from the callback URL (fragment or
+            // query). Reject anything that is not a well-formed token pair.
+            const params = parseAuthParamsFromUrl(result.url);
+            const accessToken = params?.get('access_token');
+            const refreshToken = params?.get('refresh_token');
 
-            if (accessToken && refreshToken) {
-              await supabase.auth.setSession({
+            if (isValidJwt(accessToken) && isValidRefreshToken(refreshToken)) {
+              const { error: sessionError } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken,
               });
+              if (sessionError) {
+                return { success: false, error: getAuthErrorMessage(sessionError) };
+              }
               return { success: true };
             }
           }

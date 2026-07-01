@@ -41,6 +41,7 @@ import { useGear, GearItem } from '../../context/GearContext';
 import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
 import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, Checkpoint } from '../../lib/database.types';
+import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
 
@@ -70,7 +71,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   
   // Contexts
-  const { getEvent, deleteEvent, refreshEvents } = useEvents();
+  const { getEvent, updateEvent, deleteEvent, refreshEvents } = useEvents();
   const { getCheckpointsByEventId, deleteCheckpoint, getCheckpointById } = useCheckpoints();
   const { gearItems, getGearItem } = useGear();
   const { crewMembers, getCrewMember } = useCrewMembers();
@@ -665,6 +666,15 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 </Card>
               </TouchableOpacity>
             )}
+
+            {/* Course Route (GPX) */}
+            <GPXRouteSection
+              eventId={eventId}
+              gpxFileUrl={event.gpx_file_url}
+              onGpxChange={async (fileUri) => {
+                await updateEvent(eventId, { gpx_file_url: fileUri });
+              }}
+            />
 
             {/* Checkpoints Section */}
             <View style={styles.section}>

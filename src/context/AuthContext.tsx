@@ -179,7 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initSupabase = async () => {
       try {
-        const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        const client = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
           auth: {
             // Sessions are encrypted at rest via expo-secure-store
             // (AsyncStorage fallback on web).

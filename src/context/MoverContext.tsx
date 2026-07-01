@@ -227,7 +227,7 @@ export function MoverProvider({ children }: { children: React.ReactNode }) {
         const percentChange = (change / previous) * 100;
         
         return {
-          direction: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable',
+          direction: (change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable') as 'up' | 'down' | 'stable',
           change: Math.abs(change),
           percentChange: Math.abs(percentChange),
         };
@@ -243,7 +243,7 @@ export function MoverProvider({ children }: { children: React.ReactNode }) {
     const percentChange = (change / previousAvg) * 100;
     
     return {
-      direction: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable' as const,
+      direction: (change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable') as 'up' | 'down' | 'stable',
       change: Math.abs(change),
       percentChange: Math.abs(percentChange),
     };

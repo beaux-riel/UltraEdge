@@ -184,7 +184,7 @@ export default function CheckpointDetailScreen() {
         {/* Header Card */}
         <Card 
           variant="elevated" 
-          style={[styles.headerCard, { backgroundColor: typeInfo.color }]}
+          style={{ ...styles.headerCard, backgroundColor: typeInfo.color }}
         >
           <CardContent>
             <View style={styles.headerRow}>
@@ -225,7 +225,7 @@ export default function CheckpointDetailScreen() {
         {checkpoint.cutoff_time && (
           <Card 
             variant="standard" 
-            style={[styles.cutoffCard, { borderColor: colors.sunrise, borderWidth: 1.5 }]}
+            style={{ ...styles.cutoffCard, borderColor: colors.sunrise, borderWidth: 1.5 }}
           >
             <CardContent>
               <View style={styles.cutoffRow}>

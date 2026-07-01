@@ -124,11 +124,8 @@ export default function GearDetailScreen({ navigation, route }: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            const index = gearItems.findIndex((g: GearItem) => g.id === item.id);
-            if (index !== -1) {
-              await deleteGearItem(index);
-              navigation.goBack();
-            }
+            await deleteGearItem(item.id);
+            navigation.goBack();
           },
         },
       ]
@@ -151,11 +148,8 @@ export default function GearDetailScreen({ navigation, route }: any) {
         {
           text: item.retired ? 'Restore' : 'Retire',
           onPress: async () => {
-            const index = gearItems.findIndex((g: GearItem) => g.id === item.id);
-            if (index !== -1) {
-              await updateGearItem(index, { ...item, retired: !item.retired });
-              navigation.goBack();
-            }
+            await updateGearItem(item.id, { ...item, retired: !item.retired });
+            navigation.goBack();
           },
         },
       ]

@@ -159,10 +159,7 @@ export default function GearListScreen({ navigation }: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            const gearIndex = gearItems.findIndex((g: GearItem) => g.id === item.id);
-            if (gearIndex !== -1) {
-              await deleteGearItem(gearIndex);
-            }
+            await deleteGearItem(item.id);
           },
         },
       ]

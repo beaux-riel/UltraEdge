@@ -148,7 +148,7 @@ export function Button({
                 fontWeight: '600' as const,
               },
               variantStyles.text,
-              icon && styles.textWithIcon,
+              icon ? styles.textWithIcon : null,
               textStyle,
             ]}
           >

@@ -105,5 +105,5 @@ export const colors = {
   },
 } as const;
 
-export type ColorScheme = typeof colors.light;
+export type ColorScheme = { [K in keyof typeof colors.light]: string };
 export type ThemeMode = 'light' | 'dark' | 'system';

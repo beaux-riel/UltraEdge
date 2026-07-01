@@ -191,7 +191,7 @@ function MainTabs() {
       />
       <Tab.Screen 
         name="Events" 
-        component={EventsListScreen}
+        component={EventsListScreen as React.ComponentType<object>}
         options={{ headerShown: false }}
       />
       <Tab.Screen 

@@ -78,16 +78,15 @@ export default function CreateGearScreen({ navigation }: any) {
 
     try {
       const newItem = {
-        id: uuid.v4() as string,
         name: name.trim(),
         brand: brand.trim() || undefined,
         category,
         weight: weight ? parseFloat(weight) : undefined,
-        weightUnit: weight ? weightUnit : undefined,
+        weightUnit,
         quantity: parseInt(quantity) || 1,
         notes: notes.trim() || undefined,
         retired: false,
-        createdAt: new Date().toISOString(),
+        isActive: true,
       };
 
       await addGearItem(newItem);

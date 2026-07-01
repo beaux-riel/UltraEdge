@@ -685,7 +685,9 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
   // ==========================================================================
 
   const loginWithUserId = useCallback(async (newUserId: string): Promise<void> => {
-    if (!isInitialized) return;
+    // No-op when the SDK isn't available (web / unset keys) — server
+    // reconciliation still keys off the Supabase user id.
+    if (!rcEnabled || !isInitialized) return;
 
     try {
       const { customerInfo: newInfo } = await Purchases.logIn(newUserId);
@@ -694,10 +696,10 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     } catch (error) {
       console.error('[Subscription] Failed to login:', error);
     }
-  }, [isInitialized]);
+  }, [rcEnabled, isInitialized]);
 
   const logout = useCallback(async (): Promise<void> => {
-    if (!isInitialized) return;
+    if (!rcEnabled || !isInitialized) return;
 
     try {
       const newInfo = await Purchases.logOut();
@@ -726,6 +728,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     offerings,
     currentOffering,
     // Functions
+    syncWithServer,
     checkPremiumStatus,
     purchasePackage,
     restorePurchases,
@@ -747,6 +750,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     customerInfo,
     offerings,
     currentOffering,
+    syncWithServer,
     checkPremiumStatus,
     purchasePackage,
     restorePurchases,
@@ -785,12 +789,22 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
  */
 export function useSubscription(): SubscriptionContextValue {
   const context = useContext(SubscriptionContext);
-  
+
   if (!context) {
     throw new Error('useSubscription must be used within a SubscriptionProvider');
   }
-  
+
   return context;
+}
+
+/**
+ * Like useSubscription, but returns null instead of throwing when no
+ * SubscriptionProvider is mounted. Useful for shared UI components
+ * (FeatureGate, UpgradeBottomSheet) that must degrade gracefully in
+ * isolation (tests, storybook) — callers treat null as "not premium".
+ */
+export function useOptionalSubscription(): SubscriptionContextValue | null {
+  return useContext(SubscriptionContext);
 }
 
 // =============================================================================

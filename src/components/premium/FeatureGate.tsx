@@ -15,9 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../theme/ThemeProvider';
 import { PremiumBadge, PremiumLockBadge } from './PremiumBadge';
-
-// TODO: Import from actual SubscriptionContext when available
-// import { useSubscription } from '../../context/SubscriptionContext';
+import { useOptionalSubscription } from '../../context/SubscriptionContext';
+import { PremiumFeature } from '../../config/revenuecat';
 
 type GateVariant = 'overlay' | 'inline' | 'replace' | 'blur';
 
@@ -45,10 +44,15 @@ export function FeatureGate({
   const { theme } = useTheme();
   const { colors, typography, radius, spacing } = theme;
 
-  // TODO: Use actual subscription context
-  // const { isPremium } = useSubscription();
-  // For now, use override or default to false
-  const isPremium = isPremiumOverride ?? false;
+  // Real subscription state. Reconciled between the RevenueCat SDK cache and
+  // the server-side user_subscriptions record; null when no provider is
+  // mounted (isolated tests) — treated as not premium. The explicit
+  // isPremium prop still wins so screens/tests can force a state.
+  const subscription = useOptionalSubscription();
+  const contextHasAccess = feature
+    ? subscription?.hasFeatureAccess(feature as PremiumFeature) ?? false
+    : subscription?.isPremium ?? false;
+  const isPremium = isPremiumOverride ?? contextHasAccess;
 
   // If user is premium, just render children
   if (isPremium) {
@@ -61,10 +65,11 @@ export function FeatureGate({
   };
 
   const defaultTitle = title || 'Premium Feature';
-  const defaultDescription = description || 
-    feature 
+  const defaultDescription =
+    description ??
+    (feature
       ? `${feature} is available with UltraEdge Pro`
-      : 'This feature is available with UltraEdge Pro';
+      : 'This feature is available with UltraEdge Pro');
 
   // Render based on variant
   switch (variant) {
@@ -350,8 +355,10 @@ export function GatedListItem({
 }) {
   const { theme } = useTheme();
 
-  // TODO: Use actual subscription context
-  const isUnlocked = isPremium ?? false;
+  // Prop override wins; otherwise use the real subscription context
+  // (null-safe: no provider = not premium).
+  const subscription = useOptionalSubscription();
+  const isUnlocked = isPremium ?? subscription?.isPremium ?? false;
 
   if (isUnlocked) {
     return <>{children}</>;

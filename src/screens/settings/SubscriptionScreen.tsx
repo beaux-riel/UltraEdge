@@ -27,29 +27,7 @@ import {
   UpgradeBottomSheetRef,
   PricingTier,
 } from '../../components/premium';
-
-// TODO: Import from actual SubscriptionContext when available
-// import { useSubscription } from '../../context/SubscriptionContext';
-
-// Mock subscription state for development
-interface MockSubscriptionState {
-  isPremium: boolean;
-  tier: 'free' | 'premium' | 'premium_lifetime';
-  productId: string | null;
-  expirationDate: Date | null;
-  willRenew: boolean;
-  platform: 'ios' | 'android' | 'web' | null;
-}
-
-// Toggle this to test different states
-const MOCK_STATE: MockSubscriptionState = {
-  isPremium: false,
-  tier: 'free',
-  productId: null,
-  expirationDate: null,
-  willRenew: false,
-  platform: null,
-};
+import { useSubscription } from '../../context/SubscriptionContext';
 
 // Feature list for premium comparison
 const PREMIUM_FEATURES = [
@@ -111,47 +89,72 @@ export function SubscriptionScreen() {
   const upgradeSheetRef = useRef<UpgradeBottomSheetRef>(null);
   
   const [refreshing, setRefreshing] = useState(false);
-  const [subscriptionState, setSubscriptionState] = useState<MockSubscriptionState>(MOCK_STATE);
 
-  // TODO: Use actual subscription context
-  // const { isPremium, tier, expirationDate, ... } = useSubscription();
+  // Real subscription state. isPremium/tier are reconciled between the
+  // RevenueCat SDK cache and the server-side user_subscriptions record;
+  // when RevenueCat isn't configured (placeholder keys / web) the SDK is
+  // never touched and the user is treated as not premium.
+  const {
+    isPremium,
+    tier,
+    subscriptionDetails,
+    refreshCustomerInfo,
+    syncWithServer,
+    purchasePackage,
+    restorePurchases,
+    getMonthlyPackage,
+    getAnnualPackage,
+    getLifetimePackage,
+  } = useSubscription();
+
+  const expirationDate = subscriptionDetails?.expirationDate ?? null;
+  const willRenew = subscriptionDetails?.willRenew ?? false;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // TODO: Refresh subscription status from RevenueCat
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    try {
+      // Refresh both the SDK cache and the server record (source of truth)
+      await Promise.all([refreshCustomerInfo(), syncWithServer()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshCustomerInfo, syncWithServer]);
 
   const handleUpgradePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     upgradeSheetRef.current?.open();
   };
 
-  const handlePurchase = async (tier: PricingTier): Promise<boolean> => {
-    // TODO: Implement actual purchase via RevenueCat
-    console.log(`[SubscriptionScreen] Purchase requested: ${tier}`);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Mock success
-    setSubscriptionState({
-      isPremium: true,
-      tier: tier === 'lifetime' ? 'premium_lifetime' : 'premium',
-      productId: `com.ultraedge.${tier}`,
-      expirationDate: tier === 'lifetime' ? null : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      willRenew: tier !== 'lifetime',
-      platform: Platform.OS as 'ios' | 'android',
-    });
-    
-    return true;
-  };
+  const handlePurchase = useCallback(async (pricingTier: PricingTier): Promise<boolean> => {
+    const pkg =
+      pricingTier === 'monthly'
+        ? getMonthlyPackage()
+        : pricingTier === 'annual'
+          ? getAnnualPackage()
+          : getLifetimePackage();
 
-  const handleRestore = async (): Promise<boolean> => {
-    // TODO: Implement actual restore via RevenueCat
-    console.log('[SubscriptionScreen] Restore requested');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return false;
-  };
+    if (!pkg) {
+      // Offerings unavailable: RevenueCat not configured (placeholder keys,
+      // web) or the store couldn't be reached. Fail gracefully — never crash.
+      Alert.alert(
+        'Purchases Unavailable',
+        Platform.OS === 'web'
+          ? 'Purchases are not available on web. Please use the iOS or Android app to subscribe.'
+          : 'This plan isn\u2019t available right now. Please check your connection and try again later.'
+      );
+      return false;
+    }
+
+    // purchasePackage handles errors/cancellation internally and reconciles
+    // with the server record after a successful purchase.
+    return purchasePackage(pkg);
+  }, [getMonthlyPackage, getAnnualPackage, getLifetimePackage, purchasePackage]);
+
+  const handleRestore = useCallback(async (): Promise<boolean> => {
+    // restorePurchases no-ops with a friendly alert when RevenueCat isn't
+    // configured, and reconciles with the server record on success.
+    return restorePurchases();
+  }, [restorePurchases]);
 
   const handleManageSubscription = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -217,12 +220,12 @@ export function SubscriptionScreen() {
       >
         {/* Current Status Card */}
         <Card
-          variant={subscriptionState.isPremium ? 'hero' : 'elevated'}
+          variant={isPremium ? 'hero' : 'elevated'}
           style={styles.statusCard}
         >
           <View style={styles.statusHeader}>
             <View style={styles.statusBadgeContainer}>
-              {subscriptionState.isPremium ? (
+              {isPremium ? (
                 <PremiumBadge size="lg" variant="filled" label="PRO" />
               ) : (
                 <View
@@ -254,31 +257,31 @@ export function SubscriptionScreen() {
               style={[
                 styles.statusTitle,
                 {
-                  color: subscriptionState.isPremium ? '#FFFFFF' : colors.bark,
+                  color: isPremium ? '#FFFFFF' : colors.bark,
                   fontFamily: typography.h2.fontFamily,
                   fontSize: typography.h2.fontSize,
                 },
               ]}
             >
-              {getTierDisplayName(subscriptionState.tier)}
+              {getTierDisplayName(tier)}
             </Text>
 
-            {subscriptionState.isPremium && subscriptionState.expirationDate && (
+            {isPremium && expirationDate && (
               <Text
                 style={[
                   styles.statusSubtitle,
                   {
-                    color: subscriptionState.isPremium ? 'rgba(255,255,255,0.8)' : colors.stone,
+                    color: isPremium ? 'rgba(255,255,255,0.8)' : colors.stone,
                     fontFamily: typography.body.fontFamily,
                     fontSize: typography.body.fontSize,
                   },
                 ]}
               >
-                {subscriptionState.willRenew ? 'Renews' : 'Expires'}: {formatExpirationDate(subscriptionState.expirationDate)}
+                {willRenew ? 'Renews' : 'Expires'}: {formatExpirationDate(expirationDate)}
               </Text>
             )}
 
-            {subscriptionState.isPremium && subscriptionState.tier === 'premium_lifetime' && (
+            {isPremium && tier === 'premium_lifetime' && (
               <Text
                 style={[
                   styles.statusSubtitle,
@@ -294,7 +297,7 @@ export function SubscriptionScreen() {
             )}
           </View>
 
-          {!subscriptionState.isPremium && (
+          {!isPremium && (
             <TouchableOpacity
               onPress={handleUpgradePress}
               activeOpacity={0.8}
@@ -321,7 +324,7 @@ export function SubscriptionScreen() {
             </TouchableOpacity>
           )}
 
-          {subscriptionState.isPremium && subscriptionState.tier !== 'premium_lifetime' && (
+          {isPremium && tier !== 'premium_lifetime' && (
             <View style={styles.manageButtons}>
               <TouchableOpacity
                 onPress={handleManageSubscription}

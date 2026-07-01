@@ -27,13 +27,13 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { PricingCard, PricingTier } from './PricingCard';
 import { RestoreLink } from './RestorePurchasesButton';
 import { PremiumBadge } from './PremiumBadge';
-
-// TODO: Import from actual SubscriptionContext when available
-// import { useSubscription } from '../../context/SubscriptionContext';
+import { useOptionalSubscription } from '../../context/SubscriptionContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Pricing data
+// Fallback pricing data (used when store offerings haven't loaded, e.g.
+// RevenueCat keys are placeholders or the device is offline). Real localized
+// prices from the store are preferred when available.
 const PRICING = {
   monthly: {
     price: '$5.99',
@@ -90,6 +90,31 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
     const [purchaseLoading, setPurchaseLoading] = useState<PricingTier | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Real subscription context (null-safe for isolated rendering). Used as
+    // the default purchase/restore implementation when the parent doesn't
+    // pass onPurchase/onRestore, and for real localized store prices.
+    const subscription = useOptionalSubscription();
+
+    const getPackageForTier = useCallback((tier: PricingTier) => {
+      if (!subscription) return null;
+      switch (tier) {
+        case 'monthly':
+          return subscription.getMonthlyPackage();
+        case 'annual':
+          return subscription.getAnnualPackage();
+        case 'lifetime':
+          return subscription.getLifetimePackage();
+        default:
+          return null;
+      }
+    }, [subscription]);
+
+    /** Localized store price for a tier, falling back to reference pricing */
+    const getPriceForTier = useCallback((tier: PricingTier): string => {
+      const pkg = getPackageForTier(tier);
+      return pkg?.product?.priceString ?? PRICING[tier].price;
+    }, [getPackageForTier]);
+
     // Snap points
     const snapPoints = useMemo(() => {
       const contentHeight = Math.min(SCREEN_HEIGHT * 0.9, 720);
@@ -136,12 +161,29 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             bottomSheetRef.current?.close();
           }
+        } else if (subscription) {
+          // Default implementation: purchase via SubscriptionContext.
+          // purchasePackage degrades gracefully (alerts, never crashes) when
+          // RevenueCat isn't configured or the user cancels.
+          const pkg = getPackageForTier(tier);
+          if (!pkg) {
+            setError(
+              Platform.OS === 'web'
+                ? 'Purchases are not available on web. Please use the iOS or Android app.'
+                : 'This plan isn\u2019t available right now. Please try again later.'
+            );
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          } else {
+            const success = await subscription.purchasePackage(pkg);
+            if (success) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              bottomSheetRef.current?.close();
+            }
+          }
         } else {
-          // Mock purchase for development
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          console.log(`[UpgradeBottomSheet] Mock purchase: ${tier}`);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          bottomSheetRef.current?.close();
+          // No handler and no provider mounted — nothing we can do safely.
+          setError('Purchases are not available right now.');
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Purchase failed';
@@ -161,9 +203,15 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
         }
         return success;
       }
-      // Mock restore for development
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('[UpgradeBottomSheet] Mock restore');
+      // Default implementation: restore via SubscriptionContext (alerts and
+      // returns false gracefully when RevenueCat isn't configured).
+      if (subscription) {
+        const success = await subscription.restorePurchases();
+        if (success) {
+          bottomSheetRef.current?.close();
+        }
+        return success;
+      }
       return false;
     };
 
@@ -351,7 +399,7 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
             {/* Annual - Best Value (shown first and highlighted) */}
             <PricingCard
               tier="annual"
-              price={PRICING.annual.price}
+              price={getPriceForTier('annual')}
               period={PRICING.annual.period}
               savings={PRICING.annual.savings}
               isHighlighted={PRICING.annual.isHighlighted}
@@ -366,7 +414,7 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
             {/* Monthly */}
             <PricingCard
               tier="monthly"
-              price={PRICING.monthly.price}
+              price={getPriceForTier('monthly')}
               period={PRICING.monthly.period}
               ctaText={PRICING.monthly.ctaText}
               onSelect={() => handlePurchase('monthly')}
@@ -378,7 +426,7 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
             {/* Lifetime */}
             <PricingCard
               tier="lifetime"
-              price={PRICING.lifetime.price}
+              price={getPriceForTier('lifetime')}
               period={PRICING.lifetime.period}
               ctaText={PRICING.lifetime.ctaText}
               onSelect={() => handlePurchase('lifetime')}

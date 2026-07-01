@@ -109,38 +109,16 @@ export default function CheckpointDetailScreen() {
     [getCheckpointById, eventId, checkpointId]
   );
   
-  // Handle case where checkpoint doesn't exist
-  if (!checkpoint) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.parchment }]}>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.mist} />
-          <H3 style={{ marginTop: spacing.md }}>Checkpoint Not Found</H3>
-          <Body color="secondary" style={{ marginTop: spacing.xs }}>
-            This checkpoint may have been deleted.
-          </Body>
-          <Button 
-            variant="secondary" 
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: spacing.lg }}
-          >
-            Go Back
-          </Button>
-        </View>
-      </View>
-    );
-  }
-  
-  const typeInfo = CHECKPOINT_TYPE_INFO[checkpoint.checkpoint_type];
-  
+  const checkpointName = checkpoint?.name ?? '';
+
   const handleEdit = useCallback(() => {
     navigation.navigate('EditCheckpoint', { eventId, checkpointId });
   }, [navigation, eventId, checkpointId]);
-  
+
   const handleDuplicate = useCallback(() => {
     Alert.alert(
       'Duplicate Checkpoint',
-      `Create a copy of "${checkpoint.name}"?`,
+      `Create a copy of "${checkpointName}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -152,12 +130,12 @@ export default function CheckpointDetailScreen() {
         },
       ]
     );
-  }, [checkpoint.name, eventId, checkpointId, duplicateCheckpoint, navigation]);
-  
+  }, [checkpointName, eventId, checkpointId, duplicateCheckpoint, navigation]);
+
   const handleDelete = useCallback(() => {
     Alert.alert(
       'Delete Checkpoint',
-      `Are you sure you want to delete "${checkpoint.name}"? This cannot be undone.`,
+      `Are you sure you want to delete "${checkpointName}"? This cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -170,7 +148,31 @@ export default function CheckpointDetailScreen() {
         },
       ]
     );
-  }, [checkpoint.name, eventId, checkpointId, deleteCheckpoint, navigation]);
+  }, [checkpointName, eventId, checkpointId, deleteCheckpoint, navigation]);
+
+  // Handle case where checkpoint doesn't exist
+  if (!checkpoint) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.parchment }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.mist} />
+          <H3 style={{ marginTop: spacing.md }}>Checkpoint Not Found</H3>
+          <Body color="secondary" style={{ marginTop: spacing.xs }}>
+            This checkpoint may have been deleted.
+          </Body>
+          <Button
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: spacing.lg }}
+          >
+            Go Back
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  const typeInfo = CHECKPOINT_TYPE_INFO[checkpoint.checkpoint_type];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.parchment }]}>

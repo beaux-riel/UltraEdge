@@ -135,28 +135,6 @@ export default function EditCheckpointScreen() {
     hasPacerDropoff, selectedSupplies, notes
   ]);
 
-  // Handle case where checkpoint doesn't exist
-  if (!checkpoint) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.parchment }]}>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.mist} />
-          <H3 style={{ marginTop: spacing.md }}>Checkpoint Not Found</H3>
-          <Body color="secondary" style={{ marginTop: spacing.xs }}>
-            This checkpoint may have been deleted.
-          </Body>
-          <Button 
-            variant="secondary" 
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: spacing.lg }}
-          >
-            Go Back
-          </Button>
-        </View>
-      </View>
-    );
-  }
-
   const toggleSupply = useCallback((supply: string) => {
     setSelectedSupplies(prev =>
       prev.includes(supply)
@@ -218,6 +196,28 @@ export default function EditCheckpointScreen() {
     hasPacerDropoff, selectedSupplies, notes, eventId, checkpointId,
     updateCheckpoint, navigation
   ]);
+
+  // Handle case where checkpoint doesn't exist
+  if (!checkpoint) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.parchment }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.mist} />
+          <H3 style={{ marginTop: spacing.md }}>Checkpoint Not Found</H3>
+          <Body color="secondary" style={{ marginTop: spacing.xs }}>
+            This checkpoint may have been deleted.
+          </Body>
+          <Button
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: spacing.lg }}
+          >
+            Go Back
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   const typeInfo = CHECKPOINT_TYPE_INFO[checkpointType];
 

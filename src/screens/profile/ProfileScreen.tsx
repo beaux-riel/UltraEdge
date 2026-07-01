@@ -3,13 +3,14 @@
  * View profile with name, current weight, weight history chart, and preferences
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -159,14 +160,57 @@ export default function ProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   
   const { profile, weightHistory, getWeightTrend, getWeightHistory30Days } = useMover();
-  const { user, isAuthenticated, signOut, isLoading: authLoading } = useAuth();
-  
+  const { user, isAuthenticated, signOut, supabase, isLoading: authLoading } = useAuth();
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
   const trend = getWeightTrend();
   const chartData = getWeightHistory30Days();
 
   // Handle sign out
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  // Handle account deletion (App Store Guideline 5.1.1(v))
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account?',
+      'This permanently deletes your account and all synced data (events, gear, crew, checkpoints, subscriptions). This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you absolutely sure?',
+              'All of your cloud data will be erased immediately.',
+              [
+                { text: 'Keep My Account', style: 'cancel' },
+                {
+                  text: 'Delete Everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    if (!supabase) return;
+                    setDeletingAccount(true);
+                    try {
+                      const { error } = await supabase.rpc('delete_my_account');
+                      if (error) throw error;
+                      await signOut();
+                      Alert.alert('Account Deleted', 'Your account and all synced data have been removed.');
+                    } catch (e) {
+                      Alert.alert('Deletion Failed', 'Could not delete your account. Please try again or contact support@ultraedge.app.');
+                    } finally {
+                      setDeletingAccount(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
   
   // Format date for last updated
@@ -423,6 +467,26 @@ export default function ProfileScreen({ navigation }: any) {
                     <Body style={{ color: colors.clay }}>Sign Out</Body>
                     <BodySmall color="tertiary">
                       Your local data will remain on this device
+                    </BodySmall>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                <TouchableOpacity
+                  style={styles.preferenceRow}
+                  onPress={handleDeleteAccount}
+                  disabled={deletingAccount || authLoading}
+                >
+                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.clay}15` }]}>
+                    <Ionicons name="trash-outline" size={20} color={colors.clay} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Body style={{ color: colors.clay }}>
+                      {deletingAccount ? 'Deleting Account…' : 'Delete Account'}
+                    </Body>
+                    <BodySmall color="tertiary">
+                      Permanently remove your account and synced data
                     </BodySmall>
                   </View>
                 </TouchableOpacity>

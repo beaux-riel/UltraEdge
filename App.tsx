@@ -11,6 +11,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Sentry from '@sentry/react-native';
 
 // Theme & Fonts
 import { ThemeProvider, useTheme } from './src/theme';
@@ -58,8 +59,18 @@ function AppContent() {
   );
 }
 
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    enabled: !__DEV__,
+    tracesSampleRate: 0.2,
+  });
+}
+
 // Root component with all providers
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
@@ -86,6 +97,8 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+export default SENTRY_DSN ? Sentry.wrap(App) : App;
 
 const styles = StyleSheet.create({
   root: {

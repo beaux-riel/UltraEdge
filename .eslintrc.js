@@ -31,6 +31,10 @@ module.exports = {
     'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
     'no-console': 'warn',
+    'react-hooks/exhaustive-deps': 'warn',
+    // @react-native config ships an eslint-plugin-prettier that is
+    // incompatible with prettier v3 (resolveConfig.sync was removed)
+    'prettier/prettier': 'off',
   },
   ignorePatterns: [
     'node_modules/',

@@ -23,6 +23,7 @@
     "@expo-google-fonts/nunito": "^0.2.3",
     "@expo-google-fonts/playfair-display": "^0.2.3",
     "@expo/metro-runtime": "~6.1.2",
+    "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",

@@ -1,102 +1,99 @@
-import React, { useState, useEffect } from "react";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Provider as PaperProvider } from "react-native-paper";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  useColorScheme,
-  Button,
-} from "react-native";
-import AppNavigator from "./src/navigation/AppNavigator";
-import { RaceProvider } from "./src/context/RaceContext";
-import { ThemeProvider, useAppTheme } from "./src/context/ThemeContext";
-import { SupabaseProvider } from "./src/context/SupabaseContext";
-import { UserProvider } from "./src/context/UserContext";
-import { RevenueCatProvider } from "./src/context/RevenueCatContext";
-import { SettingsProvider } from "./src/context/SettingsContext";
-import { GearProvider } from "./src/context/GearContext";
-import { NutritionHydrationProvider } from "./src/context/NutritionHydrationContext";
-import { NotesProvider } from "./src/context/NotesContext";
+/**
+ * UltraEdge App
+ * Endurance event planning for Movers
+ */
 
-const AppContent = () => {
-  const { theme, isDarkMode } = useAppTheme();
-  const [isReady, setIsReady] = useState(false);
+// Polyfills must be imported first
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
+import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 300);
+// Theme & Fonts
+import { ThemeProvider, useTheme } from './src/theme';
+import { useFonts } from './src/hooks/useFonts';
 
-    return () => clearTimeout(timer);
-  }, []);
+// Data Providers
+import { AuthProvider } from './src/context/AuthContext';
+import { MoverProvider } from './src/context/MoverContext';
+import { EventProvider } from './src/context/EventContext';
+import { CheckpointProvider } from './src/context/CheckpointContext';
+import { GearProvider } from './src/context/GearContext';
+import { CrewProvider } from './src/context/CrewContext';
+import { DropBagProvider } from './src/context/DropBagContext';
+import { SubscriptionProvider } from './src/context/SubscriptionContext';
 
-  if (!isReady) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: isDarkMode ? "#121212" : "#f5f5f5",
-        }}
-      >
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text
-          style={{
-            marginTop: 16,
-            fontSize: 16,
-            color: isDarkMode ? "#ffffff" : "#000000",
-          }}
-        >
-          Loading UltraEdge...
-        </Text>
-      </View>
-    );
+// Navigation
+import AppNavigator from './src/navigation/AppNavigator';
+
+// Loading screen while fonts load
+function LoadingScreen() {
+  const { theme } = useTheme();
+  
+  return (
+    <View style={[styles.loading, { backgroundColor: theme.colors.parchment }]}>
+      <ActivityIndicator size="large" color={theme.colors.forest} />
+    </View>
+  );
+}
+
+// Main app content
+function AppContent() {
+  const { fontsLoaded, fontError } = useFonts();
+  const { isDarkMode } = useTheme();
+
+  // Show loading while fonts load
+  if (!fontsLoaded && !fontError) {
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <StatusBar style={isDarkMode ? "light" : "dark"} />
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <AppNavigator />
     </>
   );
-};
+}
 
+// Root component with all providers
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <PaperProviderWithTheme />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <MoverProvider>
+                <EventProvider>
+                  <CheckpointProvider>
+                    <GearProvider>
+                      <CrewProvider>
+                        <DropBagProvider>
+                          <AppContent />
+                        </DropBagProvider>
+                      </CrewProvider>
+                    </GearProvider>
+                  </CheckpointProvider>
+                </EventProvider>
+              </MoverProvider>
+            </SubscriptionProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
-// Use a separate component to access the theme context
-const PaperProviderWithTheme = () => {
-  const { theme } = useAppTheme();
-
-  return (
-    <PaperProvider theme={theme}>
-      <SettingsProvider>
-        <NutritionHydrationProvider>
-          <SupabaseProvider>
-            <RevenueCatProvider>
-              <UserProvider>
-                <RaceProvider>
-                  <GearProvider>
-                    <NotesProvider>
-                      <AppContent />
-                    </NotesProvider>
-                  </GearProvider>
-                </RaceProvider>
-              </UserProvider>
-            </RevenueCatProvider>
-          </SupabaseProvider>
-        </NutritionHydrationProvider>
-      </SettingsProvider>
-    </PaperProvider>
-  );
-};
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

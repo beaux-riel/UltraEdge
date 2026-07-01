@@ -1,451 +1,361 @@
-import React, { useEffect } from "react";
+/**
+ * UltraEdge Home Screen
+ * Dashboard with upcoming events and quick stats
+ */
+
+import React, { useEffect, useState } from 'react';
 import {
   View,
-  StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  StyleSheet,
+  RefreshControl,
   Image,
-  Dimensions,
-  Animated,
-  TouchableOpacity,
-} from "react-native";
-import {
-  Text,
-  Button,
-  Title,
-  Paragraph,
-  Surface,
-  useTheme as usePaperTheme,
-} from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRaces } from "../context/RaceContext";
-import { useAppTheme } from "../context/ThemeContext";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
-// Import custom components
-import EmptyState from "../components/EmptyState";
-import RaceCard from "../components/RaceCard";
-import TipCard from "../components/TipCard";
+import { useTheme } from '../theme';
+import { Text, H1, H2, H3, Body, BodySmall, Button, Card, CardContent, WeightBadge } from '../components/ui';
+import { useEvents } from '../context/EventContext';
+import { useMover } from '../context/MoverContext';
+import type { Event, Mover } from '../lib/database.types';
 
-const { width } = Dimensions.get("window");
-
-const HomeScreen = ({ navigation }) => {
-  const paperTheme = usePaperTheme();
-  const { isDarkMode, theme } = useAppTheme();
+export default function HomeScreen({ navigation }: any) {
+  const { theme, isDarkMode } = useTheme();
+  const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
-  const { getRacesArray, loading, deleteRace } = useRaces();
 
-  // Animation values
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(50)).current;
+  // Use local-first contexts
+  const { events, loading: eventsLoading, refreshEvents } = useEvents();
+  const { profile: mover, isLoading: moverLoading } = useMover();
+  
+  const [refreshing, setRefreshing] = useState(false);
+  const loading = eventsLoading || moverLoading;
 
-  useEffect(() => {
-    // Start animations when component mounts
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshEvents();
+    setRefreshing(false);
+  };
 
-  // Get races and sort them by date (closest date first)
-  const races = getRacesArray().sort((a, b) => {
-    let dateA, dateB;
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
-    // Parse date A
-    if (a.date.includes("-")) {
-      // YYYY-MM-DD format
-      const partsA = a.date.split("-");
-      dateA = new Date(
-        parseInt(partsA[0]), // year
-        parseInt(partsA[1]) - 1, // month (0-based)
-        parseInt(partsA[2]), // day
-        ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-      );
-    } else {
-      // MM/DD/YYYY format (for backward compatibility)
-      const partsA = a.date.split("/");
-      dateA = new Date(
-        parseInt(partsA[2]), // year
-        parseInt(partsA[0]) - 1, // month (0-based)
-        parseInt(partsA[1]), // day
-        ...(a.startTime ? a.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-      );
-    }
+  // Format date for display
+  const formatEventDate = (dateStr: string | null) => {
+    if (!dateStr) return 'Date TBD';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
-    // Parse date B
-    if (b.date.includes("-")) {
-      // YYYY-MM-DD format
-      const partsB = b.date.split("-");
-      dateB = new Date(
-        parseInt(partsB[0]), // year
-        parseInt(partsB[1]) - 1, // month (0-based)
-        parseInt(partsB[2]), // day
-        ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-      );
-    } else {
-      // MM/DD/YYYY format (for backward compatibility)
-      const partsB = b.date.split("/");
-      dateB = new Date(
-        parseInt(partsB[2]), // year
-        parseInt(partsB[0]) - 1, // month (0-based)
-        parseInt(partsB[1]), // day
-        ...(b.startTime ? b.startTime.split(":").map(Number) : [0, 0]) // hours and minutes
-      );
-    }
-
-    return dateA - dateB;
-  });
-
-  if (loading) {
-    return (
-      <View
-        style={[
-          styles.loadingContainer,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa",
-          },
-        ]}
-      >
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text
-          style={[
-            styles.loadingText,
-            { color: isDarkMode ? theme.colors.text : theme.colors.text },
-          ]}
-        >
-          Loading your races...
-        </Text>
-      </View>
-    );
-  }
-
-  // Define gradient colors based on theme
-  const headerGradientColors = isDarkMode
-    ? ["#0a2e25", "#1e1a42"]
-    : ["#e8f8f4", "#f3f1ff"];
-
-  console.log("Sorted Races:", races);
+  // Calculate days until event
+  const getDaysUntil = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const eventDate = new Date(dateStr);
+    const today = new Date();
+    const diffTime = eventDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   return (
     <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: isDarkMode ? theme.colors.background : "#f8f9fa" },
-      ]}
-      contentContainerStyle={{
-        paddingBottom: insets.bottom + 16,
-      }}
+      style={[styles.container, { backgroundColor: colors.parchment }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.forest}
+        />
+      }
     >
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        }}
+      {/* Header */}
+      <LinearGradient
+        colors={isDarkMode 
+          ? [colors.forest, colors.parchment] 
+          : [colors.forest, '#4A8B5C', colors.parchment]
+        }
+        style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
-        <LinearGradient
-          colors={headerGradientColors}
-          style={styles.headerGradient}
-        >
-          <View style={styles.headerContent}>
-            <Image
-              source={require("../../assets/logo.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Title
-              style={[
-                styles.headerTitle,
-                { color: isDarkMode ? "#ffffff" : "#000" },
-              ]}
-            >
-              UltraEdge
-            </Title>
-            <Paragraph
-              style={[
-                styles.headerSubtitle,
-                { color: isDarkMode ? "#ffffff" : "#000" },
-              ]}
-            >
-              Your ultra marathon companion
-            </Paragraph>
-          </View>
-        </LinearGradient>
+        <View style={styles.headerContent}>
+          <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.8)' }}>
+            {getGreeting()}
+          </Text>
+          <H1 style={{ color: '#FFFFFF' }}>
+            {mover?.display_name || 'Mover'}
+          </H1>
+          
+          {/* Quick Stats */}
+          {mover?.current_weight && (
+            <View style={styles.quickStats}>
+              <View style={styles.statItem}>
+                <Ionicons name="scale-outline" size={16} color="rgba(255,255,255,0.7)" />
+                <Text variant="bodySmall" style={{ color: '#FFFFFF', marginLeft: 4 }}>
+                  {mover.current_weight} {mover.weight_unit}
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.7)" />
+                <Text variant="bodySmall" style={{ color: '#FFFFFF', marginLeft: 4 }}>
+                  {events.length} event{events.length !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </LinearGradient>
 
-        <Surface
-          style={[
-            styles.actionCard,
-            { backgroundColor: isDarkMode ? theme.colors.surface : "#ffffff" },
-          ]}
-        >
-          <View style={styles.actionCardContent}>
-            <Text
-              style={[
-                styles.actionTitle,
-                { color: isDarkMode ? theme.colors.text : theme.colors.text },
-              ]}
+      {/* Main Content */}
+      <View style={[styles.content, { marginTop: -spacing.xl }]}>
+        
+        {/* Create Event CTA */}
+        <Card variant="elevated" style={styles.ctaCard}>
+          <CardContent>
+            <H3>Ready for your next adventure?</H3>
+            <Body color="secondary" style={{ marginTop: spacing.xs, marginBottom: spacing.md }}>
+              Plan your event with checkpoints, crew, gear, and nutrition all in one place.
+            </Body>
+            <Button 
+              onPress={() => navigation.navigate('CreateEvent')}
+              fullWidth
             >
-              Ready for your next challenge?
-            </Text>
-            <Paragraph
-              style={[
-                styles.actionDescription,
-                {
-                  color: isDarkMode
-                    ? theme.colors.text
-                    : theme.colors.text,
-                },
-              ]}
-            >
-              Plan, prepare, and conquer your next marathon, ultra marathon, endurance event or multi day hike with
-              confidence.
-            </Paragraph>
-            <Button
-              mode="contained"
-              onPress={() => navigation.navigate("CreateRace")}
-              style={styles.actionButton}
-              contentStyle={styles.actionButtonContent}
-              labelStyle={styles.actionButtonLabel}
-              buttonColor={theme.colors.primary}
-            >
-              Create New Adventure Plan
+              Create New Event
             </Button>
-          </View>
-        </Surface>
+          </CardContent>
+        </Card>
 
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeaderContainer}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: isDarkMode ? theme.colors.text : theme.colors.text },
-              ]}
-            >
-              Upcoming Races
-            </Text>
-            {races.length > 0 && (
-              <TouchableOpacity onPress={() => navigation.navigate("AllRaces")}>
-                <Text style={{ color: theme.colors.primary }}>View All</Text>
-              </TouchableOpacity>
+        {/* Upcoming Events */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <H2>Upcoming Events</H2>
+            {events.length > 0 && (
+              <Button 
+                variant="tertiary" 
+                size="sm"
+                onPress={() => navigation.navigate('Events')}
+              >
+                View All
+              </Button>
             )}
           </View>
 
-          {races.length === 0 ? (
-            <EmptyState
-              image={require("../../assets/logo.png")}
-              title="No races yet"
-              description="Track your upcoming ultra marathons and get personalized training plans."
-              buttonText="Add Your First Race"
-              onButtonPress={() => navigation.navigate("CreateRace")}
-            />
+          {events.length === 0 ? (
+            <Card style={styles.emptyCard}>
+              <CardContent>
+                <View style={styles.emptyContent}>
+                  <Ionicons name="trail-sign-outline" size={48} color={colors.mist} />
+                  <Body color="secondary" align="center" style={{ marginTop: spacing.sm }}>
+                    No events planned yet.{'\n'}Create your first one above!
+                  </Body>
+                </View>
+              </CardContent>
+            </Card>
           ) : (
-            races.slice(0, 3).map((race) => (
-              <View key={race.id} style={styles.raceCardContainer}>
-                <RaceCard
-                  race={race}
-                  progress={60}
-                  date={race.date}
-                  time={race.startTime}
-                  onPress={() =>
-                    navigation.navigate("RaceDetails", { id: race.id })
-                  }
-                />
-                <TouchableOpacity 
-                  style={styles.deleteButton}
-                  onPress={() => {
-                    deleteRace(race.id);
-                  }}
+            events.slice(0, 3).map((event) => {
+              const daysUntil = getDaysUntil(event.event_date);
+              
+              return (
+                <Card 
+                  key={event.id}
+                  variant="standard"
+                  onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
+                  style={styles.eventCard}
                 >
-                  <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
-          {races.length > 3 && (
-            <Button
-              mode="outlined"
-              onPress={() => navigation.navigate("AllRaces")}
-              style={styles.viewAllButton}
-              labelStyle={{ color: theme.colors.primary }}
-            >
-              View All Races
-            </Button>
+                  <CardContent>
+                    <View style={styles.eventHeader}>
+                      <View style={{ flex: 1 }}>
+                        <H3>{event.name}</H3>
+                        <BodySmall color="secondary">
+                          {formatEventDate(event.event_date)}
+                          {event.location && ` • ${event.location}`}
+                        </BodySmall>
+                      </View>
+                      {daysUntil !== null && daysUntil > 0 && (
+                        <View style={[styles.countdown, { backgroundColor: colors.forest + '15' }]}>
+                          <Text variant="h3" style={{ color: colors.forest }}>
+                            {daysUntil}
+                          </Text>
+                          <Text variant="caption" style={{ color: colors.forest }}>
+                            days
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    
+                    {/* Event Stats */}
+                    <View style={styles.eventStats}>
+                      {event.total_distance && (
+                        <View style={styles.eventStat}>
+                          <Ionicons name="navigate-outline" size={14} color={colors.stone} />
+                          <BodySmall color="secondary" style={{ marginLeft: 4 }}>
+                            {event.total_distance} {event.distance_unit}
+                          </BodySmall>
+                        </View>
+                      )}
+                      {event.total_elevation_gain && (
+                        <View style={styles.eventStat}>
+                          <Ionicons name="trending-up-outline" size={14} color={colors.stone} />
+                          <BodySmall color="secondary" style={{ marginLeft: 4 }}>
+                            {event.total_elevation_gain} {event.elevation_unit}
+                          </BodySmall>
+                        </View>
+                      )}
+                      {event.total_gear_weight && (
+                        <WeightBadge 
+                          weight={event.total_gear_weight} 
+                          unit={mover?.weight_unit as any || 'lbs'}
+                          size="sm"
+                        />
+                      )}
+                    </View>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </View>
 
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeaderContainer}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: isDarkMode ? theme.colors.text : theme.colors.text },
-              ]}
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <H2 style={{ marginBottom: spacing.md }}>Quick Actions</H2>
+          <View style={styles.quickActions}>
+            <Card 
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Gear')}
             >
-              Training Tips
-            </Text>
-            <TouchableOpacity>
-              <Text style={{ color: theme.colors.primary }}>More</Text>
-            </TouchableOpacity>
+              <CardContent>
+                <View style={[styles.actionIcon, { backgroundColor: colors.trail + '20' }]}>
+                  <Ionicons name="bag-handle-outline" size={24} color={colors.trail} />
+                </View>
+                <BodySmall color="secondary" align="center">Gear</BodySmall>
+              </CardContent>
+            </Card>
+            
+            <Card 
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Profile')}
+            >
+              <CardContent>
+                <View style={[styles.actionIcon, { backgroundColor: colors.forest + '20' }]}>
+                  <Ionicons name="scale" size={24} color={colors.forest} />
+                </View>
+                <BodySmall color="secondary" align="center">Weight</BodySmall>
+              </CardContent>
+            </Card>
+            
+            <Card 
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('DropBags', {})}
+            >
+              <CardContent>
+                <View style={[styles.actionIcon, { backgroundColor: colors.sunrise + '20' }]}>
+                  <Ionicons name="cube-outline" size={24} color={colors.sunrise} />
+                </View>
+                <BodySmall color="secondary" align="center">Drop Bags</BodySmall>
+              </CardContent>
+            </Card>
           </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tipsScrollContainer}
-          >
-            <TipCard
-              title="Nutrition Strategy"
-              description="Proper fueling can make or break your race. Learn how to calculate your caloric needs."
-              icon="food-apple"
-              iconBackgroundColor={theme.colors.success}
-              style={{ width: width * 0.7, marginRight: 16 }}
-              onPress={() => {}}
-            />
-
-            <TipCard
-              title="Gear Selection"
-              description="Choosing the right shoes and equipment for your ultra marathon."
-              icon="shoe-print"
-              iconBackgroundColor={theme.colors.secondary}
-              style={{ width: width * 0.7, marginRight: 16 }}
-              onPress={() => {}}
-            />
-
-            <TipCard
-              title="Training Schedule"
-              description="Build endurance with a progressive training plan tailored to your race."
-              icon="run-fast"
-              iconBackgroundColor={theme.colors.tertiary}
-              style={{ width: width * 0.7, marginRight: 16 }}
-              onPress={() => {}}
-            />
-          </ScrollView>
         </View>
-      </Animated.View>
+      </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  headerGradient: {
-    paddingVertical: 30,
+  header: {
     paddingHorizontal: 20,
+    paddingBottom: 48,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   headerContent: {
-    alignItems: "center",
+    marginTop: 8,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
+  quickStats: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 16,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  headerSubtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 4,
-    marginBottom: 16,
+  content: {
+    paddingHorizontal: 20,
+  },
+  ctaCard: {
+    marginBottom: 24,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  emptyCard: {
+    alignItems: 'center',
+  },
+  emptyContent: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  eventCard: {
+    marginBottom: 12,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  countdown: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  eventStats: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 16,
+    alignItems: 'center',
+  },
+  eventStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
   actionCard: {
-    marginHorizontal: 16,
-    marginTop: -20,
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    flex: 1,
+    alignItems: 'center',
   },
-  actionCardContent: {
-    padding: 20,
-  },
-  actionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
   },
-  actionDescription: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  actionButton: {
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  actionButtonContent: {
-    height: 48,
-  },
-  actionButtonLabel: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  sectionContainer: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-  },
-  sectionHeaderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  tipsScrollContainer: {
-    paddingBottom: 8,
-    paddingRight: 16,
-  },
-  raceCardContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    padding: 8,
-    zIndex: 10,
-  },
-  viewAllButton: {
-    marginTop: 8,
-    marginBottom: 16,
-    borderColor: '#ccc',
-    borderRadius: 8,
-  },
 });
-
-export default HomeScreen;

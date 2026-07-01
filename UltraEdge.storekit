@@ -5,7 +5,7 @@
       {
         "locale" : "en_US",
         "policyText" : "",
-        "policyURL" : ""
+        "policyURL" : "https://ultraedge.app/privacy"
       }
     ]
   },
@@ -14,7 +14,21 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "89.99",
+      "familyShareable" : false,
+      "internalID" : "6744386401",
+      "localizations" : [
+        {
+          "description" : "One-time purchase. Lifetime access to all UltraEdge Premium features.",
+          "displayName" : "UltraEdge Premium Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ultraedge_premium_lifetime",
+      "referenceName" : "Premium Lifetime $89.99",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_applicationInternalID" : "6744366852",
@@ -86,7 +100,40 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "12.99",
+          "displayPrice" : "5.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6744386400",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Access to all UltraEdge Premium features",
+              "displayName" : "UltraEdge Premium Monthly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "Access to all UltraEdge Premium features",
+              "displayName" : "UltraEdge Premium Monthly",
+              "locale" : "en_CA"
+            }
+          ],
+          "productID" : "ultraedge_premium_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Monthly $5.99",
+          "subscriptionGroupID" : "21664551",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6744386399",
@@ -94,18 +141,18 @@
           "localizations" : [
             {
               "description" : "Access to all UltraEdge Premium features",
-              "displayName" : "UltraEdge Premium",
+              "displayName" : "UltraEdge Premium Annual",
               "locale" : "en_US"
             },
             {
               "description" : "Access to all UltraEdge Premium features",
-              "displayName" : "UltraEdge Premium",
+              "displayName" : "UltraEdge Premium Annual",
               "locale" : "en_CA"
             }
           ],
-          "productID" : "rc_1299_1yr",
+          "productID" : "ultraedge_premium_annual",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Annual $12.99",
+          "referenceName" : "Annual $39.99",
           "subscriptionGroupID" : "21664551",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

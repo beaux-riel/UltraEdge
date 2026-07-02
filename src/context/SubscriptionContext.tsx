@@ -29,15 +29,30 @@ import React, {
   ReactNode,
 } from 'react';
 import { Platform, Alert, AppState, AppStateStatus } from 'react-native';
-import Purchases, {
+import type {
   PurchasesPackage,
   CustomerInfo,
   PurchasesOfferings,
   PurchasesOffering,
-  LOG_LEVEL,
-  PURCHASES_ERROR_CODE,
   PurchasesError,
 } from 'react-native-purchases';
+
+// react-native-purchases instantiates a NativeEventEmitter at import time,
+// which throws in Expo Go (no native module). Load it lazily so environments
+// without the native module (Expo Go, web) never evaluate it.
+type PurchasesModule = typeof import('react-native-purchases');
+let purchasesModule: PurchasesModule | null | undefined;
+function loadPurchases(): PurchasesModule | null {
+  if (purchasesModule === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      purchasesModule = require('react-native-purchases');
+    } catch {
+      purchasesModule = null;
+    }
+  }
+  return purchasesModule ?? null;
+}
 
 import {
   getRevenueCatApiKey,
@@ -159,9 +174,13 @@ function useOptionalAuth(): AuthContextType | null {
 }
 
 export function SubscriptionProvider({ children, userId }: SubscriptionProviderProps) {
-  // Whether the RevenueCat SDK can be used at all (native platform + real keys).
-  // When false we never touch the SDK and rely solely on the server record.
-  const rcEnabled = useMemo(() => isRevenueCatConfigured(), []);
+  // Whether the RevenueCat SDK can be used at all (native platform + real keys
+  // + native module present — absent in Expo Go). When false we never touch
+  // the SDK and rely solely on the server record.
+  const rcEnabled = useMemo(
+    () => isRevenueCatConfigured() && loadPurchases() !== null,
+    []
+  );
 
   // Auth (supabase client + current user) — used for server reconciliation
   const auth = useOptionalAuth();
@@ -315,14 +334,17 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
       return;
     }
 
+    const RC = loadPurchases()!;
+    const Purchases = RC.default;
+
     try {
       // Enable debug logging in development
       if (__DEV__) {
-        Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+        Purchases.setLogLevel(RC.LOG_LEVEL.DEBUG);
       }
 
       const apiKey = getRevenueCatApiKey();
-      
+
       // Configure SDK
       // Note: If appUserId is null/undefined, RevenueCat creates an anonymous ID
       await Purchases.configure({
@@ -455,7 +477,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
   const fetchOfferings = useCallback(async (): Promise<PurchasesOfferings | null> => {
     if (!rcEnabled) return null;
     try {
-      const fetchedOfferings = await Purchases.getOfferings();
+      const fetchedOfferings = await loadPurchases()!.default.getOfferings();
       setOfferings(fetchedOfferings);
       
       if (!fetchedOfferings.current) {
@@ -472,7 +494,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
   const refreshCustomerInfo = useCallback(async (): Promise<CustomerInfo | null> => {
     if (!rcEnabled) return null;
     try {
-      const info = await Purchases.getCustomerInfo();
+      const info = await loadPurchases()!.default.getCustomerInfo();
       setCustomerInfo(info);
       return info;
     } catch (error) {
@@ -496,7 +518,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     }
 
     try {
-      const info = await Purchases.getCustomerInfo();
+      const info = await loadPurchases()!.default.getCustomerInfo();
       setCustomerInfo(info);
 
       const hasPremium =
@@ -567,8 +589,10 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
 
     setIsPurchasing(true);
 
+    const RC = loadPurchases()!;
+
     try {
-      const { customerInfo: newInfo } = await Purchases.purchasePackage(pkg);
+      const { customerInfo: newInfo } = await RC.default.purchasePackage(pkg);
       setCustomerInfo(newInfo);
 
       // Check if purchase granted premium access
@@ -593,7 +617,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
       const purchaseError = error as PurchasesError;
       
       // User cancelled - not an error
-      if (purchaseError.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      if (purchaseError.code === RC.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
         console.log('[Subscription] Purchase cancelled by user');
         return false;
       }
@@ -601,13 +625,13 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
       // Handle specific errors
       let errorMessage = 'There was an error processing your purchase. Please try again.';
       
-      if (purchaseError.code === PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR) {
+      if (purchaseError.code === RC.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR) {
         errorMessage = 'Your purchase is pending approval. You\'ll get access once it\'s confirmed.';
-      } else if (purchaseError.code === PURCHASES_ERROR_CODE.PRODUCT_ALREADY_PURCHASED_ERROR) {
+      } else if (purchaseError.code === RC.PURCHASES_ERROR_CODE.PRODUCT_ALREADY_PURCHASED_ERROR) {
         errorMessage = 'You already have an active subscription. Try restoring your purchases.';
-      } else if (purchaseError.code === PURCHASES_ERROR_CODE.STORE_PROBLEM_ERROR) {
+      } else if (purchaseError.code === RC.PURCHASES_ERROR_CODE.STORE_PROBLEM_ERROR) {
         errorMessage = 'There\'s a problem with the app store. Please try again later.';
-      } else if (purchaseError.code === PURCHASES_ERROR_CODE.NETWORK_ERROR) {
+      } else if (purchaseError.code === RC.PURCHASES_ERROR_CODE.NETWORK_ERROR) {
         errorMessage = 'Network error. Please check your connection and try again.';
       }
 
@@ -641,7 +665,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     setIsLoading(true);
 
     try {
-      const restoredInfo = await Purchases.restorePurchases();
+      const restoredInfo = await loadPurchases()!.default.restorePurchases();
       setCustomerInfo(restoredInfo);
 
       // Check if restore found premium access
@@ -690,7 +714,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     if (!rcEnabled || !isInitialized) return;
 
     try {
-      const { customerInfo: newInfo } = await Purchases.logIn(newUserId);
+      const { customerInfo: newInfo } = await loadPurchases()!.default.logIn(newUserId);
       setCustomerInfo(newInfo);
       console.log('[Subscription] Logged in with user ID:', newUserId);
     } catch (error) {
@@ -702,7 +726,7 @@ export function SubscriptionProvider({ children, userId }: SubscriptionProviderP
     if (!rcEnabled || !isInitialized) return;
 
     try {
-      const newInfo = await Purchases.logOut();
+      const newInfo = await loadPurchases()!.default.logOut();
       setCustomerInfo(newInfo);
       console.log('[Subscription] Logged out to anonymous user');
     } catch (error) {

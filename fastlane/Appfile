@@ -1,0 +1,4 @@
+app_identifier("com.beaux.ultraedge")
+
+team_id(ENV["ASC_TEAM_ID"] || ENV["DEVELOPMENT_TEAM"])
+itc_team_id(ENV["ASC_ITC_TEAM_ID"]) if ENV["ASC_ITC_TEAM_ID"]

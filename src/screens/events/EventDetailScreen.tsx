@@ -42,6 +42,7 @@ import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewConte
 import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, Checkpoint } from '../../lib/database.types';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
+import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
 
@@ -674,6 +675,13 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               onGpxChange={async (fileUri) => {
                 await updateEvent(eventId, { gpx_file_url: fileUri });
               }}
+            />
+
+            {/* Race Plan Export */}
+            <ExportRacePlanButton
+              eventId={eventId}
+              fullWidth
+              style={{ marginBottom: theme.spacing.lg }}
             />
 
             {/* Checkpoints Section */}

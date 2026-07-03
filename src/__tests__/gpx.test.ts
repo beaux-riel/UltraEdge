@@ -108,4 +108,46 @@ describe('distanceMarkers with display units', () => {
   it('returns no markers for a non-positive interval', () => {
     expect(distanceMarkers(metrics.points, 0, 'miles')).toEqual([]);
   });
+
+  describe('interval switching', () => {
+    // ~40 km / ~24.9 mi route
+    const longMetrics = computeRouteMetrics(parseGpx(gpx(41)))!;
+
+    it.each([
+      ['kilometers', 1],
+      ['kilometers', 5],
+      ['kilometers', 10],
+      ['miles', 1],
+      ['miles', 5],
+      ['miles', 10],
+    ] as const)('emits exact multiples for %s interval %d', (unit, interval) => {
+      const totalDisplay =
+        unit === 'kilometers'
+          ? longMetrics.totalDistanceMi * MILES_TO_KM
+          : longMetrics.totalDistanceMi;
+      const count = Math.floor(totalDisplay / interval);
+      expect(count).toBeGreaterThan(0);
+      const markers = distanceMarkers(longMetrics.points, interval, unit);
+      expect(markers.map(m => m.value)).toEqual(
+        Array.from({ length: count }, (_, i) => (i + 1) * interval)
+      );
+    });
+
+    it.each([
+      ['miles', 5],
+      ['miles', 10],
+      ['kilometers', 5],
+      ['kilometers', 10],
+    ] as const)(
+      'interval-1 markers filtered by %s interval %d match direct computation',
+      (unit, interval) => {
+        // RouteMap keeps interval-1 marker slots mounted and shows the subset
+        // whose value is a multiple of the chosen interval; that subset must
+        // be identical to computing markers at the interval directly.
+        const base = distanceMarkers(longMetrics.points, 1, unit);
+        const filtered = base.filter(m => m.value % interval === 0);
+        expect(filtered).toEqual(distanceMarkers(longMetrics.points, interval, unit));
+      }
+    );
+  });
 });

@@ -8,7 +8,7 @@
  *  - full screen (interactive=true): pinch/zoom/pan enabled
  */
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,10 +57,23 @@ export default function RouteMap({
     () => metrics.points.map(p => ({ latitude: p.lat, longitude: p.lon })),
     [metrics]
   );
-  const markers = useMemo(
-    () => (showMarkers ? distanceMarkers(metrics.points, markerInterval, markerUnit) : []),
-    [metrics, showMarkers, markerInterval, markerUnit]
-  );
+  // Distance-marker "slots": one mounted <Marker> per whole display unit,
+  // buffered to the larger of the mi/km counts. Interval, unit, and Off
+  // changes only toggle opacity / update content — Marker children are never
+  // unmounted, because removing Marker children crashes react-native-maps
+  // 1.20.x on iOS under the new architecture (react-native-maps#5214).
+  const markerSlots = useMemo(() => {
+    const mi = distanceMarkers(metrics.points, 1, 'miles');
+    const km = distanceMarkers(metrics.points, 1, 'kilometers');
+    const active = markerUnit === 'kilometers' ? km : mi;
+    const count = Math.max(mi.length, km.length);
+    const park = metrics.points[0];
+    return Array.from({ length: count }, (_, i) =>
+      i < active.length
+        ? { value: active[i].value, lat: active[i].lat, lon: active[i].lon, parked: false }
+        : { value: 0, lat: park.lat, lon: park.lon, parked: true }
+    );
+  }, [metrics, markerUnit]);
 
   const start = metrics.points[0];
   const finish = metrics.points[metrics.points.length - 1];
@@ -99,22 +112,19 @@ export default function RouteMap({
         />
 
         {/* Distance markers first so start/finish render on top */}
-        {markers.map(m => (
-          <Marker
-            key={`marker-${markerUnit}-${m.value}`}
-            coordinate={{ latitude: m.lat, longitude: m.lon }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
-          >
-            <View
-              style={[
-                styles.mileMarker,
-                { backgroundColor: colors.surface, borderColor: colors.trail },
-              ]}
-            >
-              <Text style={[styles.mileMarkerText, { color: colors.bark }]}>{m.value}</Text>
-            </View>
-          </Marker>
+        {markerSlots.map((slot, i) => (
+          <DistanceMarkerSlot
+            key={`marker-slot-${i}`}
+            latitude={slot.lat}
+            longitude={slot.lon}
+            label={slot.parked ? '' : String(slot.value)}
+            visible={
+              showMarkers && !slot.parked && slot.value % markerInterval === 0
+            }
+            surfaceColor={colors.surface}
+            borderColor={colors.trail}
+            textColor={colors.bark}
+          />
         ))}
 
         <Marker
@@ -139,17 +149,70 @@ export default function RouteMap({
           </View>
         </Marker>
 
-        {scrubPoint && (
-          <Marker
-            coordinate={{ latitude: scrubPoint.lat, longitude: scrubPoint.lon }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
-          >
-            <View style={[styles.scrubMarker, { backgroundColor: colors.sky }]} />
-          </Marker>
-        )}
+        {/* Always mounted (hidden via opacity) — unmounting Marker children
+            crashes react-native-maps 1.20.x on iOS under the new arch. */}
+        <Marker
+          coordinate={{
+            latitude: (scrubPoint ?? start).lat,
+            longitude: (scrubPoint ?? start).lon,
+          }}
+          anchor={{ x: 0.5, y: 0.5 }}
+          tracksViewChanges={false}
+          opacity={scrubPoint ? 1 : 0}
+        >
+          <View style={[styles.scrubMarker, { backgroundColor: colors.sky }]} />
+        </Marker>
       </MapView>
     </View>
+  );
+}
+
+/** How long a marker keeps tracking view changes after its content updates. */
+const MARKER_SNAPSHOT_MS = 500;
+
+/**
+ * One persistent distance-marker slot. Mounts with tracksViewChanges enabled
+ * so react-native-maps snapshots the badge after it has actually laid out
+ * (snapshotting immediately with tracksViewChanges={false} captures a blank
+ * view), then disables tracking to avoid re-render churn while panning.
+ * Re-enables tracking briefly whenever the label or theme colors change.
+ */
+function DistanceMarkerSlot({
+  latitude,
+  longitude,
+  label,
+  visible,
+  surfaceColor,
+  borderColor,
+  textColor,
+}: {
+  latitude: number;
+  longitude: number;
+  label: string;
+  visible: boolean;
+  surfaceColor: string;
+  borderColor: string;
+  textColor: string;
+}) {
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  useEffect(() => {
+    setTracksViewChanges(true);
+    const timer = setTimeout(() => setTracksViewChanges(false), MARKER_SNAPSHOT_MS);
+    return () => clearTimeout(timer);
+  }, [label, surfaceColor, borderColor, textColor]);
+
+  return (
+    <Marker
+      coordinate={{ latitude, longitude }}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={tracksViewChanges}
+      opacity={visible ? 1 : 0}
+    >
+      <View style={[styles.mileMarker, { backgroundColor: surfaceColor, borderColor }]}>
+        <Text style={[styles.mileMarkerText, { color: textColor }]}>{label}</Text>
+      </View>
+    </Marker>
   );
 }
 

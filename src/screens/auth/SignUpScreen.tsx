@@ -231,7 +231,7 @@ export default function SignUpScreen({ navigation }: any) {
         <LinearGradient
           colors={isDarkMode 
             ? [colors.forest, colors.parchment] 
-            : [colors.forest, '#4A8B5C', colors.parchment]
+            : [colors.forest, colors.forestSoft, colors.parchment]
           }
           style={[styles.header, { paddingTop: insets.top + spacing.md }]}
         >
@@ -240,12 +240,12 @@ export default function SignUpScreen({ navigation }: any) {
             style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={colors.snow} />
           </TouchableOpacity>
 
           <View style={styles.headerContent}>
-            <Ionicons name="person-add-outline" size={48} color="#FFFFFF" style={{ marginBottom: spacing.sm }} />
-            <H1 style={{ color: '#FFFFFF' }}>Create Account</H1>
+            <Ionicons name="person-add-outline" size={48} color={colors.snow} style={{ marginBottom: spacing.sm }} />
+            <H1 style={{ color: colors.snow }}>Create Account</H1>
             <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
               Join UltraEdge and sync your race plans
             </BodySmall>

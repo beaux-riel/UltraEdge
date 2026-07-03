@@ -159,7 +159,7 @@ export default function CrewListScreen({ navigation }: any) {
           <Button
             size="sm"
             onPress={() => navigation.navigate('CreateCrew')}
-            icon={<Ionicons name="add" size={18} color="#FFFFFF" />}
+            icon={<Ionicons name="add" size={18} color={colors.snow} />}
           >
             Add
           </Button>
@@ -249,7 +249,7 @@ export default function CrewListScreen({ navigation }: any) {
           >
             <Text
               variant="bodySmall"
-              style={{ color: selectedRole === 'all' ? '#FFFFFF' : colors.stone }}
+              style={{ color: selectedRole === 'all' ? colors.snow : colors.stone }}
             >
               All
             </Text>
@@ -274,12 +274,12 @@ export default function CrewListScreen({ navigation }: any) {
                 <Ionicons
                   name={config.icon as any}
                   size={14}
-                  color={isSelected ? '#FFFFFF' : config.color}
+                  color={isSelected ? colors.snow : config.color}
                   style={{ marginRight: 4 }}
                 />
                 <Text
                   variant="bodySmall"
-                  style={{ color: isSelected ? '#FFFFFF' : colors.stone }}
+                  style={{ color: isSelected ? colors.snow : colors.stone }}
                 >
                   {config.label}
                 </Text>

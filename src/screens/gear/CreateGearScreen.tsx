@@ -117,7 +117,7 @@ export default function CreateGearScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -210,12 +210,12 @@ export default function CreateGearScreen({ navigation }: any) {
                   <Ionicons
                     name={config.icon as any}
                     size={18}
-                    color={isSelected ? '#FFFFFF' : catColor}
+                    color={isSelected ? colors.snow : catColor}
                   />
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: isSelected ? '#FFFFFF' : colors.stone,
+                      color: isSelected ? colors.snow : colors.stone,
                       marginTop: 4,
                     }}
                   >
@@ -266,7 +266,7 @@ export default function CreateGearScreen({ navigation }: any) {
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: weightUnit === unit.value ? '#FFFFFF' : colors.stone,
+                      color: weightUnit === unit.value ? colors.snow : colors.stone,
                       fontWeight: '600',
                     }}
                   >
@@ -380,7 +380,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   backButton: {
     padding: 4,

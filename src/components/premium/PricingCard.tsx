@@ -122,8 +122,8 @@ export function PricingCard({
             },
           ]}
         >
-          <Ionicons name="star" size={10} color="#FFFFFF" />
-          <Text style={[styles.highlightText, { fontFamily: typography.label.fontFamily }]}>
+          <Ionicons name="star" size={10} color={colors.snow} />
+          <Text style={[styles.highlightText, { color: colors.snow, fontFamily: typography.label.fontFamily }]}>
             {highlightLabel}
           </Text>
         </View>
@@ -239,12 +239,13 @@ export function PricingCard({
           ]}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.snow} />
           ) : (
             <Text
               style={[
                 styles.ctaText,
                 {
+                  color: colors.snow,
                   fontFamily: typography.label.fontFamily,
                   fontSize: 13,
                 },
@@ -264,7 +265,7 @@ export function PricingCard({
             { backgroundColor: colors.sunrise },
           ]}
         >
-          <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+          <Ionicons name="checkmark" size={14} color={colors.snow} />
         </View>
       )}
     </TouchableOpacity>
@@ -291,7 +292,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   highlightText: {
-    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ctaText: {
-    color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

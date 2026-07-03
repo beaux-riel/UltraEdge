@@ -45,9 +45,9 @@ export function PremiumBadge({
             backgroundColor: colors.sunrise,
           },
           text: {
-            color: '#FFFFFF',
+            color: colors.snow,
           },
-          iconColor: '#FFFFFF',
+          iconColor: colors.snow,
         };
       case 'outline':
         return {

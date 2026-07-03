@@ -240,11 +240,11 @@ export function EventForm({
           </View>
           <View style={styles.thirdField}>
             <Label style={styles.label}>Unit</Label>
-            <View style={styles.unitToggle}>
+            <View style={[styles.unitToggle, { borderColor: colors.border }]}>
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  distanceUnit === 'miles' && { backgroundColor: colors.forest },
+                  { backgroundColor: distanceUnit === 'miles' ? colors.forest : colors.surface },
                   { borderTopLeftRadius: radius.sm, borderBottomLeftRadius: radius.sm },
                 ]}
                 onPress={() => setDistanceUnit('miles')}
@@ -254,7 +254,7 @@ export function EventForm({
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  distanceUnit === 'kilometers' && { backgroundColor: colors.forest },
+                  { backgroundColor: distanceUnit === 'kilometers' ? colors.forest : colors.surface },
                   { borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm },
                 ]}
                 onPress={() => setDistanceUnit('kilometers')}
@@ -280,11 +280,11 @@ export function EventForm({
           </View>
           <View style={styles.thirdField}>
             <Label style={styles.label}>Unit</Label>
-            <View style={styles.unitToggle}>
+            <View style={[styles.unitToggle, { borderColor: colors.border }]}>
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  elevationUnit === 'feet' && { backgroundColor: colors.forest },
+                  { backgroundColor: elevationUnit === 'feet' ? colors.forest : colors.surface },
                   { borderTopLeftRadius: radius.sm, borderBottomLeftRadius: radius.sm },
                 ]}
                 onPress={() => setElevationUnit('feet')}
@@ -294,7 +294,7 @@ export function EventForm({
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  elevationUnit === 'meters' && { backgroundColor: colors.forest },
+                  { backgroundColor: elevationUnit === 'meters' ? colors.forest : colors.surface },
                   { borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm },
                 ]}
                 onPress={() => setElevationUnit('meters')}
@@ -433,7 +433,6 @@ const styles = StyleSheet.create({
   unitToggle: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#E5DED3',
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -441,7 +440,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
   statusRow: {
     flexDirection: 'row',

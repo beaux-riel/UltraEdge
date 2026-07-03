@@ -185,13 +185,13 @@ export default function CreateCheckpointScreen() {
                   <Ionicons
                     name={info.icon as any}
                     size={20}
-                    color={isSelected ? '#FFFFFF' : info.color}
+                    color={isSelected ? colors.snow : info.color}
                   />
                   <Text
                     variant="caption"
                     style={{
                       marginTop: 4,
-                      color: isSelected ? '#FFFFFF' : colors.bark,
+                      color: isSelected ? colors.snow : colors.bark,
                     }}
                   >
                     {info.label}
@@ -235,7 +235,7 @@ export default function CreateCheckpointScreen() {
                 ]}
                 onPress={() => setUseMetric(false)}
               >
-                <BodySmall style={{ color: !useMetric ? '#FFFFFF' : colors.stone, fontWeight: '600' }}>
+                <BodySmall style={{ color: !useMetric ? colors.snow : colors.stone, fontWeight: '600' }}>
                   mi / ft
                 </BodySmall>
               </TouchableOpacity>
@@ -246,7 +246,7 @@ export default function CreateCheckpointScreen() {
                 ]}
                 onPress={() => setUseMetric(true)}
               >
-                <BodySmall style={{ color: useMetric ? '#FFFFFF' : colors.stone, fontWeight: '600' }}>
+                <BodySmall style={{ color: useMetric ? colors.snow : colors.stone, fontWeight: '600' }}>
                   km / m
                 </BodySmall>
               </TouchableOpacity>
@@ -372,7 +372,7 @@ export default function CreateCheckpointScreen() {
                   ]}
                 >
                   {hasCrewAccess && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -402,7 +402,7 @@ export default function CreateCheckpointScreen() {
                   ]}
                 >
                   {hasDropBag && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -432,7 +432,7 @@ export default function CreateCheckpointScreen() {
                   ]}
                 >
                   {hasPacerPickup && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -462,7 +462,7 @@ export default function CreateCheckpointScreen() {
                   ]}
                 >
                   {hasPacerDropoff && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>

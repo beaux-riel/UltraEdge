@@ -257,7 +257,7 @@ export function SubscriptionScreen() {
               style={[
                 styles.statusTitle,
                 {
-                  color: isPremium ? '#FFFFFF' : colors.bark,
+                  color: isPremium ? colors.snow : colors.bark,
                   fontFamily: typography.h2.fontFamily,
                   fontSize: typography.h2.fontSize,
                 },
@@ -309,11 +309,12 @@ export function SubscriptionScreen() {
                 },
               ]}
             >
-              <Ionicons name="star" size={18} color="#FFFFFF" />
+              <Ionicons name="star" size={18} color={colors.snow} />
               <Text
                 style={[
                   styles.upgradeButtonText,
                   {
+                    color: colors.snow,
                     fontFamily: typography.label.fontFamily,
                     fontSize: 14,
                   },
@@ -336,8 +337,8 @@ export function SubscriptionScreen() {
                   },
                 ]}
               >
-                <Ionicons name="settings-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.manageButtonText}>Manage</Text>
+                <Ionicons name="settings-outline" size={16} color={colors.snow} />
+                <Text style={[styles.manageButtonText, { color: colors.snow }]}>Manage</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -350,7 +351,7 @@ export function SubscriptionScreen() {
                   },
                 ]}
               >
-                <Text style={[styles.manageButtonText, { opacity: 0.8 }]}>Cancel</Text>
+                <Text style={[styles.manageButtonText, { color: colors.snow, opacity: 0.8 }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -687,7 +688,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   upgradeButtonText: {
-    color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -706,7 +706,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   manageButtonText: {
-    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
   },

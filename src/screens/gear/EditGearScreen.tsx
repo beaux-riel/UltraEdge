@@ -98,7 +98,7 @@ export default function EditGearScreen({ navigation, route }: any) {
   if (!originalItem) {
     return (
       <View style={[styles.container, { backgroundColor: colors.parchment }]}>
-        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="close" size={24} color={colors.bark} />
           </TouchableOpacity>
@@ -218,7 +218,7 @@ export default function EditGearScreen({ navigation, route }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
         <TouchableOpacity onPress={handleDiscard} style={styles.backButton}>
           <Ionicons name="close" size={24} color={colors.bark} />
         </TouchableOpacity>
@@ -326,12 +326,12 @@ export default function EditGearScreen({ navigation, route }: any) {
                   <Ionicons
                     name={config.icon as any}
                     size={18}
-                    color={isSelected ? '#FFFFFF' : catColor}
+                    color={isSelected ? colors.snow : catColor}
                   />
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: isSelected ? '#FFFFFF' : colors.stone,
+                      color: isSelected ? colors.snow : colors.stone,
                       marginTop: 4,
                     }}
                   >
@@ -382,7 +382,7 @@ export default function EditGearScreen({ navigation, route }: any) {
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: weightUnit === unit.value ? '#FFFFFF' : colors.stone,
+                      color: weightUnit === unit.value ? colors.snow : colors.stone,
                       fontWeight: '600',
                     }}
                   >
@@ -517,14 +517,14 @@ export default function EditGearScreen({ navigation, route }: any) {
         )}
 
         {/* Danger Zone */}
-        <View style={styles.dangerZone}>
+        <View style={[styles.dangerZone, { borderTopColor: colors.borderLight }]}>
           <Label style={{ color: colors.clay }}>Danger Zone</Label>
           <Button
             variant="danger"
             fullWidth
             onPress={handleDelete}
             style={{ marginTop: spacing.sm }}
-            icon={<Ionicons name="trash-outline" size={18} color="#FFFFFF" />}
+            icon={<Ionicons name="trash-outline" size={18} color={colors.snow} />}
           >
             Delete Item
           </Button>
@@ -545,7 +545,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   backButton: {
     padding: 4,
@@ -647,6 +646,5 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.08)',
   },
 });

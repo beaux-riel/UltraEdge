@@ -131,7 +131,7 @@ export default function EventsListScreen({ navigation }: Props) {
         style={[styles.deleteAction, { backgroundColor: colors.clay }]}
       >
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={24} color="#FFFFFF" />
+          <Ionicons name="trash-outline" size={24} color={colors.snow} />
         </Animated.View>
       </TouchableOpacity>
     );
@@ -274,7 +274,7 @@ export default function EventsListScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('CreateEvent')}
             style={[styles.addButton, { backgroundColor: colors.forest }]}
           >
-            <Ionicons name="add" size={24} color="#FFFFFF" />
+            <Ionicons name="add" size={24} color={colors.snow} />
           </TouchableOpacity>
         </View>
 

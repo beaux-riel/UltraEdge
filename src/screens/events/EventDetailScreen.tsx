@@ -360,7 +360,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     return (
       <View style={[styles.deleteAction, { backgroundColor: colors.clay }]}>
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
+          <Ionicons name="trash-outline" size={22} color={colors.snow} />
         </Animated.View>
       </View>
     );
@@ -509,7 +509,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           <LinearGradient
             colors={isDarkMode 
               ? [colors.forest, colors.parchment] 
-              : [colors.forest, '#4A8B5C', colors.parchment]
+              : [colors.forest, colors.forestSoft, colors.parchment]
             }
             style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
           >
@@ -519,20 +519,20 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 onPress={() => navigation.goBack()}
                 style={styles.navButton}
               >
-                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                <Ionicons name="arrow-back" size={24} color={colors.snow} />
               </TouchableOpacity>
               <View style={styles.heroActions}>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('EditEvent', { eventId })}
                   style={styles.navButton}
                 >
-                  <Ionicons name="pencil" size={22} color="#FFFFFF" />
+                  <Ionicons name="pencil" size={22} color={colors.snow} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleDelete}
                   style={styles.navButton}
                 >
-                  <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
+                  <Ionicons name="trash-outline" size={22} color={colors.snow} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -549,7 +549,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                   {event.status.toUpperCase().replace('_', ' ')}
                 </Caption>
               </View>
-              <H1 style={{ color: '#FFFFFF', marginTop: spacing.xs }}>{event.name}</H1>
+              <H1 style={{ color: colors.snow, marginTop: spacing.xs }}>{event.name}</H1>
               <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: spacing.xs }}>
                 {formatEventDate(event.event_date)}
                 {event.event_time && ` • ${event.event_time}`}
@@ -567,7 +567,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             {/* Countdown */}
             {daysUntil !== null && daysUntil > 0 && (
               <View style={styles.countdown}>
-                <Text variant="display" style={{ color: '#FFFFFF' }}>
+                <Text variant="display" style={{ color: colors.snow }}>
                   {daysUntil}
                 </Text>
                 <BodySmall style={{ color: 'rgba(255,255,255,0.8)' }}>

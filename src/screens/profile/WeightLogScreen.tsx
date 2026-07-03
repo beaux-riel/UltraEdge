@@ -398,8 +398,8 @@ export default function WeightLogScreen({ navigation }: any) {
                   ]}
                   pointerEvents="none"
                 >
-                  <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
-                  <Text style={styles.successText}>Logged!</Text>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.snow} />
+                  <Text style={[styles.successText, { color: colors.snow }]}>Logged!</Text>
                 </Animated.View>
               </CardContent>
             </Card>
@@ -602,7 +602,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   successText: {
-    color: '#FFFFFF',
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,

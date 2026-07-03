@@ -85,7 +85,7 @@ export default function HomeScreen({ navigation }: any) {
       <LinearGradient
         colors={isDarkMode 
           ? [colors.forest, colors.parchment] 
-          : [colors.forest, '#4A8B5C', colors.parchment]
+          : [colors.forest, colors.forestSoft, colors.parchment]
         }
         style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
@@ -93,7 +93,7 @@ export default function HomeScreen({ navigation }: any) {
           <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {getGreeting()}
           </Text>
-          <H1 style={{ color: '#FFFFFF' }}>
+          <H1 style={{ color: colors.snow }}>
             {mover?.display_name || 'Mover'}
           </H1>
           
@@ -102,13 +102,13 @@ export default function HomeScreen({ navigation }: any) {
             <View style={styles.quickStats}>
               <View style={styles.statItem}>
                 <Ionicons name="scale-outline" size={16} color="rgba(255,255,255,0.7)" />
-                <Text variant="bodySmall" style={{ color: '#FFFFFF', marginLeft: 4 }}>
+                <Text variant="bodySmall" style={{ color: colors.snow, marginLeft: 4 }}>
                   {mover.current_weight} {mover.weight_unit}
                 </Text>
               </View>
               <View style={styles.statItem}>
                 <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.7)" />
-                <Text variant="bodySmall" style={{ color: '#FFFFFF', marginLeft: 4 }}>
+                <Text variant="bodySmall" style={{ color: colors.snow, marginLeft: 4 }}>
                   {events.length} event{events.length !== 1 ? 's' : ''}
                 </Text>
               </View>

@@ -62,6 +62,7 @@ import { SignInScreen, SignUpScreen } from '../screens/auth';
 
 // Settings
 import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
+import AboutScreen from '../screens/settings/AboutScreen';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -77,6 +78,7 @@ export type RootStackParamList = {
   
   // Settings
   Subscription: undefined;
+  About: undefined;
   
   // Events
   CreateEvent: undefined;
@@ -408,6 +410,11 @@ export default function AppNavigator() {
           name="Subscription"
           component={SubscriptionScreen}
           options={{ title: 'Subscription' }}
+        />
+        <Stack.Screen
+          name="About"
+          component={AboutScreen}
+          options={{ title: 'About UltraEdge' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

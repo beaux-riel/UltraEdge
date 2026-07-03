@@ -273,13 +273,13 @@ export default function EditCheckpointScreen() {
                   <Ionicons
                     name={info.icon as any}
                     size={20}
-                    color={isSelected ? '#FFFFFF' : info.color}
+                    color={isSelected ? colors.snow : info.color}
                   />
                   <Text
                     variant="caption"
                     style={{
                       marginTop: 4,
-                      color: isSelected ? '#FFFFFF' : colors.bark,
+                      color: isSelected ? colors.snow : colors.bark,
                     }}
                   >
                     {info.label}
@@ -429,7 +429,7 @@ export default function EditCheckpointScreen() {
                   ]}
                 >
                   {hasCrewAccess && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -459,7 +459,7 @@ export default function EditCheckpointScreen() {
                   ]}
                 >
                   {hasDropBag && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -489,7 +489,7 @@ export default function EditCheckpointScreen() {
                   ]}
                 >
                   {hasPacerPickup && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -519,7 +519,7 @@ export default function EditCheckpointScreen() {
                   ]}
                 >
                   {hasPacerDropoff && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={colors.snow} />
                   )}
                 </View>
               </TouchableOpacity>

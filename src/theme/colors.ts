@@ -35,6 +35,14 @@ export const colors = {
     border: '#E5DED3',
     borderLight: '#F0EBE3',
 
+    // On-color content — text/icons on saturated surfaces (buttons, gradients, chips).
+    // Intentionally identical in both modes.
+    snow: '#FFFFFF',
+
+    // Gradient mid-tones (header gradients)
+    forestSoft: '#4A8B5C',
+    sunriseSoft: '#E8A87C',
+
     // Shadows (for StyleSheet)
     shadow: 'rgba(44, 36, 22, 0.08)',
     shadowMedium: 'rgba(44, 36, 22, 0.12)',
@@ -71,6 +79,14 @@ export const colors = {
     surfaceElevated: '#252019',
     border: '#3D352C',
     borderLight: '#2D261F',
+
+    // On-color content — text/icons on saturated surfaces (buttons, gradients, chips).
+    // Intentionally identical in both modes.
+    snow: '#FFFFFF',
+
+    // Gradient mid-tones (header gradients)
+    forestSoft: '#4A8B5C',
+    sunriseSoft: '#E8A87C',
 
     // Glows (replace shadows in dark mode)
     shadow: 'rgba(255, 155, 108, 0.05)',   // Subtle sunrise glow

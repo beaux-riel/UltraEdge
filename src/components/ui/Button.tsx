@@ -71,7 +71,7 @@ export function Button({
             ...shadows.md,
           },
           text: {
-            color: '#FFFFFF',
+            color: colors.snow,
           },
         };
       case 'secondary':
@@ -103,7 +103,7 @@ export function Button({
             ...shadows.md,
           },
           text: {
-            color: '#FFFFFF',
+            color: colors.snow,
           },
         };
       default:

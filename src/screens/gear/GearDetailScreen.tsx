@@ -82,7 +82,7 @@ export default function GearDetailScreen({ navigation, route }: any) {
   if (!item) {
     return (
       <View style={[styles.container, { backgroundColor: colors.parchment }]}>
-        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.bark} />
           </TouchableOpacity>
@@ -159,7 +159,7 @@ export default function GearDetailScreen({ navigation, route }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.parchment }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.bark} />
         </TouchableOpacity>
@@ -342,7 +342,7 @@ export default function GearDetailScreen({ navigation, route }: any) {
             fullWidth
             onPress={handleDelete}
             style={{ marginTop: spacing.sm }}
-            icon={<Ionicons name="trash-outline" size={18} color="#FFFFFF" />}
+            icon={<Ionicons name="trash-outline" size={18} color={colors.snow} />}
           >
             Delete Item
           </Button>
@@ -422,7 +422,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   detailLabel: {
     flexDirection: 'row',

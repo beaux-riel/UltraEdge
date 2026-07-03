@@ -35,7 +35,7 @@ export function Text({
       case 'tertiary':
         return colors.mist;
       case 'inverse':
-        return '#FFFFFF';
+        return colors.snow;
       case 'success':
         return colors.meadow;
       case 'warning':

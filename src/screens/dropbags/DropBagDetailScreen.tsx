@@ -119,7 +119,7 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
         <LinearGradient
           colors={isDarkMode 
             ? [colors.sunrise, colors.parchment] 
-            : [colors.sunrise, '#E8A87C', colors.parchment]
+            : [colors.sunrise, colors.sunriseSoft, colors.parchment]
           }
           style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
         >
@@ -129,20 +129,20 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
               onPress={() => navigation.goBack()}
               style={styles.navButton}
             >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.snow} />
             </TouchableOpacity>
             <View style={styles.heroActions}>
               <TouchableOpacity
                 onPress={() => navigation.navigate('EditDropBag', { dropBagId })}
                 style={styles.navButton}
               >
-                <Ionicons name="pencil" size={22} color="#FFFFFF" />
+                <Ionicons name="pencil" size={22} color={colors.snow} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDelete}
                 style={styles.navButton}
               >
-                <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
+                <Ionicons name="trash-outline" size={22} color={colors.snow} />
               </TouchableOpacity>
             </View>
           </View>
@@ -150,9 +150,9 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
           {/* Drop Bag Info */}
           <View style={styles.heroContent}>
             <View style={[styles.iconBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Ionicons name="bag-handle" size={32} color="#FFFFFF" />
+              <Ionicons name="bag-handle" size={32} color={colors.snow} />
             </View>
-            <H1 style={{ color: '#FFFFFF', marginTop: spacing.sm }}>{dropBag.name}</H1>
+            <H1 style={{ color: colors.snow, marginTop: spacing.sm }}>{dropBag.name}</H1>
             {event && (
               <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: spacing.xs }}>
                 {event.name}
@@ -163,7 +163,7 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
           {/* Items Count */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text variant="display" style={{ color: '#FFFFFF' }}>
+              <Text variant="display" style={{ color: colors.snow }}>
                 {dropBag.items.length}
               </Text>
               <BodySmall style={{ color: 'rgba(255,255,255,0.8)' }}>

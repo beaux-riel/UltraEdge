@@ -245,6 +245,7 @@ export function FeatureGate({
               style={[
                 styles.upgradeButtonText,
                 {
+                  color: colors.snow,
                   fontFamily: typography.label.fontFamily,
                   fontSize: 13,
                 },
@@ -252,7 +253,7 @@ export function FeatureGate({
             >
               Upgrade to Pro
             </Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            <Ionicons name="arrow-forward" size={16} color={colors.snow} />
           </TouchableOpacity>
         </View>
       );
@@ -324,11 +325,12 @@ function OverlayContent({
           },
         ]}
       >
-        <Ionicons name="star" size={16} color="#FFFFFF" />
+        <Ionicons name="star" size={16} color={colors.snow} />
         <Text
           style={[
             styles.overlayButtonText,
             {
+              color: colors.snow,
               fontFamily: typography.label.fontFamily,
               fontSize: 13,
             },
@@ -421,7 +423,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   overlayButtonText: {
-    color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -491,7 +492,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   upgradeButtonText: {
-    color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

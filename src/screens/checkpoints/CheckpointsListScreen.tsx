@@ -93,7 +93,7 @@ function CheckpointCard({
           <Ionicons 
             name={typeInfo.icon as any} 
             size={12} 
-            color="#FFFFFF" 
+            color={colors.snow} 
           />
         </View>
         
@@ -266,7 +266,7 @@ export default function CheckpointsListScreen() {
         }
       >
         {/* Header Stats */}
-        <View style={[styles.header, { paddingTop: spacing.md }]}>
+        <View style={[styles.header, { paddingTop: spacing.md, borderBottomColor: colors.borderLight }]}>
           <BodySmall color="secondary">{eventName}</BodySmall>
           
           {/* Quick stats */}
@@ -338,7 +338,7 @@ export default function CheckpointsListScreen() {
         <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
           <Button
             onPress={handleCreateCheckpoint}
-            icon={<Ionicons name="add" size={20} color="#FFFFFF" />}
+            icon={<Ionicons name="add" size={20} color={colors.snow} />}
           >
             Add Checkpoint
           </Button>
@@ -359,7 +359,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   backButton: {
     padding: 4,

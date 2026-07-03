@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useTheme } from '../../theme';
+import { useTheme, ThemeMode } from '../../theme';
 import {
   Text,
   H1,
@@ -35,6 +35,16 @@ import { useAuth } from '../../context/AuthContext';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 160;
 const CHART_PADDING = 20;
+
+const APPEARANCE_OPTIONS: {
+  mode: ThemeMode;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { mode: 'system', label: 'System', icon: 'phone-portrait-outline' },
+  { mode: 'light', label: 'Light', icon: 'sunny-outline' },
+  { mode: 'dark', label: 'Dark', icon: 'moon-outline' },
+];
 
 // ============================================================================
 // WEIGHT CHART COMPONENT
@@ -155,7 +165,7 @@ function WeightChart({ data, colors, unit }: WeightChartProps) {
 // ============================================================================
 
 export default function ProfileScreen({ navigation }: any) {
-  const { theme, isDarkMode } = useTheme();
+  const { theme, isDarkMode, themeMode, setThemeMode } = useTheme();
   const { colors, spacing, radius, typography } = theme;
   const insets = useSafeAreaInsets();
   
@@ -266,20 +276,20 @@ export default function ProfileScreen({ navigation }: any) {
       <LinearGradient
         colors={isDarkMode 
           ? [colors.forest, colors.parchment] 
-          : [colors.forest, '#4A8B5C', colors.parchment]
+          : [colors.forest, colors.forestSoft, colors.parchment]
         }
         style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
             <Caption style={{ color: 'rgba(255,255,255,0.7)' }}>PROFILE</Caption>
-            <H1 style={{ color: '#FFFFFF' }}>{profile.display_name}</H1>
+            <H1 style={{ color: colors.snow }}>{profile.display_name}</H1>
           </View>
           <TouchableOpacity
             style={[styles.editButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
             onPress={() => navigation.navigate('EditProfile')}
           >
-            <Ionicons name="settings-outline" size={22} color="#FFFFFF" />
+            <Ionicons name="settings-outline" size={22} color={colors.snow} />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -415,6 +425,56 @@ export default function ProfileScreen({ navigation }: any) {
           </Card>
         </View>
 
+        {/* Appearance Section */}
+        <View style={styles.section}>
+          <H2 style={{ marginBottom: spacing.md }}>Appearance</H2>
+
+          <Card>
+            <CardContent>
+              <View style={styles.appearanceRow}>
+                {APPEARANCE_OPTIONS.map(option => {
+                  const selected = themeMode === option.mode;
+                  return (
+                    <TouchableOpacity
+                      key={option.mode}
+                      style={[
+                        styles.appearanceOption,
+                        {
+                          borderRadius: radius.md,
+                          borderColor: selected ? colors.forest : colors.border,
+                          backgroundColor: selected ? `${colors.forest}15` : 'transparent',
+                        },
+                      ]}
+                      onPress={() => setThemeMode(option.mode)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`${option.label} appearance`}
+                    >
+                      <Ionicons
+                        name={option.icon}
+                        size={22}
+                        color={selected ? colors.forest : colors.stone}
+                      />
+                      <BodySmall
+                        style={{
+                          marginTop: 6,
+                          color: selected ? colors.forest : colors.stone,
+                          fontWeight: selected ? '600' : '400',
+                        }}
+                      >
+                        {option.label}
+                      </BodySmall>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <BodySmall color="tertiary" style={{ marginTop: spacing.sm }}>
+                System follows your device setting.
+              </BodySmall>
+            </CardContent>
+          </Card>
+        </View>
+
         {/* Account Section */}
         <View style={styles.section}>
           <H2 style={{ marginBottom: spacing.md }}>Account</H2>
@@ -540,6 +600,27 @@ export default function ProfileScreen({ navigation }: any) {
                 </TouchableOpacity>
               </>
             )}
+          </Card>
+        </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <H2 style={{ marginBottom: spacing.md }}>About</H2>
+
+          <Card>
+            <TouchableOpacity
+              style={styles.preferenceRow}
+              onPress={() => navigation.navigate('About')}
+            >
+              <View style={[styles.preferenceIcon, { backgroundColor: `${colors.trail}15` }]}>
+                <Ionicons name="trail-sign-outline" size={20} color={colors.trail} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Body>About UltraEdge</Body>
+                <BodySmall color="secondary">The story behind the app</BodySmall>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.mist} />
+            </TouchableOpacity>
           </Card>
         </View>
 
@@ -704,6 +785,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+  },
+  appearanceRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  appearanceOption: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderWidth: 1.5,
   },
   preferenceIcon: {
     width: 40,

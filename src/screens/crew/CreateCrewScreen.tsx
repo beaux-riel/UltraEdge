@@ -75,7 +75,7 @@ export default function CreateCrewScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.borderLight }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -190,12 +190,12 @@ export default function CreateCrewScreen({ navigation }: any) {
                   <Ionicons
                     name={config.icon as any}
                     size={22}
-                    color={isSelected ? '#FFFFFF' : config.color}
+                    color={isSelected ? colors.snow : config.color}
                   />
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: isSelected ? '#FFFFFF' : colors.stone,
+                      color: isSelected ? colors.snow : colors.stone,
                       marginTop: 6,
                       textAlign: 'center',
                     }}
@@ -299,7 +299,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   backButton: {
     padding: 4,

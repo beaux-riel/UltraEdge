@@ -179,7 +179,7 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
           <Button
             size="sm"
             onPress={() => navigation.navigate('CreateDropBag', { eventId: eventIdFilter })}
-            icon={<Ionicons name="add" size={18} color="#FFFFFF" />}
+            icon={<Ionicons name="add" size={18} color={colors.snow} />}
           >
             Add
           </Button>
@@ -250,7 +250,7 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
             >
               <Text
                 variant="bodySmall"
-                style={{ color: selectedEventId === 'all' ? '#FFFFFF' : colors.stone }}
+                style={{ color: selectedEventId === 'all' ? colors.snow : colors.stone }}
               >
                 All Events
               </Text>
@@ -273,12 +273,12 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
                   <Ionicons
                     name="calendar"
                     size={14}
-                    color={isSelected ? '#FFFFFF' : colors.mist}
+                    color={isSelected ? colors.snow : colors.mist}
                     style={{ marginRight: 4 }}
                   />
                   <Text
                     variant="bodySmall"
-                    style={{ color: isSelected ? '#FFFFFF' : colors.stone }}
+                    style={{ color: isSelected ? colors.snow : colors.stone }}
                     numberOfLines={1}
                   >
                     {event.name}

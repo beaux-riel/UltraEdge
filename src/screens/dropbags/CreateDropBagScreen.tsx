@@ -432,7 +432,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
       {showGearPicker && (
         <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <View style={[styles.modalContent, { backgroundColor: colors.parchment }]}>
-            <View style={styles.modalHeader}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <H3>Add Gear</H3>
               <TouchableOpacity onPress={() => setShowGearPicker(false)}>
                 <Ionicons name="close" size={24} color={colors.bark} />
@@ -603,7 +603,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
   },
   modalScroll: {
     padding: 20,

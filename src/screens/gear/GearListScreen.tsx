@@ -255,7 +255,7 @@ export default function GearListScreen({ navigation }: any) {
           <Button
             size="sm"
             onPress={() => navigation.navigate('CreateGear')}
-            icon={<Ionicons name="add" size={18} color="#FFFFFF" />}
+            icon={<Ionicons name="add" size={18} color={colors.snow} />}
           >
             Add
           </Button>
@@ -326,7 +326,7 @@ export default function GearListScreen({ navigation }: any) {
           >
             <Text
               variant="bodySmall"
-              style={{ color: selectedCategory === 'all' ? '#FFFFFF' : colors.stone }}
+              style={{ color: selectedCategory === 'all' ? colors.snow : colors.stone }}
             >
               All
             </Text>
@@ -352,12 +352,12 @@ export default function GearListScreen({ navigation }: any) {
                 <Ionicons
                   name={config.icon as any}
                   size={14}
-                  color={isSelected ? '#FFFFFF' : catColor}
+                  color={isSelected ? colors.snow : catColor}
                   style={{ marginRight: 4 }}
                 />
                 <Text
                   variant="bodySmall"
-                  style={{ color: isSelected ? '#FFFFFF' : colors.stone }}
+                  style={{ color: isSelected ? colors.snow : colors.stone }}
                 >
                   {config.label}
                 </Text>

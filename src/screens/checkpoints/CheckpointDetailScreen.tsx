@@ -191,13 +191,13 @@ export default function CheckpointDetailScreen() {
           <CardContent>
             <View style={styles.headerRow}>
               <View style={styles.headerIcon}>
-                <Ionicons name={typeInfo.icon as any} size={32} color="#FFFFFF" />
+                <Ionicons name={typeInfo.icon as any} size={32} color={colors.snow} />
               </View>
               <View style={styles.headerText}>
                 <Text variant="caption" style={{ color: 'rgba(255,255,255,0.8)' }}>
                   {typeInfo.label}
                 </Text>
-                <H1 style={{ color: '#FFFFFF', marginTop: 2 }}>{checkpoint.name}</H1>
+                <H1 style={{ color: colors.snow, marginTop: 2 }}>{checkpoint.name}</H1>
               </View>
             </View>
             
@@ -205,7 +205,7 @@ export default function CheckpointDetailScreen() {
             <View style={styles.headerStats}>
               {checkpoint.distance_from_start !== null && (
                 <View style={styles.headerStat}>
-                  <Text variant="display" style={{ color: '#FFFFFF' }}>
+                  <Text variant="display" style={{ color: colors.snow }}>
                     {checkpoint.distance_from_start.toFixed(1)}
                   </Text>
                   <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>miles</Caption>
@@ -213,7 +213,7 @@ export default function CheckpointDetailScreen() {
               )}
               {checkpoint.elevation !== null && (
                 <View style={styles.headerStat}>
-                  <Text variant="display" style={{ color: '#FFFFFF' }}>
+                  <Text variant="display" style={{ color: colors.snow }}>
                     {checkpoint.elevation.toLocaleString()}
                   </Text>
                   <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>ft elevation</Caption>
@@ -378,7 +378,7 @@ export default function CheckpointDetailScreen() {
             <Button
               variant="danger"
               onPress={handleDelete}
-              icon={<Ionicons name="trash-outline" size={18} color="#FFFFFF" />}
+              icon={<Ionicons name="trash-outline" size={18} color={colors.snow} />}
               style={{ flex: 1 }}
             >
               Delete
@@ -391,7 +391,7 @@ export default function CheckpointDetailScreen() {
       <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
         <Button
           onPress={handleEdit}
-          icon={<Ionicons name="pencil" size={18} color="#FFFFFF" />}
+          icon={<Ionicons name="pencil" size={18} color={colors.snow} />}
         >
           Edit Checkpoint
         </Button>

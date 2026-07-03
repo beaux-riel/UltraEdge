@@ -17,12 +17,18 @@ import { useTheme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { H2, BodySmall, Button, Card, CardContent } from '../ui';
 import { isRemoteGpxPath, uploadGpx, downloadGpx, removeGpx } from '../../lib/gpxStorage';
+import { GpxRouteStats, parseGpx, computeRouteMetrics } from '../../lib/gpx';
 import GPXViewer from './GPXViewer';
 
 interface GPXRouteSectionProps {
   eventId: string;
   gpxFileUrl: string | null;
-  onGpxChange: (fileUri: string | null) => Promise<void>;
+  /**
+   * Called when the stored route reference changes. `stats` is provided only
+   * on a fresh import so the parent can populate the event's course figures;
+   * it is undefined for storage-path promotions and removals.
+   */
+  onGpxChange: (fileUri: string | null, stats?: GpxRouteStats) => Promise<void>;
 }
 
 const CARD_PADDING = 16;
@@ -128,10 +134,26 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
       new File(asset.uri).copy(dest);
       setResolvedUri(dest.uri);
 
+      // Derive course stats from the imported route so the event's
+      // distance/elevation fields can be auto-populated.
+      let stats: GpxRouteStats | undefined;
+      try {
+        const metrics = computeRouteMetrics(parseGpx(await dest.text()));
+        if (metrics) {
+          stats = {
+            totalDistanceMi: metrics.totalDistanceMi,
+            elevationGainFt: metrics.elevationGainFt,
+            elevationLossFt: metrics.elevationLossFt,
+          };
+        }
+      } catch {
+        // Unparseable file — the viewer will surface the error; skip stats.
+      }
+
       if (user) {
         try {
           const path = await uploadGpx(user.id, eventId, dest);
-          await onGpxChange(path);
+          await onGpxChange(path, stats);
           return;
         } catch {
           Alert.alert(
@@ -140,7 +162,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
           );
         }
       }
-      await onGpxChange(dest.uri);
+      await onGpxChange(dest.uri, stats);
     } catch (e) {
       Alert.alert('Error', 'Failed to import the GPX file. Please try again.');
     } finally {

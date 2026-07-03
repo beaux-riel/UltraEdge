@@ -7,11 +7,13 @@
  *  - elevation profile with labeled distance/elevation axes
  *
  * Tapping the map preview opens a full-screen modal with an interactive
- * map (pinch/zoom/pan), a standard/hybrid map-type toggle, and a
- * scrubbable elevation profile that highlights the matching spot on the
- * map. The modal lives inside this component tree — no navigator changes.
+ * map (pinch/zoom/pan), a standard/hybrid map-type toggle, a scrubbable
+ * elevation profile that highlights the matching spot on the map, and
+ * distance-marker controls (off / 1 / 5 / 10 unit spacing).
  *
- * Units follow the codebase convention in src/lib/gpx.ts: miles + feet.
+ * All displayed figures follow a viewer-level distance unit (mi ↔ km with
+ * paired ft ↔ m elevation). The unit defaults to the mover's profile
+ * preference and can be toggled inline in both the preview and the modal.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -30,6 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
+import { useMover } from '../../context/MoverContext';
 import { Text, H3, BodySmall, Caption } from '../ui';
 import {
   RouteMetrics,
@@ -38,13 +41,33 @@ import {
   pointAtDistance,
   formatMiles,
   formatFeet,
+  milesToUnit,
+  feetToUnit,
+  distanceUnitLabel,
+  elevationUnitLabel,
+  elevationUnitForDistance,
 } from '../../lib/gpx';
+import type { DistanceUnit } from '../../lib/database.types';
 import RouteMap, { RouteMapType } from './RouteMap';
 import ElevationProfile from './ElevationProfile';
 
 const PREVIEW_MAP_HEIGHT = 200;
 const PREVIEW_PROFILE_HEIGHT = 130;
 const FULLSCREEN_PROFILE_HEIGHT = 150;
+const DEFAULT_MARKER_INTERVAL = 5;
+
+/** Marker spacing choices, in display units. 0 = markers hidden. */
+const MARKER_INTERVAL_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: 'Off' },
+  { value: 1, label: '1' },
+  { value: 5, label: '5' },
+  { value: 10, label: '10' },
+];
+
+const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
+  { value: 'miles', label: 'mi' },
+  { value: 'kilometers', label: 'km' },
+];
 
 interface GPXViewerProps {
   fileUri: string;
@@ -59,6 +82,7 @@ export default function GPXViewer({
   const { theme } = useTheme();
   const { colors, spacing } = theme;
   const { width: windowWidth } = useWindowDimensions();
+  const { profile } = useMover();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +91,11 @@ export default function GPXViewer({
   const [fullScreen, setFullScreen] = useState(false);
   const [mapType, setMapType] = useState<RouteMapType>('standard');
   const [scrubDistanceMi, setScrubDistanceMi] = useState<number | null>(null);
+
+  // Display unit: follow the profile preference until the user overrides it.
+  const [unitOverride, setUnitOverride] = useState<DistanceUnit | null>(null);
+  const distanceUnit = unitOverride ?? profile.distance_unit;
+  const [markerInterval, setMarkerInterval] = useState(DEFAULT_MARKER_INTERVAL);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +151,11 @@ export default function GPXViewer({
     );
   }
 
+  const elevationUnit = elevationUnitForDistance(distanceUnit);
+  const distLabel = distanceUnitLabel(distanceUnit);
+  const eleLabel = elevationUnitLabel(elevationUnit);
+  const showMarkers = markerInterval > 0;
+
   return (
     <View style={{ width }}>
       {/* Map preview — tap to open the full-screen interactive view */}
@@ -130,7 +164,13 @@ export default function GPXViewer({
         accessibilityRole="button"
         accessibilityLabel="Open full-screen course map"
       >
-        <RouteMap metrics={metrics} height={PREVIEW_MAP_HEIGHT} />
+        <RouteMap
+          metrics={metrics}
+          height={PREVIEW_MAP_HEIGHT}
+          markerUnit={distanceUnit}
+          markerInterval={showMarkers ? markerInterval : DEFAULT_MARKER_INTERVAL}
+          showMarkers={showMarkers}
+        />
         <View
           style={[
             styles.expandBadge,
@@ -142,13 +182,22 @@ export default function GPXViewer({
         </View>
       </Pressable>
 
-      <StatsRow metrics={metrics} style={{ marginTop: spacing.sm }} />
+      <View style={[styles.controlsRow, { marginTop: spacing.sm }]}>
+        <StatsRow metrics={metrics} distanceUnit={distanceUnit} style={styles.statsFlex} />
+        <Segmented
+          options={UNIT_OPTIONS}
+          value={distanceUnit}
+          onChange={setUnitOverride}
+          accessibilityLabel="Distance unit"
+        />
+      </View>
 
       {metrics.hasElevation && (
         <ElevationProfile
           metrics={metrics}
           width={width}
           height={PREVIEW_PROFILE_HEIGHT}
+          distanceUnit={distanceUnit}
           style={{ marginTop: spacing.sm }}
         />
       )}
@@ -182,7 +231,34 @@ export default function GPXViewer({
                 <Ionicons name="close" size={26} color={colors.bark} />
               </TouchableOpacity>
               <H3>Course Route</H3>
-              <MapTypeToggle value={mapType} onChange={setMapType} />
+              <Segmented
+                options={MAP_TYPE_OPTIONS}
+                value={mapType}
+                onChange={setMapType}
+                accessibilityLabel="Map type"
+              />
+            </View>
+
+            {/* Viewer settings: display unit + distance-marker spacing */}
+            <View style={styles.modalControls}>
+              <View style={styles.controlGroup}>
+                <Caption style={{ marginRight: 6 }}>Units</Caption>
+                <Segmented
+                  options={UNIT_OPTIONS}
+                  value={distanceUnit}
+                  onChange={setUnitOverride}
+                  accessibilityLabel="Distance unit"
+                />
+              </View>
+              <View style={styles.controlGroup}>
+                <Caption style={{ marginRight: 6 }}>Markers ({distLabel})</Caption>
+                <Segmented
+                  options={MARKER_INTERVAL_OPTIONS}
+                  value={markerInterval}
+                  onChange={setMarkerInterval}
+                  accessibilityLabel="Distance marker spacing"
+                />
+              </View>
             </View>
 
             <RouteMap
@@ -191,19 +267,22 @@ export default function GPXViewer({
               interactive
               mapType={mapType}
               scrubPoint={scrubPoint}
+              markerUnit={distanceUnit}
+              markerInterval={showMarkers ? markerInterval : DEFAULT_MARKER_INTERVAL}
+              showMarkers={showMarkers}
               style={styles.modalMap}
             />
 
             <View style={{ padding: spacing.md }}>
-              <StatsRow metrics={metrics} />
+              <StatsRow metrics={metrics} distanceUnit={distanceUnit} />
               {metrics.hasElevation && (
                 <>
                   <View style={styles.scrubInfo}>
                     {scrubPoint ? (
                       <Caption style={{ color: colors.sky }}>
-                        {formatMiles(scrubPoint.distanceMi)} mi
+                        {formatMiles(milesToUnit(scrubPoint.distanceMi, distanceUnit))} {distLabel}
                         {scrubPoint.eleFt !== null
-                          ? ` · ${formatFeet(scrubPoint.eleFt)} ft`
+                          ? ` · ${formatFeet(feetToUnit(scrubPoint.eleFt, elevationUnit))} ${eleLabel}`
                           : ''}
                       </Caption>
                     ) : (
@@ -214,6 +293,7 @@ export default function GPXViewer({
                     metrics={metrics}
                     width={windowWidth - spacing.md * 2}
                     height={FULLSCREEN_PROFILE_HEIGHT}
+                    distanceUnit={distanceUnit}
                     onScrub={setScrubDistanceMi}
                     scrubDistanceMi={scrubDistanceMi}
                   />
@@ -233,25 +313,32 @@ export default function GPXViewer({
 
 interface StatsRowProps {
   metrics: RouteMetrics;
+  distanceUnit: DistanceUnit;
   style?: object;
 }
 
-function StatsRow({ metrics, style }: StatsRowProps) {
+function StatsRow({ metrics, distanceUnit, style }: StatsRowProps) {
+  const elevationUnit = elevationUnitForDistance(distanceUnit);
+  const distLabel = distanceUnitLabel(distanceUnit);
+  const eleLabel = elevationUnitLabel(elevationUnit);
+  const dist = (mi: number) => formatMiles(milesToUnit(mi, distanceUnit));
+  const ele = (ft: number) => formatFeet(feetToUnit(ft, elevationUnit));
+
   const stats: { label: string; value: string; unit: string }[] = [
-    { label: 'Distance', value: formatMiles(metrics.totalDistanceMi), unit: 'mi' },
+    { label: 'Distance', value: dist(metrics.totalDistanceMi), unit: distLabel },
   ];
   if (metrics.hasElevation) {
     if (metrics.elevationGainFt !== null) {
-      stats.push({ label: 'Gain', value: `+${formatFeet(metrics.elevationGainFt)}`, unit: 'ft' });
+      stats.push({ label: 'Gain', value: `+${ele(metrics.elevationGainFt)}`, unit: eleLabel });
     }
     if (metrics.elevationLossFt !== null) {
-      stats.push({ label: 'Loss', value: `-${formatFeet(metrics.elevationLossFt)}`, unit: 'ft' });
+      stats.push({ label: 'Loss', value: `-${ele(metrics.elevationLossFt)}`, unit: eleLabel });
     }
     if (metrics.minElevationFt !== null) {
-      stats.push({ label: 'Min Elev', value: formatFeet(metrics.minElevationFt), unit: 'ft' });
+      stats.push({ label: 'Min Elev', value: ele(metrics.minElevationFt), unit: eleLabel });
     }
     if (metrics.maxElevationFt !== null) {
-      stats.push({ label: 'Max Elev', value: formatFeet(metrics.maxElevationFt), unit: 'ft' });
+      stats.push({ label: 'Max Elev', value: ele(metrics.maxElevationFt), unit: eleLabel });
     }
   }
 
@@ -273,31 +360,41 @@ function StatsRow({ metrics, style }: StatsRowProps) {
 }
 
 // ============================================================================
-// MAP TYPE TOGGLE
+// SEGMENTED CONTROL
 // ============================================================================
 
-interface MapTypeToggleProps {
-  value: RouteMapType;
-  onChange: (type: RouteMapType) => void;
-}
-
-const MAP_TYPE_OPTIONS: { type: RouteMapType; label: string }[] = [
-  { type: 'standard', label: 'Map' },
-  { type: 'hybrid', label: 'Hybrid' },
+const MAP_TYPE_OPTIONS: { value: RouteMapType; label: string }[] = [
+  { value: 'standard', label: 'Map' },
+  { value: 'hybrid', label: 'Hybrid' },
 ];
 
-function MapTypeToggle({ value, onChange }: MapTypeToggleProps) {
+interface SegmentedProps<T> {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  accessibilityLabel?: string;
+}
+
+function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+  accessibilityLabel,
+}: SegmentedProps<T>) {
   const { theme } = useTheme();
   const { colors, radius } = theme;
 
   return (
-    <View style={[styles.toggle, { backgroundColor: colors.birch, borderRadius: radius.sm }]}>
-      {MAP_TYPE_OPTIONS.map(option => {
-        const selected = option.type === value;
+    <View
+      style={[styles.toggle, { backgroundColor: colors.birch, borderRadius: radius.sm }]}
+      accessibilityLabel={accessibilityLabel}
+    >
+      {options.map(option => {
+        const selected = option.value === value;
         return (
           <TouchableOpacity
-            key={option.type}
-            onPress={() => onChange(option.type)}
+            key={String(option.value)}
+            onPress={() => onChange(option.value)}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             style={[
@@ -338,6 +435,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  statsFlex: {
+    flex: 1,
+  },
   statsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -359,6 +463,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  modalControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  controlGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   modalMap: {
     flex: 1,

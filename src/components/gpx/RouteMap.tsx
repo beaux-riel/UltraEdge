@@ -1,6 +1,7 @@
 /**
  * Route map — draws a GPX route as a Polyline over real map tiles with
- * start/finish markers and small mile markers every 5 miles.
+ * start/finish markers and adjustable distance markers (mi or km, at a
+ * configurable increment, or hidden entirely).
  *
  * Used in two modes:
  *  - preview (interactive=false): gestures disabled, parent handles taps
@@ -14,11 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../theme';
 import { fonts } from '../../theme/typography';
-import { RouteMetrics, RoutePoint, routeRegion, mileMarkers } from '../../lib/gpx';
+import { RouteMetrics, RoutePoint, routeRegion, distanceMarkers } from '../../lib/gpx';
+import type { DistanceUnit } from '../../lib/database.types';
 
 export type RouteMapType = 'standard' | 'satellite' | 'hybrid';
 
-const MILE_MARKER_INTERVAL = 5;
+const DEFAULT_MARKER_INTERVAL = 5;
 
 interface RouteMapProps {
   metrics: RouteMetrics;
@@ -27,6 +29,12 @@ interface RouteMapProps {
   mapType?: RouteMapType;
   /** Position highlighted by the elevation-profile scrubber. */
   scrubPoint?: RoutePoint | null;
+  /** Distance-marker display unit. Default miles. */
+  markerUnit?: DistanceUnit;
+  /** Marker spacing in display units (1 / 5 / 10). Default 5. */
+  markerInterval?: number;
+  /** Show/hide the distance markers. Default true. */
+  showMarkers?: boolean;
   style?: ViewStyle;
 }
 
@@ -36,6 +44,9 @@ export default function RouteMap({
   interactive = false,
   mapType = 'standard',
   scrubPoint = null,
+  markerUnit = 'miles',
+  markerInterval = DEFAULT_MARKER_INTERVAL,
+  showMarkers = true,
   style,
 }: RouteMapProps) {
   const { theme } = useTheme();
@@ -47,8 +58,8 @@ export default function RouteMap({
     [metrics]
   );
   const markers = useMemo(
-    () => mileMarkers(metrics.points, MILE_MARKER_INTERVAL),
-    [metrics]
+    () => (showMarkers ? distanceMarkers(metrics.points, markerInterval, markerUnit) : []),
+    [metrics, showMarkers, markerInterval, markerUnit]
   );
 
   const start = metrics.points[0];
@@ -87,10 +98,10 @@ export default function RouteMap({
           lineCap="round"
         />
 
-        {/* Mile markers first so start/finish render on top */}
+        {/* Distance markers first so start/finish render on top */}
         {markers.map(m => (
           <Marker
-            key={`mile-${m.mile}`}
+            key={`marker-${markerUnit}-${m.value}`}
             coordinate={{ latitude: m.lat, longitude: m.lon }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
@@ -101,7 +112,7 @@ export default function RouteMap({
                 { backgroundColor: colors.surface, borderColor: colors.trail },
               ]}
             >
-              <Text style={[styles.mileMarkerText, { color: colors.bark }]}>{m.mile}</Text>
+              <Text style={[styles.mileMarkerText, { color: colors.bark }]}>{m.value}</Text>
             </View>
           </Marker>
         ))}

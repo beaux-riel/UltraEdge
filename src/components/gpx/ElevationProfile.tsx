@@ -1,8 +1,15 @@
 /**
- * Elevation profile chart with labeled axes (elevation ft / distance mi)
+ * Elevation profile chart with labeled axes (elevation ft/m, distance mi/km)
  * and gridlines. Optionally supports touch scrubbing: dragging across the
  * chart reports the corresponding route distance so a parent can highlight
  * that position on the map.
+ *
+ * Axis-label layout: edge labels are anchored inward ('start' at the left
+ * edge, 'end' at the right edge) so the first and last labels always render
+ * fully inside the SVG at any width — a middle-anchored label at the plot's
+ * right edge previously overflowed the viewport and was clipped. The distance
+ * unit is appended to the final tick label instead of drawn as a separate
+ * overlapping text element.
  */
 
 import React, { useMemo } from 'react';
@@ -15,17 +22,27 @@ import {
   elevationSamples,
   niceTicks,
   pointAtDistance,
+  milesToUnit,
+  feetToUnit,
+  distanceUnitLabel,
+  elevationUnitLabel,
+  elevationUnitForDistance,
 } from '../../lib/gpx';
+import type { DistanceUnit } from '../../lib/database.types';
 
 const PAD_LEFT = 42;
-const PAD_RIGHT = 10;
+const PAD_RIGHT = 14;
 const PAD_TOP = 8;
 const PAD_BOTTOM = 22;
+/** Labels within this many px of a plot edge get anchored inward. */
+const EDGE_ANCHOR_PX = 16;
 
 interface ElevationProfileProps {
   metrics: RouteMetrics;
   width: number;
   height: number;
+  /** Display unit for the distance axis; elevation follows (mi→ft, km→m). */
+  distanceUnit?: DistanceUnit;
   /** When set, the chart becomes a scrubber. Called with null on release. */
   onScrub?: (distanceMi: number | null) => void;
   scrubDistanceMi?: number | null;
@@ -36,6 +53,7 @@ export default function ElevationProfile({
   metrics,
   width,
   height,
+  distanceUnit = 'miles',
   onScrub,
   scrubDistanceMi = null,
   style,
@@ -46,43 +64,52 @@ export default function ElevationProfile({
   const plotW = Math.max(width - PAD_LEFT - PAD_RIGHT, 1);
   const plotH = Math.max(height - PAD_TOP - PAD_BOTTOM, 1);
   const totalMi = metrics.totalDistanceMi;
+  const elevationUnit = elevationUnitForDistance(distanceUnit);
 
   const chart = useMemo(() => {
     const samples = elevationSamples(metrics.points);
     if (samples.length < 2 || totalMi <= 0) return null;
 
-    const yTicks = niceTicks(metrics.minElevationFt ?? 0, metrics.maxElevationFt ?? 0, 4);
+    const toDist = (mi: number) => milesToUnit(mi, distanceUnit);
+    const toEle = (ft: number) => feetToUnit(ft, elevationUnit);
+    const totalDist = toDist(totalMi);
+
+    const yTicks = niceTicks(
+      toEle(metrics.minElevationFt ?? 0),
+      toEle(metrics.maxElevationFt ?? 0),
+      4
+    );
     if (yTicks.length === 0) return null;
     const yMin = yTicks[0];
     const yMax = Math.max(yTicks[yTicks.length - 1], yMin + 1);
 
     // Choose a distance tick interval that yields ~4-6 labels
     const intervals = [0.5, 1, 2, 5, 10, 20, 25, 50, 100];
-    const xInterval = intervals.find(i => totalMi / i <= 6) ?? 100;
+    const xInterval = intervals.find(i => totalDist / i <= 6) ?? 100;
     const xTicks: number[] = [];
-    for (let mi = 0; mi <= totalMi; mi += xInterval) xTicks.push(mi);
+    for (let d = 0; d <= totalDist; d += xInterval) xTicks.push(d);
 
-    const xFor = (mi: number) => PAD_LEFT + (mi / totalMi) * plotW;
-    const yFor = (ft: number) => PAD_TOP + plotH - ((ft - yMin) / (yMax - yMin)) * plotH;
+    const xFor = (dist: number) => PAD_LEFT + (dist / totalDist) * plotW;
+    const yFor = (ele: number) => PAD_TOP + plotH - ((ele - yMin) / (yMax - yMin)) * plotH;
 
     let line = '';
     samples.forEach((s, i) => {
       const cmd = i === 0 ? 'M' : 'L';
-      line += `${cmd}${xFor(s.distanceMi).toFixed(1)},${yFor(s.eleFt).toFixed(1)} `;
+      line += `${cmd}${xFor(toDist(s.distanceMi)).toFixed(1)},${yFor(toEle(s.eleFt)).toFixed(1)} `;
     });
     const area =
       line +
-      `L${xFor(samples[samples.length - 1].distanceMi).toFixed(1)},${(PAD_TOP + plotH).toFixed(1)} ` +
-      `L${xFor(samples[0].distanceMi).toFixed(1)},${(PAD_TOP + plotH).toFixed(1)} Z`;
+      `L${xFor(toDist(samples[samples.length - 1].distanceMi)).toFixed(1)},${(PAD_TOP + plotH).toFixed(1)} ` +
+      `L${xFor(toDist(samples[0].distanceMi)).toFixed(1)},${(PAD_TOP + plotH).toFixed(1)} Z`;
 
-    return { line: line.trim(), area, yTicks, xTicks, yMin, yMax, xFor, yFor };
-  }, [metrics, totalMi, plotW, plotH]);
+    return { line: line.trim(), area, yTicks, xTicks, yMin, yMax, xFor, yFor, toDist, toEle };
+  }, [metrics, totalMi, plotW, plotH, distanceUnit, elevationUnit]);
 
   const scrub = useMemo(() => {
     if (!chart || scrubDistanceMi === null) return null;
     const p = pointAtDistance(metrics.points, scrubDistanceMi);
     if (p.eleFt === null) return null;
-    return { x: chart.xFor(p.distanceMi), y: chart.yFor(p.eleFt) };
+    return { x: chart.xFor(chart.toDist(p.distanceMi)), y: chart.yFor(chart.toEle(p.eleFt)) };
   }, [chart, scrubDistanceMi, metrics]);
 
   if (!chart) return null;
@@ -105,15 +132,25 @@ export default function ElevationProfile({
       }
     : {};
 
+  /** Keep edge labels inside the plot: anchor inward near either edge. */
+  const anchorFor = (x: number): 'start' | 'middle' | 'end' => {
+    if (x <= PAD_LEFT + EDGE_ANCHOR_PX) return 'start';
+    if (x >= PAD_LEFT + plotW - EDGE_ANCHOR_PX) return 'end';
+    return 'middle';
+  };
+
+  const distUnitLabel = distanceUnitLabel(distanceUnit);
+  const lastTickIndex = chart.xTicks.length - 1;
+
   return (
     <View style={[{ width, height }, style]} {...responderProps}>
       <Svg width={width} height={height} pointerEvents="none">
         {/* Horizontal gridlines + elevation labels */}
-        {chart.yTicks.map(ft => {
-          const y = chart.yFor(ft);
+        {chart.yTicks.map(ele => {
+          const y = chart.yFor(ele);
           if (y < PAD_TOP - 1 || y > PAD_TOP + plotH + 1) return null;
           return (
-            <React.Fragment key={`y-${ft}`}>
+            <React.Fragment key={`y-${ele}`}>
               <Line
                 x1={PAD_LEFT}
                 y1={y}
@@ -129,17 +166,18 @@ export default function ElevationProfile({
                 fill={colors.mist}
                 textAnchor="end"
               >
-                {Math.round(ft).toLocaleString('en-US')}
+                {Math.round(ele).toLocaleString('en-US')}
               </SvgText>
             </React.Fragment>
           );
         })}
 
-        {/* Vertical gridlines + distance labels */}
-        {chart.xTicks.map(mi => {
-          const x = chart.xFor(mi);
+        {/* Vertical gridlines + distance labels (unit appended to last tick) */}
+        {chart.xTicks.map((dist, index) => {
+          const x = chart.xFor(dist);
+          const label = index === lastTickIndex ? `${xInt(dist)} ${distUnitLabel}` : xInt(dist);
           return (
-            <React.Fragment key={`x-${mi}`}>
+            <React.Fragment key={`x-${dist}`}>
               <Line
                 x1={x}
                 y1={PAD_TOP}
@@ -153,26 +191,17 @@ export default function ElevationProfile({
                 y={PAD_TOP + plotH + 13}
                 fontSize={9}
                 fill={colors.mist}
-                textAnchor={mi === 0 ? 'start' : 'middle'}
+                textAnchor={anchorFor(x)}
               >
-                {xInt(mi)}
+                {label}
               </SvgText>
             </React.Fragment>
           );
         })}
 
-        {/* Axis unit labels */}
+        {/* Elevation unit label */}
         <SvgText x={PAD_LEFT - 6} y={PAD_TOP - 1} fontSize={8} fill={colors.mist} textAnchor="end">
-          ft
-        </SvgText>
-        <SvgText
-          x={PAD_LEFT + plotW}
-          y={PAD_TOP + plotH + 13}
-          fontSize={9}
-          fill={colors.mist}
-          textAnchor="end"
-        >
-          mi
+          {elevationUnitLabel(elevationUnit)}
         </SvgText>
 
         {/* Profile area + line */}
@@ -213,6 +242,6 @@ export default function ElevationProfile({
 }
 
 /** Format a distance tick label without trailing .0 noise. */
-function xInt(mi: number): string {
-  return Number.isInteger(mi) ? String(mi) : mi.toFixed(1);
+function xInt(dist: number): string {
+  return Number.isInteger(dist) ? String(dist) : dist.toFixed(1);
 }

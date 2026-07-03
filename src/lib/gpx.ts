@@ -7,6 +7,7 @@
  */
 
 import { DOMParser } from '@xmldom/xmldom';
+import type { DistanceUnit, ElevationUnit } from './database.types';
 
 // ============================================================================
 // TYPES
@@ -42,8 +43,9 @@ export interface RouteRegion {
   longitudeDelta: number;
 }
 
-export interface MileMarker {
-  mile: number;
+export interface DistanceMarker {
+  /** Marker value in the requested display unit (5, 10, 15… mi or km). */
+  value: number;
   lat: number;
   lon: number;
 }
@@ -69,6 +71,8 @@ export interface RouteMetrics {
 // ============================================================================
 
 export const FEET_PER_METER = 3.28084;
+export const MILES_TO_KM = 1.609344;
+export const FEET_TO_METERS = 0.3048;
 const EARTH_RADIUS_MILES = 3958.7613;
 /** Ignore elevation wiggles smaller than this (meters) when summing gain/loss. */
 const ELEVATION_NOISE_THRESHOLD_M = 3;
@@ -245,14 +249,25 @@ export function pointAtDistance(points: RoutePoint[], distanceMi: number): Route
   };
 }
 
-/** Marker positions every `intervalMi` miles along the route (5, 10, 15…). */
-export function mileMarkers(points: RoutePoint[], intervalMi = 5): MileMarker[] {
-  if (points.length < 2 || intervalMi <= 0) return [];
-  const total = points[points.length - 1].distanceMi;
-  const markers: MileMarker[] = [];
-  for (let mile = intervalMi; mile < total; mile += intervalMi) {
-    const p = pointAtDistance(points, mile);
-    markers.push({ mile, lat: p.lat, lon: p.lon });
+/**
+ * Marker positions every `interval` display units (miles or kilometers)
+ * along the route (5, 10, 15… mi/km). `value` is in the display unit.
+ */
+export function distanceMarkers(
+  points: RoutePoint[],
+  interval: number,
+  unit: DistanceUnit = 'miles'
+): DistanceMarker[] {
+  if (points.length < 2 || interval <= 0) return [];
+  const metric = unit === 'kilometers';
+  const totalMi = points[points.length - 1].distanceMi;
+  const totalDisplay = metric ? totalMi * MILES_TO_KM : totalMi;
+
+  const markers: DistanceMarker[] = [];
+  for (let value = interval; value < totalDisplay; value += interval) {
+    const mi = metric ? value / MILES_TO_KM : value;
+    const p = pointAtDistance(points, mi);
+    markers.push({ value, lat: p.lat, lon: p.lon });
   }
   return markers;
 }
@@ -312,4 +327,70 @@ export function formatFeet(value: number): string {
 
 export function formatMiles(value: number): string {
   return value >= 100 ? Math.round(value).toLocaleString('en-US') : value.toFixed(1);
+}
+
+// ============================================================================
+// DISPLAY UNITS
+// ============================================================================
+
+/** Convert a distance stored in miles into the display unit. */
+export function milesToUnit(miles: number, unit: DistanceUnit): number {
+  return unit === 'kilometers' ? miles * MILES_TO_KM : miles;
+}
+
+/** Convert an elevation stored in feet into the display unit. */
+export function feetToUnit(feet: number, unit: ElevationUnit): number {
+  return unit === 'meters' ? feet * FEET_TO_METERS : feet;
+}
+
+export function distanceUnitLabel(unit: DistanceUnit): 'mi' | 'km' {
+  return unit === 'kilometers' ? 'km' : 'mi';
+}
+
+export function elevationUnitLabel(unit: ElevationUnit): 'ft' | 'm' {
+  return unit === 'meters' ? 'm' : 'ft';
+}
+
+/** Pairing convention: miles → feet, kilometers → meters. */
+export function elevationUnitForDistance(unit: DistanceUnit): ElevationUnit {
+  return unit === 'kilometers' ? 'meters' : 'feet';
+}
+
+// ============================================================================
+// EVENT STATS
+// ============================================================================
+
+/** The route figures needed to populate an event's course stats. */
+export interface GpxRouteStats {
+  totalDistanceMi: number;
+  elevationGainFt: number | null;
+  elevationLossFt: number | null;
+}
+
+/**
+ * Convert GPX-derived route stats into event fields, expressed in the
+ * event's own units. Distance keeps one decimal; elevations round to
+ * whole feet/meters.
+ */
+export function eventStatsFromRoute(
+  stats: GpxRouteStats,
+  distanceUnit: DistanceUnit,
+  elevationUnit: ElevationUnit
+): {
+  total_distance: number;
+  total_elevation_gain: number | null;
+  total_elevation_loss: number | null;
+} {
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+  return {
+    total_distance: round1(milesToUnit(stats.totalDistanceMi, distanceUnit)),
+    total_elevation_gain:
+      stats.elevationGainFt !== null
+        ? Math.round(feetToUnit(stats.elevationGainFt, elevationUnit))
+        : null,
+    total_elevation_loss:
+      stats.elevationLossFt !== null
+        ? Math.round(feetToUnit(stats.elevationLossFt, elevationUnit))
+        : null,
+  };
 }

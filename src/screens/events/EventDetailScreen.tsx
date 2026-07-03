@@ -40,7 +40,8 @@ import { useCheckpoints, CHECKPOINT_TYPE_INFO } from '../../context/CheckpointCo
 import { useGear, GearItem } from '../../context/GearContext';
 import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
 import { useDropBags } from '../../context/DropBagContext';
-import { Event, EventStatus, Checkpoint } from '../../lib/database.types';
+import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.types';
+import { eventStatsFromRoute } from '../../lib/gpx';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
@@ -672,8 +673,15 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             <GPXRouteSection
               eventId={eventId}
               gpxFileUrl={event.gpx_file_url}
-              onGpxChange={async (fileUri) => {
-                await updateEvent(eventId, { gpx_file_url: fileUri });
+              onGpxChange={async (fileUri, stats) => {
+                const updates: EventUpdate = { gpx_file_url: fileUri };
+                if (stats) {
+                  Object.assign(
+                    updates,
+                    eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
+                  );
+                }
+                await updateEvent(eventId, updates);
               }}
             />
 

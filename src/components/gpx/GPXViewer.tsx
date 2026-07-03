@@ -1,70 +1,72 @@
 /**
- * GPX route + elevation profile renderer (Skia)
+ * GPX course viewer.
+ *
+ * Embedded preview (event detail screen):
+ *  - real map tiles with the route as a polyline, start/finish markers
+ *  - measurement stats: distance, elevation gain/loss, min/max elevation
+ *  - elevation profile with labeled distance/elevation axes
+ *
+ * Tapping the map preview opens a full-screen modal with an interactive
+ * map (pinch/zoom/pan), a standard/hybrid map-type toggle, and a
+ * scrubbable elevation profile that highlights the matching spot on the
+ * map. The modal lives inside this component tree — no navigator changes.
+ *
+ * Units follow the codebase convention in src/lib/gpx.ts: miles + feet.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
-import { Canvas, Path, Skia, SkPath } from '@shopify/react-native-skia';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+  Modal,
+  Pressable,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
 import { File } from 'expo-file-system';
-import { DOMParser } from '@xmldom/xmldom';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
-import { BodySmall, Caption } from '../ui';
+import { Text, H3, BodySmall, Caption } from '../ui';
+import {
+  RouteMetrics,
+  parseGpx,
+  computeRouteMetrics,
+  pointAtDistance,
+  formatMiles,
+  formatFeet,
+} from '../../lib/gpx';
+import RouteMap, { RouteMapType } from './RouteMap';
+import ElevationProfile from './ElevationProfile';
 
-interface GPXPoint {
-  lat: number;
-  lon: number;
-  ele?: number;
-}
-
-export interface GPXStats {
-  pointCount: number;
-  minEle: number | null;
-  maxEle: number | null;
-}
+const PREVIEW_MAP_HEIGHT = 200;
+const PREVIEW_PROFILE_HEIGHT = 130;
+const FULLSCREEN_PROFILE_HEIGHT = 150;
 
 interface GPXViewerProps {
   fileUri: string;
+  /** Available width for the embedded preview (map, stats, chart). */
   width?: number;
-  height?: number;
-  onStats?: (stats: GPXStats) => void;
-}
-
-function parseGPXPoints(xml: string): GPXPoint[] {
-  const doc = new DOMParser().parseFromString(xml, 'text/xml');
-  let nodes = doc.getElementsByTagName('trkpt');
-  if (nodes.length === 0) nodes = doc.getElementsByTagName('rtept');
-
-  const points: GPXPoint[] = [];
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    const lat = parseFloat(node.getAttribute('lat') || '');
-    const lon = parseFloat(node.getAttribute('lon') || '');
-    if (isNaN(lat) || isNaN(lon)) continue;
-
-    let ele: number | undefined;
-    const eleNodes = node.getElementsByTagName('ele');
-    if (eleNodes.length > 0) {
-      const parsed = parseFloat(eleNodes[0].textContent || '');
-      if (!isNaN(parsed)) ele = parsed;
-    }
-    points.push({ lat, lon, ele });
-  }
-  return points;
 }
 
 export default function GPXViewer({
   fileUri,
   width = Dimensions.get('window').width - 64,
-  height = 220,
-  onStats,
 }: GPXViewerProps) {
   const { theme } = useTheme();
   const { colors, spacing } = theme;
+  const { width: windowWidth } = useWindowDimensions();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [points, setPoints] = useState<GPXPoint[]>([]);
+  const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
+
+  const [fullScreen, setFullScreen] = useState(false);
+  const [mapType, setMapType] = useState<RouteMapType>('standard');
+  const [scrubDistanceMi, setScrubDistanceMi] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,11 +76,14 @@ export default function GPXViewer({
       setError(null);
       try {
         const content = await new File(fileUri).text();
-        const parsed = parseGPXPoints(content);
-        if (parsed.length === 0) throw new Error('No track points found');
-        if (!cancelled) setPoints(parsed);
-      } catch (e) {
-        if (!cancelled) setError('Could not read this GPX file.');
+        const computed = computeRouteMetrics(parseGpx(content));
+        if (!computed) throw new Error('No track points found');
+        if (!cancelled) setMetrics(computed);
+      } catch {
+        if (!cancelled) {
+          setMetrics(null);
+          setError('Could not read this GPX file.');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -90,121 +95,274 @@ export default function GPXViewer({
     };
   }, [fileUri]);
 
-  const { routePath, elevationPath, minEle, maxEle } = useMemo((): {
-    routePath: SkPath | null;
-    elevationPath: SkPath | null;
-    minEle: number | null;
-    maxEle: number | null;
-  } => {
-    if (points.length < 2) {
-      return { routePath: null, elevationPath: null, minEle: null, maxEle: null };
-    }
+  const scrubPoint = useMemo(() => {
+    if (!metrics || scrubDistanceMi === null) return null;
+    return pointAtDistance(metrics.points, scrubDistanceMi);
+  }, [metrics, scrubDistanceMi]);
 
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    let lo = Infinity, hi = -Infinity;
-    for (const p of points) {
-      minLat = Math.min(minLat, p.lat);
-      maxLat = Math.max(maxLat, p.lat);
-      minLon = Math.min(minLon, p.lon);
-      maxLon = Math.max(maxLon, p.lon);
-      if (p.ele !== undefined) {
-        lo = Math.min(lo, p.ele);
-        hi = Math.max(hi, p.ele);
-      }
-    }
-
-    const hasEle = lo !== Infinity && hi > lo;
-    const pad = 10;
-    const mapH = hasEle ? height * 0.6 : height;
-    const availW = width - pad * 2;
-    const mapAvailH = mapH - pad * 2;
-    const latRange = maxLat - minLat || 1e-9;
-    const lonRange = maxLon - minLon || 1e-9;
-
-    // Preserve aspect ratio so the route isn't distorted
-    const scale = Math.min(availW / lonRange, mapAvailH / latRange);
-    const offsetX = pad + (availW - lonRange * scale) / 2;
-    const offsetY = pad + (mapAvailH - latRange * scale) / 2;
-
-    const route = Skia.Path.Make();
-    points.forEach((p, i) => {
-      const x = offsetX + (p.lon - minLon) * scale;
-      const y = offsetY + (maxLat - p.lat) * scale;
-      if (i === 0) route.moveTo(x, y);
-      else route.lineTo(x, y);
-    });
-
-    let elevation: SkPath | null = null;
-    if (hasEle) {
-      elevation = Skia.Path.Make();
-      const eleTop = mapH + pad;
-      const eleH = height - mapH - pad * 2;
-      const eleRange = hi - lo;
-      points.forEach((p, i) => {
-        const x = pad + (i / (points.length - 1)) * availW;
-        const y = eleTop + eleH - (((p.ele ?? lo) - lo) / eleRange) * eleH;
-        if (i === 0) elevation!.moveTo(x, y);
-        else elevation!.lineTo(x, y);
-      });
-    }
-
-    return {
-      routePath: route,
-      elevationPath: elevation,
-      minEle: hasEle ? lo : null,
-      maxEle: hasEle ? hi : null,
-    };
-  }, [points, width, height]);
-
-  useEffect(() => {
-    if (points.length > 0 && onStats) {
-      onStats({ pointCount: points.length, minEle, maxEle });
-    }
-  }, [points.length, minEle, maxEle, onStats]);
+  const closeFullScreen = () => {
+    setFullScreen(false);
+    setScrubDistanceMi(null);
+  };
 
   if (loading) {
     return (
-      <View style={[styles.center, { width, height }]}>
+      <View style={[styles.center, { width, height: PREVIEW_MAP_HEIGHT }]}>
         <ActivityIndicator size="small" color={colors.forest} />
         <Caption style={{ marginTop: spacing.xs }}>Loading route…</Caption>
       </View>
     );
   }
 
-  if (error || !routePath) {
+  if (error || !metrics) {
     return (
-      <View style={[styles.center, { width, height }]}>
+      <View style={[styles.center, { width, height: PREVIEW_MAP_HEIGHT }]}>
         <BodySmall style={{ color: colors.clay }}>{error ?? 'No route data'}</BodySmall>
       </View>
     );
   }
 
   return (
-    <View>
-      <Canvas style={{ width, height }}>
-        <Path path={routePath} color={colors.forest} style="stroke" strokeWidth={2.5} strokeJoin="round" strokeCap="round" />
-        {elevationPath && (
-          <Path path={elevationPath} color={colors.sky} style="stroke" strokeWidth={2} strokeJoin="round" strokeCap="round" />
-        )}
-      </Canvas>
-      {minEle !== null && maxEle !== null && (
-        <View style={styles.labels}>
-          <Caption>Elevation {Math.round(minEle)}m – {Math.round(maxEle)}m</Caption>
-          <Caption>{points.length.toLocaleString()} points</Caption>
+    <View style={{ width }}>
+      {/* Map preview — tap to open the full-screen interactive view */}
+      <Pressable
+        onPress={() => setFullScreen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Open full-screen course map"
+      >
+        <RouteMap metrics={metrics} height={PREVIEW_MAP_HEIGHT} />
+        <View
+          style={[
+            styles.expandBadge,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Ionicons name="expand-outline" size={13} color={colors.stone} />
+          <Caption style={{ marginLeft: 4, color: colors.stone }}>Tap to explore</Caption>
         </View>
+      </Pressable>
+
+      <StatsRow metrics={metrics} style={{ marginTop: spacing.sm }} />
+
+      {metrics.hasElevation && (
+        <ElevationProfile
+          metrics={metrics}
+          width={width}
+          height={PREVIEW_PROFILE_HEIGHT}
+          style={{ marginTop: spacing.sm }}
+        />
       )}
+
+      {/* Full-screen interactive viewer */}
+      <Modal
+        visible={fullScreen}
+        animationType="slide"
+        onRequestClose={closeFullScreen}
+        statusBarTranslucent
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.parchment }}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={closeFullScreen}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close course map"
+            >
+              <Ionicons name="close" size={26} color={colors.bark} />
+            </TouchableOpacity>
+            <H3>Course Route</H3>
+            <MapTypeToggle value={mapType} onChange={setMapType} />
+          </View>
+
+          <RouteMap
+            metrics={metrics}
+            height={0}
+            interactive
+            mapType={mapType}
+            scrubPoint={scrubPoint}
+            style={styles.modalMap}
+          />
+
+          <View style={{ padding: spacing.md }}>
+            <StatsRow metrics={metrics} />
+            {metrics.hasElevation && (
+              <>
+                <View style={styles.scrubInfo}>
+                  {scrubPoint ? (
+                    <Caption style={{ color: colors.sky }}>
+                      {formatMiles(scrubPoint.distanceMi)} mi
+                      {scrubPoint.eleFt !== null
+                        ? ` · ${formatFeet(scrubPoint.eleFt)} ft`
+                        : ''}
+                    </Caption>
+                  ) : (
+                    <Caption>Drag across the profile to explore the course</Caption>
+                  )}
+                </View>
+                <ElevationProfile
+                  metrics={metrics}
+                  width={windowWidth - spacing.md * 2}
+                  height={FULLSCREEN_PROFILE_HEIGHT}
+                  onScrub={setScrubDistanceMi}
+                  scrubDistanceMi={scrubDistanceMi}
+                />
+              </>
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
+
+// ============================================================================
+// STATS
+// ============================================================================
+
+interface StatsRowProps {
+  metrics: RouteMetrics;
+  style?: object;
+}
+
+function StatsRow({ metrics, style }: StatsRowProps) {
+  const stats: { label: string; value: string; unit: string }[] = [
+    { label: 'Distance', value: formatMiles(metrics.totalDistanceMi), unit: 'mi' },
+  ];
+  if (metrics.hasElevation) {
+    if (metrics.elevationGainFt !== null) {
+      stats.push({ label: 'Gain', value: `+${formatFeet(metrics.elevationGainFt)}`, unit: 'ft' });
+    }
+    if (metrics.elevationLossFt !== null) {
+      stats.push({ label: 'Loss', value: `-${formatFeet(metrics.elevationLossFt)}`, unit: 'ft' });
+    }
+    if (metrics.minElevationFt !== null) {
+      stats.push({ label: 'Min Elev', value: formatFeet(metrics.minElevationFt), unit: 'ft' });
+    }
+    if (metrics.maxElevationFt !== null) {
+      stats.push({ label: 'Max Elev', value: formatFeet(metrics.maxElevationFt), unit: 'ft' });
+    }
+  }
+
+  return (
+    <View style={[styles.statsRow, style]}>
+      {stats.map(s => (
+        <View key={s.label} style={styles.statCell}>
+          <View style={styles.statValueRow}>
+            <Text variant="bodySmall" style={styles.statValue}>
+              {s.value}
+            </Text>
+            <Caption style={{ marginLeft: 2 }}>{s.unit}</Caption>
+          </View>
+          <Caption>{s.label}</Caption>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ============================================================================
+// MAP TYPE TOGGLE
+// ============================================================================
+
+interface MapTypeToggleProps {
+  value: RouteMapType;
+  onChange: (type: RouteMapType) => void;
+}
+
+const MAP_TYPE_OPTIONS: { type: RouteMapType; label: string }[] = [
+  { type: 'standard', label: 'Map' },
+  { type: 'hybrid', label: 'Hybrid' },
+];
+
+function MapTypeToggle({ value, onChange }: MapTypeToggleProps) {
+  const { theme } = useTheme();
+  const { colors, radius } = theme;
+
+  return (
+    <View style={[styles.toggle, { backgroundColor: colors.birch, borderRadius: radius.sm }]}>
+      {MAP_TYPE_OPTIONS.map(option => {
+        const selected = option.type === value;
+        return (
+          <TouchableOpacity
+            key={option.type}
+            onPress={() => onChange(option.type)}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            style={[
+              styles.toggleButton,
+              {
+                borderRadius: radius.sm - 2,
+                backgroundColor: selected ? colors.forest : 'transparent',
+              },
+            ]}
+          >
+            <Caption style={{ color: selected ? colors.snow : colors.stone }}>
+              {option.label}
+            </Caption>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+// ============================================================================
+// STYLES
+// ============================================================================
 
 const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  labels: {
+  expandBadge: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
     flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  statCell: {
+    width: '33.33%',
+    paddingVertical: 4,
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  statValue: {
+    fontWeight: '700',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  modalMap: {
+    flex: 1,
+  },
+  scrubInfo: {
     marginTop: 4,
+    marginBottom: 4,
+    minHeight: 18,
+    justifyContent: 'center',
+  },
+  toggle: {
+    flexDirection: 'row',
+    padding: 2,
+  },
+  toggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
   },
 });

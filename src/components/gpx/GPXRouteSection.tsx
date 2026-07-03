@@ -245,7 +245,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
         <BodySmall color="tertiary" align="center">
           {gpxFileUrl
             ? 'The GPX file for this event is not on this device.'
-            : 'No course route yet. Import a GPX file to preview the route and elevation profile.'}
+            : 'No course route yet. Import a GPX file to see the course on a map with distance and elevation stats.'}
         </BodySmall>
         <Button onPress={handlePick} disabled={busy} style={{ marginTop: spacing.md }}>
           {busy ? 'Importing…' : 'Add GPX Route'}

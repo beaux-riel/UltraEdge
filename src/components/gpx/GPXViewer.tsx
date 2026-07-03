@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import { File } from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
 import { Text, H3, BodySmall, Caption } from '../ui';
@@ -160,56 +160,68 @@ export default function GPXViewer({
         onRequestClose={closeFullScreen}
         statusBarTranslucent
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.parchment }}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={closeFullScreen}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              accessibilityRole="button"
-              accessibilityLabel="Close course map"
-            >
-              <Ionicons name="close" size={26} color={colors.bark} />
-            </TouchableOpacity>
-            <H3>Course Route</H3>
-            <MapTypeToggle value={mapType} onChange={setMapType} />
-          </View>
+        {/*
+          RN Modals mount in their own native window, so the app-root
+          SafeAreaProvider's insets don't reach this subtree (they read as 0,
+          putting the header under the iOS status bar and clipping the chart
+          behind the home indicator). Mount a fresh provider inside the Modal
+          so SafeAreaView measures real insets for this window.
+        */}
+        <SafeAreaProvider>
+          <SafeAreaView
+            edges={['top', 'bottom', 'left', 'right']}
+            style={{ flex: 1, backgroundColor: colors.parchment }}
+          >
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={closeFullScreen}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close course map"
+              >
+                <Ionicons name="close" size={26} color={colors.bark} />
+              </TouchableOpacity>
+              <H3>Course Route</H3>
+              <MapTypeToggle value={mapType} onChange={setMapType} />
+            </View>
 
-          <RouteMap
-            metrics={metrics}
-            height={0}
-            interactive
-            mapType={mapType}
-            scrubPoint={scrubPoint}
-            style={styles.modalMap}
-          />
+            <RouteMap
+              metrics={metrics}
+              height={0}
+              interactive
+              mapType={mapType}
+              scrubPoint={scrubPoint}
+              style={styles.modalMap}
+            />
 
-          <View style={{ padding: spacing.md }}>
-            <StatsRow metrics={metrics} />
-            {metrics.hasElevation && (
-              <>
-                <View style={styles.scrubInfo}>
-                  {scrubPoint ? (
-                    <Caption style={{ color: colors.sky }}>
-                      {formatMiles(scrubPoint.distanceMi)} mi
-                      {scrubPoint.eleFt !== null
-                        ? ` · ${formatFeet(scrubPoint.eleFt)} ft`
-                        : ''}
-                    </Caption>
-                  ) : (
-                    <Caption>Drag across the profile to explore the course</Caption>
-                  )}
-                </View>
-                <ElevationProfile
-                  metrics={metrics}
-                  width={windowWidth - spacing.md * 2}
-                  height={FULLSCREEN_PROFILE_HEIGHT}
-                  onScrub={setScrubDistanceMi}
-                  scrubDistanceMi={scrubDistanceMi}
-                />
-              </>
-            )}
-          </View>
-        </SafeAreaView>
+            <View style={{ padding: spacing.md }}>
+              <StatsRow metrics={metrics} />
+              {metrics.hasElevation && (
+                <>
+                  <View style={styles.scrubInfo}>
+                    {scrubPoint ? (
+                      <Caption style={{ color: colors.sky }}>
+                        {formatMiles(scrubPoint.distanceMi)} mi
+                        {scrubPoint.eleFt !== null
+                          ? ` · ${formatFeet(scrubPoint.eleFt)} ft`
+                          : ''}
+                      </Caption>
+                    ) : (
+                      <Caption>Drag across the profile to explore the course</Caption>
+                    )}
+                  </View>
+                  <ElevationProfile
+                    metrics={metrics}
+                    width={windowWidth - spacing.md * 2}
+                    height={FULLSCREEN_PROFILE_HEIGHT}
+                    onScrub={setScrubDistanceMi}
+                    scrubDistanceMi={scrubDistanceMi}
+                  />
+                </>
+              )}
+            </View>
+          </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );

@@ -41,15 +41,15 @@ import { useGear, GearItem } from '../../context/GearContext';
 import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
 import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.types';
+import { EVENT_CREW_KEY, EventCrewAssignment } from '../../lib/eventCrew';
 import { eventStatsFromRoute } from '../../lib/gpx';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
 
-// Storage keys for event relationships
+// Storage key for event gear relationships
 const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-const EVENT_CREW_KEY = '@ultraedge/event-crew';
 
 // Types for event relationships
 interface EventGearAllocation {
@@ -58,12 +58,6 @@ interface EventGearAllocation {
   isWorn: boolean;
   isCarried: boolean;
   quantity: number;
-  notes?: string;
-}
-
-interface EventCrewAssignment {
-  eventId: string;
-  crewMemberId: string;
   notes?: string;
 }
 
@@ -455,8 +449,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     { assignment, member }: { assignment: EventCrewAssignment; member: CrewMember },
     index: number
   ) => {
-    const roleInfo = ROLE_CONFIG[member.role];
-    
+    const roles = assignment.roles ?? [];
+    const primaryRoleInfo = roles.length > 0 ? ROLE_CONFIG[roles[0]] : null;
+    const iconColor = primaryRoleInfo?.color ?? colors.trail;
+
     return (
       <Swipeable
         key={member.id}
@@ -469,22 +465,50 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           onPress={() => navigation.navigate('CrewDetail', { crewId: member.id })}
           style={[
             styles.listItem,
-            { 
+            {
               backgroundColor: colors.surface,
               borderBottomColor: colors.border,
               borderBottomWidth: index < eventCrewMembers.length - 1 ? 1 : 0,
             }
           ]}
         >
-          <View style={[styles.listItemIcon, { backgroundColor: roleInfo.color + '20' }]}>
-            <Ionicons name={roleInfo.icon as any} size={18} color={roleInfo.color} />
+          <View style={[styles.listItemIcon, { backgroundColor: iconColor + '20' }]}>
+            <Ionicons
+              name={(primaryRoleInfo?.icon as any) ?? 'person'}
+              size={18}
+              color={iconColor}
+            />
           </View>
           <View style={styles.listItemContent}>
             <Body numberOfLines={1}>{member.name}</Body>
-            <BodySmall color="tertiary">
-              {member.customRole || roleInfo.label}
-              {member.phone ? ` • ${member.phone}` : ''}
-            </BodySmall>
+            {roles.length > 0 ? (
+              <View style={styles.crewRoleChips}>
+                {roles.map(role => {
+                  const config = ROLE_CONFIG[role];
+                  const label =
+                    role === 'other' && assignment.customRole
+                      ? assignment.customRole
+                      : config.label;
+                  return (
+                    <View
+                      key={role}
+                      style={[styles.crewRoleChip, { backgroundColor: config.color + '20' }]}
+                    >
+                      <Text
+                        variant="caption"
+                        style={{ color: config.color }}
+                      >
+                        {label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <BodySmall color="tertiary">
+                {member.phone || 'No roles set'}
+              </BodySmall>
+            )}
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.stone} />
         </TouchableOpacity>
@@ -953,6 +977,17 @@ const styles = StyleSheet.create({
   listItemContent: {
     flex: 1,
     marginRight: 8,
+  },
+  crewRoleChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 3,
+  },
+  crewRoleChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   deleteAction: {
     width: 70,

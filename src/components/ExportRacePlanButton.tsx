@@ -18,6 +18,10 @@ import { Button } from './ui';
 import { useEvents } from '../context/EventContext';
 import { useCheckpoints } from '../context/CheckpointContext';
 import { useCrewMembers, ROLE_CONFIG } from '../context/CrewContext';
+import {
+  EVENT_CREW_KEY,
+  EventCrewAssignment,
+} from '../lib/eventCrew';
 import { useGear } from '../context/GearContext';
 import { useDropBags } from '../context/DropBagContext';
 import {
@@ -30,7 +34,6 @@ import {
 
 // Per-event relationship records (same storage as EventDetailScreen).
 const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-const EVENT_CREW_KEY = '@ultraedge/event-crew';
 
 interface EventGearAllocation {
   eventId: string;
@@ -38,12 +41,6 @@ interface EventGearAllocation {
   isWorn: boolean;
   isCarried: boolean;
   quantity: number;
-  notes?: string;
-}
-
-interface EventCrewAssignment {
-  eventId: string;
-  crewMemberId: string;
   notes?: string;
 }
 
@@ -95,10 +92,17 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
       for (const assignment of crewAssignments) {
         const member = getCrewMember(assignment.crewMemberId);
         if (!member) {continue;}
+        const roles = assignment.roles ?? [];
         const roleLabel =
-          member.role === 'other' && member.customRole
-            ? member.customRole
-            : ROLE_CONFIG[member.role]?.label ?? 'Crew';
+          roles.length > 0
+            ? roles
+                .map(role =>
+                  role === 'other' && assignment.customRole
+                    ? assignment.customRole
+                    : ROLE_CONFIG[role]?.label ?? 'Crew',
+                )
+                .join(' / ')
+            : 'Crew';
         crew.push({
           name: member.name,
           role: roleLabel,

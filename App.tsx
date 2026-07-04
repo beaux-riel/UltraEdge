@@ -30,6 +30,9 @@ import { SubscriptionProvider } from './src/context/SubscriptionContext';
 // Navigation
 import AppNavigator from './src/navigation/AppNavigator';
 
+// Error boundary so release builds surface errors instead of a black screen
+import ErrorBoundary from './src/components/ErrorBoundary';
+
 // Loading screen while fonts load
 function LoadingScreen() {
   const { theme } = useTheme();
@@ -72,29 +75,31 @@ if (SENTRY_DSN) {
 // Root component with all providers
 function App() {
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <SubscriptionProvider>
-              <MoverProvider>
-                <EventProvider>
-                  <CheckpointProvider>
-                    <GearProvider>
-                      <CrewProvider>
-                        <DropBagProvider>
-                          <AppContent />
-                        </DropBagProvider>
-                      </CrewProvider>
-                    </GearProvider>
-                  </CheckpointProvider>
-                </EventProvider>
-              </MoverProvider>
-            </SubscriptionProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={styles.root}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <SubscriptionProvider>
+                <MoverProvider>
+                  <EventProvider>
+                    <CheckpointProvider>
+                      <GearProvider>
+                        <CrewProvider>
+                          <DropBagProvider>
+                            <AppContent />
+                          </DropBagProvider>
+                        </CrewProvider>
+                      </GearProvider>
+                    </CheckpointProvider>
+                  </EventProvider>
+                </MoverProvider>
+              </SubscriptionProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
 

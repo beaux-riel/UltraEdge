@@ -6,6 +6,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import {
+  EVENT_CREW_KEY,
+  migrateLegacyCrewRoles,
+  StoredCrewMemberRecord,
+  EventCrewAssignment,
+} from '../lib/eventCrew';
+
 // Simple UUID generator for local storage
 const generateId = (): string => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -26,8 +33,6 @@ export interface CrewMember {
   name: string;
   phone: string | null;
   email: string | null;
-  role: CrewRole;
-  customRole: string | null;
   notes: string | null;
   avatar_url: string | null;
   created_at: string;
@@ -38,8 +43,6 @@ export interface CrewMemberInsert {
   name: string;
   phone?: string | null;
   email?: string | null;
-  role?: CrewRole;
-  customRole?: string | null;
   notes?: string | null;
   avatar_url?: string | null;
 }
@@ -48,8 +51,6 @@ export interface CrewMemberUpdate {
   name?: string;
   phone?: string | null;
   email?: string | null;
-  role?: CrewRole;
-  customRole?: string | null;
   notes?: string | null;
   avatar_url?: string | null;
 }
@@ -106,12 +107,32 @@ export function CrewProvider({ children }: CrewProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(CREW_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CrewMember[];
+      const [storedMembers, storedAssignments] = await Promise.all([
+        AsyncStorage.getItem(CREW_STORAGE_KEY),
+        AsyncStorage.getItem(EVENT_CREW_KEY),
+      ]);
+      if (storedMembers) {
+        const parsed = JSON.parse(storedMembers) as StoredCrewMemberRecord[];
+        const parsedAssignments: EventCrewAssignment[] = storedAssignments
+          ? JSON.parse(storedAssignments)
+          : [];
+
+        // One-time migration: move legacy profile roles onto event assignments
+        const { members, assignments, changed } = migrateLegacyCrewRoles(
+          parsed,
+          parsedAssignments
+        );
+        if (changed) {
+          await Promise.all([
+            AsyncStorage.setItem(CREW_STORAGE_KEY, JSON.stringify(members)),
+            AsyncStorage.setItem(EVENT_CREW_KEY, JSON.stringify(assignments)),
+          ]);
+        }
+
+        const loaded = members as unknown as CrewMember[];
         // Sort by name alphabetically
-        parsed.sort((a, b) => a.name.localeCompare(b.name));
-        setCrewMembers(parsed);
+        loaded.sort((a, b) => a.name.localeCompare(b.name));
+        setCrewMembers(loaded);
       }
     } catch (err) {
       console.error('Failed to load crew members:', err);
@@ -144,8 +165,6 @@ export function CrewProvider({ children }: CrewProviderProps) {
       name: memberData.name,
       phone: memberData.phone || null,
       email: memberData.email || null,
-      role: memberData.role || 'other',
-      customRole: memberData.customRole || null,
       notes: memberData.notes || null,
       avatar_url: memberData.avatar_url || null,
       created_at: now,

@@ -3,7 +3,8 @@
  * Bottom tabs + stack navigation for all CRUD screens
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,6 +18,10 @@ import { useTheme } from '../theme';
 
 // Home
 import HomeScreen from '../screens/HomeScreen';
+
+// Onboarding
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
+import { isOnboardingComplete } from '../lib/onboarding';
 
 // Events (will be created by agent)
 import EventsListScreen from '../screens/events/EventsListScreen';
@@ -69,6 +74,9 @@ import AboutScreen from '../screens/settings/AboutScreen';
 // ============================================================================
 
 export type RootStackParamList = {
+  // Onboarding (first launch only)
+  Onboarding: undefined;
+
   // Tabs
   Main: undefined;
   
@@ -240,6 +248,13 @@ export default function AppNavigator() {
   const { colors } = theme;
   const screenOptions = useScreenOptions();
 
+  // null = still reading the flag; render a blank screen so onboarding never flashes
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    isOnboardingComplete().then(setOnboardingComplete);
+  }, []);
+
   // Custom navigation theme
   const navigationTheme = {
     ...(isDarkMode ? DarkTheme : DefaultTheme),
@@ -254,16 +269,30 @@ export default function AppNavigator() {
     },
   };
 
+  if (onboardingComplete === null) {
+    return <View style={{ flex: 1, backgroundColor: colors.parchment }} />;
+  }
+
   return (
     <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Navigator
+        screenOptions={screenOptions}
+        initialRouteName={onboardingComplete ? 'Main' : 'Onboarding'}
+      >
+        {/* Onboarding (first launch only) */}
+        <Stack.Screen
+          name="Onboarding"
+          component={OnboardingScreen}
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+
         {/* Main Tabs */}
         <Stack.Screen
           name="Main"
           component={MainTabs}
           options={{ headerShown: false }}
         />
-        
+
         {/* Event Screens */}
         <Stack.Screen
           name="CreateEvent"

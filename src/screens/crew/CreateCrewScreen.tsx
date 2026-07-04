@@ -19,8 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
-import { Text, H2, Body, BodySmall, Button, Card, CardContent, Label } from '../../components/ui';
-import { useCrewMembers, ROLE_CONFIG, ROLES, CrewRole } from '../../context/CrewContext';
+import { H2, Body, BodySmall, Button, Card, CardContent, Label } from '../../components/ui';
+import { useCrewMembers } from '../../context/CrewContext';
 
 export default function CreateCrewScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -33,8 +33,6 @@ export default function CreateCrewScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<CrewRole>('pacer');
-  const [customRole, setCustomRole] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -51,8 +49,6 @@ export default function CreateCrewScreen({ navigation }: any) {
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
-        role,
-        customRole: role === 'other' ? customRole.trim() || null : null,
         notes: notes.trim() || null,
       });
 
@@ -164,72 +160,6 @@ export default function CreateCrewScreen({ navigation }: any) {
           />
         </View>
 
-        {/* Role */}
-        <View style={styles.field}>
-          <Label>Role</Label>
-          <View style={styles.roleGrid}>
-            {ROLES.map((r) => {
-              const config = ROLE_CONFIG[r];
-              const isSelected = role === r;
-
-              return (
-                <TouchableOpacity
-                  key={r}
-                  style={[
-                    styles.roleButton,
-                    {
-                      backgroundColor: isSelected ? config.color : colors.cream,
-                      borderColor: isSelected ? config.color : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setRole(r);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                >
-                  <Ionicons
-                    name={config.icon as any}
-                    size={22}
-                    color={isSelected ? colors.snow : config.color}
-                  />
-                  <Text
-                    variant="bodySmall"
-                    style={{
-                      color: isSelected ? colors.snow : colors.stone,
-                      marginTop: 6,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {config.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Custom Role (if Other selected) */}
-        {role === 'other' && (
-          <View style={styles.field}>
-            <Label>Custom Role</Label>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.cream,
-                  borderColor: colors.border,
-                  color: colors.bark,
-                },
-              ]}
-              placeholder="e.g., Support Runner"
-              placeholderTextColor={colors.mist}
-              value={customRole}
-              onChangeText={setCustomRole}
-              autoCapitalize="words"
-            />
-          </View>
-        )}
-
         {/* Notes */}
         <View style={styles.field}>
           <Label>Notes</Label>
@@ -253,34 +183,19 @@ export default function CreateCrewScreen({ navigation }: any) {
           />
         </View>
 
-        {/* Role Info Card */}
+        {/* Roles Info Card */}
         <Card variant="standard" style={styles.infoCard}>
           <CardContent>
             <View style={styles.infoRow}>
               <Ionicons name="information-circle-outline" size={20} color={colors.trail} />
-              <Body style={{ flex: 1, marginLeft: spacing.sm }}>
-                <Text variant="body" style={{ fontWeight: '600' }}>
-                  Role Descriptions
-                </Text>
+              <Body style={{ flex: 1, marginLeft: spacing.sm, fontWeight: '600' }}>
+                Roles are set per event
               </Body>
             </View>
-            <View style={styles.roleDescriptions}>
-              <BodySmall color="secondary">
-                • <Text style={{ fontWeight: '600' }}>Pacer</Text> — Runs alongside you during designated sections
-              </BodySmall>
-              <BodySmall color="secondary" style={{ marginTop: 4 }}>
-                • <Text style={{ fontWeight: '600' }}>Crew Chief</Text> — Coordinates logistics at aid stations
-              </BodySmall>
-              <BodySmall color="secondary" style={{ marginTop: 4 }}>
-                • <Text style={{ fontWeight: '600' }}>Driver</Text> — Transports crew and gear between checkpoints
-              </BodySmall>
-              <BodySmall color="secondary" style={{ marginTop: 4 }}>
-                • <Text style={{ fontWeight: '600' }}>Medical</Text> — Provides medical support when needed
-              </BodySmall>
-              <BodySmall color="secondary" style={{ marginTop: 4 }}>
-                • <Text style={{ fontWeight: '600' }}>Photographer</Text> — Captures your race moments
-              </BodySmall>
-            </View>
+            <BodySmall color="secondary">
+              Assign this person to an event to give them roles like Pacer, Crew Chief,
+              or Driver — they can hold different roles for different races.
+            </BodySmall>
           </CardContent>
         </Card>
       </ScrollView>
@@ -320,21 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
   },
-  roleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 8,
-  },
-  roleButton: {
-    width: '31%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderRadius: 12,
-    padding: 8,
-  },
   notesInput: {
     minHeight: 100,
     paddingTop: 14,
@@ -346,8 +246,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-  },
-  roleDescriptions: {
-    paddingLeft: 4,
   },
 });

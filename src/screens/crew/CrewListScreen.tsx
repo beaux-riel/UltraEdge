@@ -6,7 +6,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   RefreshControl,
   TextInput,
@@ -19,7 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../theme';
 import { Text, H1, H2, H3, Body, BodySmall, Button, Card, CardContent } from '../../components/ui';
-import { useCrewMembers, ROLE_CONFIG, ROLES, CrewRole } from '../../context/CrewContext';
+import { useCrewMembers } from '../../context/CrewContext';
 
 export default function CrewListScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -30,7 +29,6 @@ export default function CrewListScreen({ navigation }: any) {
 
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<CrewRole | 'all'>('all');
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -53,13 +51,8 @@ export default function CrewListScreen({ navigation }: any) {
       );
     }
 
-    // Apply role filter
-    if (selectedRole !== 'all') {
-      filtered = filtered.filter((member) => member.role === selectedRole);
-    }
-
     return filtered;
-  }, [crewMembers, searchQuery, selectedRole]);
+  }, [crewMembers, searchQuery]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -75,11 +68,6 @@ export default function CrewListScreen({ navigation }: any) {
   };
 
   const renderCrewMember = ({ item }: { item: typeof crewMembers[0] }) => {
-    const roleConfig = ROLE_CONFIG[item.role];
-    const displayRole = item.role === 'other' && item.customRole 
-      ? item.customRole 
-      : roleConfig.label;
-
     return (
       <Card
         variant="standard"
@@ -89,11 +77,11 @@ export default function CrewListScreen({ navigation }: any) {
         <CardContent>
           <View style={styles.memberRow}>
             {/* Avatar */}
-            <View style={[styles.avatar, { backgroundColor: roleConfig.color + '20' }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.trail + '20' }]}>
               {item.avatar_url ? (
-                <Ionicons name="person" size={24} color={roleConfig.color} />
+                <Ionicons name="person" size={24} color={colors.trail} />
               ) : (
-                <Text variant="h3" style={{ color: roleConfig.color }}>
+                <Text variant="h3" style={{ color: colors.trail }}>
                   {getInitials(item.name)}
                 </Text>
               )}
@@ -102,24 +90,9 @@ export default function CrewListScreen({ navigation }: any) {
             {/* Info */}
             <View style={styles.memberInfo}>
               <Text variant="h3">{item.name}</Text>
-              <View style={styles.roleRow}>
-                <View style={[styles.roleBadge, { backgroundColor: roleConfig.color + '20' }]}>
-                  <Ionicons 
-                    name={roleConfig.icon as any} 
-                    size={12} 
-                    color={roleConfig.color} 
-                  />
-                  <Text 
-                    variant="bodySmall" 
-                    style={{ color: roleConfig.color, marginLeft: 4 }}
-                  >
-                    {displayRole}
-                  </Text>
-                </View>
-              </View>
-              {item.phone && (
-                <BodySmall color="tertiary" style={{ marginTop: 2 }}>
-                  {item.phone}
+              {(item.phone || item.email) && (
+                <BodySmall color="tertiary" style={{ marginTop: 2 }} numberOfLines={1}>
+                  {item.phone || item.email}
                 </BodySmall>
               )}
             </View>
@@ -181,33 +154,6 @@ export default function CrewListScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <View style={styles.roleStats}>
-                  {ROLES.slice(0, 3).map((role) => {
-                    const count = crewMembers.filter(m => m.role === role).length;
-                    if (count === 0) return null;
-                    return (
-                      <View 
-                        key={role} 
-                        style={[
-                          styles.roleStatBadge, 
-                          { backgroundColor: ROLE_CONFIG[role].color + '20' }
-                        ]}
-                      >
-                        <Ionicons 
-                          name={ROLE_CONFIG[role].icon as any} 
-                          size={12} 
-                          color={ROLE_CONFIG[role].color} 
-                        />
-                        <Text 
-                          variant="mono" 
-                          style={{ color: ROLE_CONFIG[role].color, marginLeft: 4 }}
-                        >
-                          {count}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
               </View>
             </CardContent>
           </Card>
@@ -230,67 +176,10 @@ export default function CrewListScreen({ navigation }: any) {
           )}
         </View>
 
-        {/* Role Filter Pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-          contentContainerStyle={styles.filterContainer}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor: selectedRole === 'all' ? colors.forest : colors.cream,
-                borderColor: selectedRole === 'all' ? colors.forest : colors.border,
-              },
-            ]}
-            onPress={() => setSelectedRole('all')}
-          >
-            <Text
-              variant="bodySmall"
-              style={{ color: selectedRole === 'all' ? colors.snow : colors.stone }}
-            >
-              All
-            </Text>
-          </TouchableOpacity>
-
-          {ROLES.map((role) => {
-            const config = ROLE_CONFIG[role];
-            const isSelected = selectedRole === role;
-
-            return (
-              <TouchableOpacity
-                key={role}
-                style={[
-                  styles.filterPill,
-                  {
-                    backgroundColor: isSelected ? config.color : colors.cream,
-                    borderColor: isSelected ? config.color : colors.border,
-                  },
-                ]}
-                onPress={() => setSelectedRole(role)}
-              >
-                <Ionicons
-                  name={config.icon as any}
-                  size={14}
-                  color={isSelected ? colors.snow : config.color}
-                  style={{ marginRight: 4 }}
-                />
-                <Text
-                  variant="bodySmall"
-                  style={{ color: isSelected ? colors.snow : colors.stone }}
-                >
-                  {config.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
       </View>
 
       {/* Crew List */}
-      {crewMembers.length === 0 && !searchQuery && selectedRole === 'all' ? (
+      {crewMembers.length === 0 && !searchQuery ? (
         renderEmptyState()
       ) : (
         <FlatList
@@ -349,17 +238,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  roleStats: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  roleStatBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -373,22 +251,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 15,
-  },
-  filterScroll: {
-    marginBottom: 8,
-  },
-  filterContainer: {
-    paddingRight: 20,
-    gap: 8,
-    flexDirection: 'row',
-  },
-  filterPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
   },
   listContent: {
     paddingHorizontal: 20,
@@ -410,17 +272,6 @@ const styles = StyleSheet.create({
   },
   memberInfo: {
     flex: 1,
-  },
-  roleRow: {
-    flexDirection: 'row',
-    marginTop: 4,
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
   },
   emptyContainer: {
     flex: 1,

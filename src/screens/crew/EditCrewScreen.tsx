@@ -19,8 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
-import { Text, H2, H3, Body, BodySmall, Button, Label } from '../../components/ui';
-import { useCrewMembers, ROLE_CONFIG, ROLES, CrewRole } from '../../context/CrewContext';
+import { H2, H3, Body, Button, Label } from '../../components/ui';
+import { useCrewMembers } from '../../context/CrewContext';
 
 export default function EditCrewScreen({ navigation, route }: any) {
   const { theme } = useTheme();
@@ -39,8 +39,6 @@ export default function EditCrewScreen({ navigation, route }: any) {
   const [name, setName] = useState(originalMember?.name || '');
   const [phone, setPhone] = useState(originalMember?.phone || '');
   const [email, setEmail] = useState(originalMember?.email || '');
-  const [role, setRole] = useState<CrewRole>(originalMember?.role || 'pacer');
-  const [customRole, setCustomRole] = useState(originalMember?.customRole || '');
   const [notes, setNotes] = useState(originalMember?.notes || '');
   const [saving, setSaving] = useState(false);
 
@@ -72,8 +70,6 @@ export default function EditCrewScreen({ navigation, route }: any) {
     name !== originalMember.name ||
     phone !== (originalMember.phone || '') ||
     email !== (originalMember.email || '') ||
-    role !== originalMember.role ||
-    customRole !== (originalMember.customRole || '') ||
     notes !== (originalMember.notes || '');
 
   const handleSave = async () => {
@@ -87,8 +83,6 @@ export default function EditCrewScreen({ navigation, route }: any) {
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
-        role,
-        customRole: role === 'other' ? customRole.trim() || null : null,
         notes: notes.trim() || null,
       });
 
@@ -233,72 +227,6 @@ export default function EditCrewScreen({ navigation, route }: any) {
           />
         </View>
 
-        {/* Role */}
-        <View style={styles.field}>
-          <Label>Role</Label>
-          <View style={styles.roleGrid}>
-            {ROLES.map((r) => {
-              const config = ROLE_CONFIG[r];
-              const isSelected = role === r;
-
-              return (
-                <TouchableOpacity
-                  key={r}
-                  style={[
-                    styles.roleButton,
-                    {
-                      backgroundColor: isSelected ? config.color : colors.cream,
-                      borderColor: isSelected ? config.color : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setRole(r);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                >
-                  <Ionicons
-                    name={config.icon as any}
-                    size={22}
-                    color={isSelected ? colors.snow : config.color}
-                  />
-                  <Text
-                    variant="bodySmall"
-                    style={{
-                      color: isSelected ? colors.snow : colors.stone,
-                      marginTop: 6,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {config.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Custom Role (if Other selected) */}
-        {role === 'other' && (
-          <View style={styles.field}>
-            <Label>Custom Role</Label>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.cream,
-                  borderColor: colors.border,
-                  color: colors.bark,
-                },
-              ]}
-              placeholder="e.g., Support Runner"
-              placeholderTextColor={colors.mist}
-              value={customRole}
-              onChangeText={setCustomRole}
-              autoCapitalize="words"
-            />
-          </View>
-        )}
-
         {/* Notes */}
         <View style={styles.field}>
           <Label>Notes</Label>
@@ -377,21 +305,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     marginTop: 8,
-  },
-  roleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 8,
-  },
-  roleButton: {
-    width: '31%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderRadius: 12,
-    padding: 8,
   },
   notesInput: {
     minHeight: 100,

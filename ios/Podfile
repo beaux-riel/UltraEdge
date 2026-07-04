@@ -52,6 +52,24 @@ target 'UltraEdge' do
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
 
+    # Xcode 26 clang rejects fmt 11.0.2's consteval format-string checks
+    # ("call to consteval function ... is not a constant expression").
+    # fmt defines FMT_USE_CONSTEVAL unconditionally, so it can't be overridden
+    # with a -D flag — patch the detection to force it off (runtime checks instead).
+    fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      marker = '// patched: consteval disabled for Xcode 26 clang'
+      src = File.read(fmt_base)
+      unless src.include?(marker)
+        src = src.sub(
+          '#if !defined(__cpp_lib_is_constant_evaluated)',
+          "#if 1 #{marker}"
+        )
+        FileUtils.chmod('u+w', fmt_base) # CocoaPods installs pod sources read-only
+        File.write(fmt_base, src)
+      end
+    end
+
     # This is necessary for Xcode 14, because it signs resource bundles by default
     # when building for devices.
     installer.target_installation_results.pod_target_installation_results

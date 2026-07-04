@@ -38,3 +38,9 @@ yarn-error.*
 .history
 supabase/.temp
 src/context/RevenueCatContext.*
+# fastlane
+fastlane/.env
+fastlane/report.xml
+build/
+vendor/bundle/
+.bundle/

@@ -1,3 +1,5 @@
+jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
+jest.mock('../lib/attachments', () => ({ attachmentUri: (v: string) => v, saveAttachment: jest.fn() }));
 import React from 'react';
 import { Keyboard, ScrollView, Text, TextInput, TouchableOpacity } from 'react-native';
 const { act, create } = require('react-test-renderer');

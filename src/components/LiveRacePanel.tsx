@@ -1,3 +1,4 @@
+import { DateTimeInput } from './StructuredTimeInput';
 import React,{useEffect,useState,useRef} from 'react';
 import {View,Modal,ScrollView,TextInput,Alert,Share,AppState,Keyboard} from 'react-native';
 import {Body,BodySmall,H2,H3,Button} from './ui';
@@ -40,7 +41,7 @@ export default function LiveRacePanel({snapshot}:Props){
  <BodySmall>Plan revision {room.revision}. Times below use this phone’s timezone; all phones calculate from the same absolute race start. Estimates use course distance, not terrain or GPS.</BodySmall>
  {projection?<Body>Projected finish {clockLabel(projection.finish)}{'\n'}Best {clockLabel(projection.bestFinish)} / Slow {clockLabel(projection.slowFinish)}</Body>:<Body>Timing reports conflict or the plan is incomplete. Check the individual observations before using ETAs.</Body>}
  {projection&&<BodySmall>Estimated now: {(['best','arrival','slow'] as const).map(s=>`${s==='arrival'?'Expected':s==='best'?'Best':'Slow'} ${projectedDistance(projection,room.snapshot.event.total_distance!,Date.now(),s).toFixed(1)} ${room.snapshot.event.distance_unit==='miles'?'mi':'km'}`).join(' • ')} — not GPS tracking</BodySmall>}
- {field('Observation time (blank = now; YYYY-MM-DDTHH:MM)',at,setAt)}
+ <DateTimeInput label="Observation time" value={at} onChange={setAt} nowLabel="Use the current time when recording" />
  {room.snapshot.checkpoints.map(cp=>{const row=projection?.rows.find(r=>r.id===cp.id);return <View key={cp.id} style={{gap:8,borderTopWidth:1,borderColor:colors.border,paddingTop:12}}><H3>{cp.name}</H3>{row&&<><Body>In {clockLabel(row.arrival)} • Out {clockLabel(row.departure)}</Body><BodySmall>Best {clockLabel(row.best)} / Slow {clockLabel(row.slow)} • {row.stop} min planned stop</BodySmall></>}
  <View style={{flexDirection:'row',gap:8}}>{(['in','out'] as const).map(kind=><Button key={kind} disabled={busy} onPress={()=>work(()=>record(cp.id,kind))}>Record {kind}</Button>)}</View>
  {room.reports.filter(r=>r.checkpointId===cp.id&&r.at).map(r=><View key={`${r.authorId}:${r.kind}`}><BodySmall>{room.members.find(m=>m.id===r.authorId)?.name??'Former member'} {r.kind}: {clockLabel(Date.parse(r.at!))}</BodySmall>{r.authorId===cache.actorId&&<Button disabled={busy} variant="tertiary" onPress={()=>work(()=>record(cp.id,r.kind,true))}>Remove my {r.kind}</Button>}</View>)}

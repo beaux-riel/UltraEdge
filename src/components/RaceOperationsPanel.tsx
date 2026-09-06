@@ -1,3 +1,4 @@
+import { DateTimeInput, DurationInput } from './StructuredTimeInput';
 import LiveRacePanel from './LiveRacePanel';
 import { makeLiveSnapshot } from '../lib/liveRaceModel';
 import React, { useEffect, useState, useRef } from 'react';
@@ -7,7 +8,7 @@ import { Body, BodySmall, H2, H3, Button, Card, CardContent } from './ui';
 import { Event, Checkpoint } from '../lib/database.types';
 import { CrewMember } from '../context/CrewContext';
 import { DropBag } from '../context/DropBagContext';
-import { RaceOperations, emptyOperations, loadOperations, changeOperations, projectRace, projectedDistance, clockLabel, putTimeReport, raceStart, parseLocalRaceTime, TimeReport, StationDuty } from '../lib/raceOperations';
+import { RaceOperations, emptyOperations, loadOperations, changeOperations, projectRace, projectedDistance, clockLabel, putTimeReport, raceStart, parseLocalRaceTime, TimeReport, StationDuty, durationMinutes } from '../lib/raceOperations';
 
 interface Props { initialStation?: string; event: Event; checkpoints: Checkpoint[]; crew: CrewMember[]; bags: DropBag[]; gear: { id: string; name: string }[]; }
 export default function RaceOperationsPanel({ event, checkpoints, crew, bags, gear, initialStation }: Props) {
@@ -18,8 +19,9 @@ export default function RaceOperationsPanel({ event, checkpoints, crew, bags, ge
   const saving = useRef(false);
   const [startText, setStartText] = useState('');
   const [open, setOpen] = useState(!!initialStation);
-  const [tab, setTab] = useState<'timeline' | 'logistics'>('timeline');
+  const [tab, setTab] = useState<'planning' | 'timeline' | 'logistics'>('planning');
   const [station, setStation] = useState<string | null>(initialStation ?? null);
+  const [finishGoal, setFinishGoal] = useState('');
   const [stop, setStop] = useState('0');
   const [variation, setVariation] = useState('10');
   const [vehicleName, setVehicleName] = useState('');
@@ -40,6 +42,9 @@ export default function RaceOperationsPanel({ event, checkpoints, crew, bags, ge
     finally { saving.current = false; setBusy(false); }
   };
   const projection = projectRace(event, checkpoints, ops);
+  const plan = projectRace(event, checkpoints, { ...ops, startAt: null, reports: [] });
+  const finishGoalMinutes = durationMinutes(finishGoal);
+  const goalMoving = finishGoalMinutes && plan ? finishGoalMinutes - plan.stopMinutes : null;
   const selected = checkpoints.find(cp => cp.id === station);
   const inputStyle = { color: colors.bark, backgroundColor: colors.parchment, borderColor: colors.border, borderWidth: 1, borderRadius: 8, padding: 12, minHeight: 48 };
   const field = (label: string, value: string, onChangeText: (value: string) => void, numeric = false) => <View style={{ gap: 6 }}><BodySmall>{label}</BodySmall><TextInput testID={`operations-${label}`} accessibilityLabel={label} value={value} onChangeText={onChangeText} keyboardType={numeric ? 'decimal-pad' : 'default'} autoCapitalize="none" returnKeyType="done" onSubmitEditing={Keyboard.dismiss} style={inputStyle} /></View>;
@@ -58,21 +63,31 @@ export default function RaceOperationsPanel({ event, checkpoints, crew, bags, ge
     <H2>Race operations</H2>
     <BodySmall style={{ marginVertical: 8 }}>{projection ? `Projected finish ${clockLabel(projection.finish)} • ${projection.stopMinutes} min at stations` : 'Set a start date/time, target HH:MM, total distance and ordered checkpoint distances to see ETAs.'}</BodySmall>
     <LiveRacePanel snapshot={() => makeLiveSnapshot(event, checkpoints, ops, [...ops.duties.map(d => `${checkpoints.find(cp=>cp.id===d.checkpointId)?.name}: ${crew.find(c=>c.id===d.crewMemberId)?.name} — ${d.role}`), ...ops.vehicles.map(v=>`${v.name} • Owner: ${crew.find(c=>c.id===v.ownerId)?.name??'Unassigned'} • Crew: ${v.crewIds.map(id=>crew.find(c=>c.id===id)?.name).join(', ')} • Cargo: ${ops.cargo.filter(c=>c.vehicleId===v.id).map(c=>c.label).join(', ')}`)])} />
-    <Button disabled={!ready} onPress={() => setOpen(true)}>Timeline, timer & logistics</Button>
+    <Button disabled={!ready} onPress={() => { setTab('planning'); setOpen(true); }}>Plan aid-station stops</Button>
+    <Button disabled={!ready} variant="secondary" onPress={() => { setTab('timeline'); setOpen(true); }}>Race day: record actual times</Button>
     <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
       <View style={{ flex: 1, backgroundColor: colors.surface, paddingTop: 24 }}>
         <View style={{ paddingHorizontal: 20, gap: 12 }}><H2>Race operations</H2><Button variant="tertiary" onPress={() => setOpen(false)}>Done</Button>
-          <View style={{ flexDirection: 'row', gap: 8 }}>{choice('Timeline & timer', tab === 'timeline', () => setTab('timeline'))}{choice('Crew & vehicles', tab === 'logistics', () => setTab('logistics'))}</View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{choice('Race planning', tab === 'planning', () => setTab('planning'))}{choice('Race day', tab === 'timeline', () => setTab('timeline'))}{choice('Crew & vehicles', tab === 'logistics', () => setTab('logistics'))}</View>
         </View>
         <ScrollView automaticallyAdjustKeyboardInsets keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 18 }}>
-          {!ready ? <Body>Loading saved plan…</Body> : tab === 'timeline' ? <>
+          {!ready ? <Body>Loading saved plan…</Body> : tab === 'planning' ? <>
+            <H3>Plan aid-station stops</H3>
+            <BodySmall>Choose each station and set the minutes you expect to spend there. These are planned durations, separate from race-day arrival and departure reports. All dates and times use this device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</BodySmall>
+            {plan && <><Body>Moving: {plan.movingMinutes} min • Stops: {plan.stopMinutes} min</Body><Body>Planned finish: {clockLabel(plan.finish)}</Body><BodySmall>Average moving speed: {(event.total_distance! / (plan.movingMinutes / 60)).toFixed(2)} {event.distance_unit === 'miles' ? 'mi' : 'km'}/h. With the same moving pace, longer stops move the finish later.</BodySmall>
+            <DurationInput label="Explore a finish-time goal (total elapsed)" value={finishGoal} onChange={setFinishGoal} />
+            {finishGoal && (goalMoving && goalMoving > 0 ? <BodySmall>To finish within {finishGoal}, allow {goalMoving} moving minutes and average {(event.total_distance! / (goalMoving / 60)).toFixed(2)} {event.distance_unit === 'miles' ? 'mi' : 'km'}/h while moving. This is a calculator; edit the race’s target moving time to adopt it.</BodySmall> : <BodySmall>Enter a valid finish duration longer than the total planned stops.</BodySmall>)}
+            </>}
+            {!checkpoints.length && <BodySmall>Add checkpoints to this race to plan station stops.</BodySmall>}
+            {[...checkpoints].sort((a,b) => a.order_index - b.order_index).map(cp => { const row=plan?.rows.find(r=>r.id===cp.id);const minutes=ops.stops[cp.id] ?? durationMinutes(cp.estimated_duration) ?? 0;return <View key={cp.id} style={{gap:8,paddingVertical:12,borderTopWidth:1,borderColor:colors.border}}><H3>{cp.name}</H3><BodySmall>{minutes} minutes planned stop{row ? ` • In ${clockLabel(row.arrival)} • Out ${clockLabel(row.departure)}` : ''}</BodySmall><Button disabled={busy} variant="secondary" onPress={()=>{setStation(cp.id);setStop(String(minutes));}}>Set planned stop</Button>{station===cp.id&&<>{field('Planned stop (minutes)',stop,setStop,true)}<View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{[0,2,5,10].map(m=><Button key={m} variant="tertiary" onPress={()=>setStop(String(m))}>{m} min</Button>)}</View><Button disabled={busy||!stop.trim()} onPress={()=>save(current=>({...current,stops:{...current.stops,[cp.id]:Number(stop)}}))}>Save planned stop</Button></>}</View>;})}
+          </> : tab === 'timeline' ? <>
             <BodySmall>Target time is moving time. Planned stops add to the finish. Projections use distance, not terrain. Times use this device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</BodySmall>
             {field('Best / slow variation (%)', variation, setVariation, true)}
             <Button disabled={busy} onPress={() => save(current => ({ ...current, variation: Number(variation) }))}>Save variation</Button>
             <H3>Race-day clock</H3>
             <Body>{ops.startAt ? `${Math.floor(elapsed / 3600)}h ${Math.floor(elapsed / 60) % 60}m ${elapsed % 60}s elapsed` : 'Race not started'}</Body>
             <Button disabled={busy || !!ops.startAt} onPress={() => Alert.alert('Start race clock?', 'Start now and use this time for live ETAs.', [{ text: 'Cancel' }, { text: 'Start', onPress: () => save(current => ({ ...current, startAt: new Date().toISOString() })) }])}>Start race now</Button>
-            {field('Actual start correction (YYYY-MM-DDTHH:MM)', startText, setStartText)}
+            <DateTimeInput label="Actual start correction" value={startText} onChange={setStartText} />
             <Button disabled={busy || !startText.trim()} variant="tertiary" onPress={() => { try { const startAt = parseLocalRaceTime(startText); save(current => ({ ...current, startAt })); } catch (error) { Alert.alert('Invalid start', error instanceof Error ? error.message : 'Use YYYY-MM-DDTHH:MM.'); } }}>Set actual start</Button>
             <BodySmall>Offline on this device. Record runner and crew reports separately; each gets equal weight. Recording again replaces that source’s report.</BodySmall>
             {projection ? <>
@@ -87,16 +102,15 @@ export default function RaceOperationsPanel({ event, checkpoints, crew, bags, ge
                 <Body>In {clockLabel(row.arrival)} • Out {clockLabel(row.departure)}</Body>
                 <BodySmall>Best {clockLabel(row.best)} / Slow {clockLabel(row.slow)}{row.actualIn !== null ? '\nArrival recorded' : ''}{row.actualOut !== null ? ' • Departure recorded' : ''}</BodySmall>
                 <BodySmall>{ops.duties.filter(duty => duty.checkpointId === row.id).map(duty => `${crew.find(member => member.id === duty.crewMemberId)?.name ?? 'Removed crew'}: ${duty.role.replace('_', ' ')}`).join(' • ') || 'No crew allocated'}</BodySmall>
-                <BodySmall>Edit stop / record time</BodySmall>
+                <BodySmall>Record actual arrival / departure</BodySmall>
               </TouchableOpacity>)}
             </> : <Body>Complete the race timing and checkpoint distances to calculate the timeline. You can still plan stops below.</Body>}
             {!projection && checkpoints.map(cp => choice(cp.name, station === cp.id, () => { setStation(cp.id); setStop(String(ops.stops[cp.id] ?? 0)); }))}
             {station && <Button variant="tertiary" onPress={() => setStation(null)}>Show all checkpoints</Button>}
             {selected && <View style={{ gap: 12, padding: 14, borderWidth: 1, borderColor: colors.forest, borderRadius: 12 }}>
-              <H3>{selected.name}</H3>{field('Planned stop (minutes)', stop, setStop, true)}
-              <Button disabled={busy} onPress={() => save(current => ({ ...current, stops: { ...current.stops, [selected.id]: Number(stop) } }))}>Save stop duration</Button>
+              <H3>{selected.name}</H3><BodySmall>Record what happened here on race day. Edit planned durations in Race planning.</BodySmall>
               <H3>Time report</H3><View style={{ flexDirection: 'row', gap: 8 }}>{choice('Runner', source === 'runner', () => setSource('runner'))}{choice('Crew', source === 'crew', () => setSource('crew'))}</View>
-              {field('Time (blank = now; YYYY-MM-DDTHH:MM)', reportAt, setReportAt)}
+              <DateTimeInput label="Actual checkpoint time" value={reportAt} onChange={setReportAt} nowLabel="Use the current time when recording" />
               <View style={{ flexDirection: 'row', gap: 8 }}>{(['in', 'out'] as const).map(kind => <Button key={kind} disabled={busy} onPress={() => { try { record(kind); } catch { Alert.alert('Invalid time', 'Use YYYY-MM-DDTHH:MM, or leave blank for now.'); } }}>Record {kind}</Button>)}</View>
               {ops.reports.filter(report => report.checkpointId === selected.id).map(report => <View key={`${report.source}:${report.kind}`}><BodySmall>{report.source} {report.kind}: {clockLabel(Date.parse(report.at))}</BodySmall><Button variant="tertiary" disabled={busy} onPress={() => save(current => ({ ...current, reports: current.reports.filter(row => !(row.checkpointId === report.checkpointId && row.source === report.source && row.kind === report.kind)) }))}>Remove {report.source} {report.kind}</Button></View>)}
               {(['in', 'out'] as const).map(kind => { const reports = ops.reports.filter(row => row.checkpointId === selected.id && row.kind === kind); return reports.length === 2 && Math.abs(Date.parse(reports[0].at) - Date.parse(reports[1].at)) > 10 * 60000 ? <BodySmall key={kind}>Reports differ by more than 10 minutes. Check the individual {kind} times before relying on the average.</BodySmall> : null; })}

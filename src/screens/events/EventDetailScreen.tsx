@@ -1,3 +1,5 @@
+import RaceGuidePanel from '../../components/RaceGuidePanel';
+import MandatoryGearPanel from '../../components/MandatoryGearPanel';
 import { parseDateOnly, daysUntilDate } from '../../lib/dateOnly';
 /**
  * UltraEdge Event Detail Screen
@@ -518,6 +520,9 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { backgroundColor: colors.parchment }]}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="on-drag"
           style={styles.scrollView}
           contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
           showsVerticalScrollIndicator={false}
@@ -615,6 +620,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               ))}
             </View>
 
+            <RaceGuidePanel event={event} />
+            <MandatoryGearPanel event={event} gear={eventGearItems.map(row => row.item)} allocations={eventGear} />
             <RaceOperationsPanel initialStation={route.params?.operationsCheckpointId} event={event} checkpoints={checkpoints} crew={eventCrewMembers.map(row => row.member)} bags={eventDropBags} gear={eventGearItems.map(row => row.item)} />
 
             {/* Course Route (GPX) */}

@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Create Drop Bag Screen
  * Create a new drop bag with checkpoint selection and items
@@ -47,12 +48,14 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
   const [name, setName] = useState('');
   const [selectedEventId, setSelectedEventId] = useState<string>(initialEventId || '');
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [selectedItems, setSelectedItems] = useState<DropBagItem[]>([]);
   const [showEventPicker, setShowEventPicker] = useState(false);
   const [showCheckpointPicker, setShowCheckpointPicker] = useState(false);
   const [showGearPicker, setShowGearPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   // Get checkpoints for selected event
   const eventCheckpoints = useMemo(() => {
@@ -138,7 +141,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
   };
 
   const handleSave = async () => {
-    if (showGearPicker || saving) return;
+    if (photoBusy || showGearPicker || saving) return;
     // Validation
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter a name for this drop bag.');
@@ -158,6 +161,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
         checkpointId: selectedCheckpointId || null,
         items: selectedItems,
         notes: notes.trim() || null,
+        imageUrl,
       });
       navigation.goBack();
     } catch (error) {
@@ -458,6 +462,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
             )}
           </View>
 
+          <PhotoField value={imageUrl} onChange={setImageUrl} disabled={saving} onBusyChange={setPhotoBusy} />
           {/* Notes */}
           <View style={styles.field}>
             <Caption style={{ marginBottom: spacing.xs }}>Notes</Caption>
@@ -541,7 +546,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
         <Button
           onPress={handleSave}
           loading={saving}
-          disabled={showGearPicker || loading || !!error || saving || !name.trim() || !selectedEventId}
+          disabled={photoBusy || showGearPicker || loading || !!error || saving || !name.trim() || !selectedEventId}
           style={{ flex: 1 }}
         >
           Create Drop Bag

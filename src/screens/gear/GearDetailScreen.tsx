@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Gear Detail Screen
  * View full details of a single gear item
@@ -50,6 +51,7 @@ interface GearItem {
   id: string;
   name: string;
   brand?: string;
+  imageUrl?: string;
   model?: string;
   category: GearCategory | 'nutrition';
   weight?: number;
@@ -181,6 +183,7 @@ export default function GearDetailScreen({ navigation, route }: any) {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <PhotoField value={item.imageUrl} onChange={async value => { await updateGearItem(item.id, { imageUrl: value || undefined }); }} />
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '20' }]}>

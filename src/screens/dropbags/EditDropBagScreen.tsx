@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Edit Drop Bag Screen
  * Edit an existing drop bag's details, checkpoint, and items
@@ -46,11 +47,13 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   // Form state
   const [name, setName] = useState('');
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [selectedItems, setSelectedItems] = useState<DropBagItem[]>([]);
   const [showCheckpointPicker, setShowCheckpointPicker] = useState(false);
   const [showGearPicker, setShowGearPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   // Initialize form with existing data
   useEffect(() => {
@@ -58,6 +61,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
       setName(dropBag.name);
       setSelectedCheckpointId(dropBag.checkpointId || '');
       setNotes(dropBag.notes || '');
+      setImageUrl(dropBag.imageUrl || null);
       setSelectedItems([...dropBag.items]);
     }
   }, [dropBag]);
@@ -118,7 +122,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   };
 
   const handleSave = async () => {
-    if (showGearPicker || saving) return;
+    if (photoBusy || showGearPicker || saving) return;
     // Validation
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter a name for this drop bag.');
@@ -132,6 +136,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
         checkpointId: selectedCheckpointId || null,
         items: selectedItems,
         notes: notes.trim() || null,
+        imageUrl,
       });
       if (!saved) throw new Error('This record was deleted. Return to the list and refresh.');
       navigation.goBack();
@@ -367,6 +372,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
             )}
           </View>
 
+          <PhotoField value={imageUrl} onChange={setImageUrl} disabled={saving} onBusyChange={setPhotoBusy} />
           {/* Notes */}
           <View style={styles.field}>
             <Caption style={{ marginBottom: spacing.xs }}>Notes</Caption>
@@ -450,7 +456,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
         <Button
           onPress={handleSave}
           loading={saving}
-          disabled={showGearPicker || saving || !name.trim()}
+          disabled={photoBusy || showGearPicker || saving || !name.trim()}
           style={{ flex: 1 }}
         >
           Save Changes

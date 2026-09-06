@@ -1,3 +1,5 @@
+import { DateTimeInput } from '../../components/StructuredTimeInput';
+import { parseLocalRaceTime } from '../../lib/raceOperations';
 /**
  * UltraEdge Edit Checkpoint Screen
  * Form to edit an existing checkpoint/aid station
@@ -172,7 +174,7 @@ export default function EditCheckpointScreen() {
         checkpoint_type: checkpointType,
         distance_from_start: distance ? parseFloat(distance) : null,
         elevation: elevation ? parseFloat(elevation) : null,
-        cutoff_time: cutoffTime.trim() || null,
+        cutoff_time: cutoffTime.trim() ? (parseLocalRaceTime(cutoffTime), cutoffTime.trim()) : null,
         location_description: locationDescription.trim() || null,
         has_crew_access: hasCrewAccess,
         has_drop_bag: hasDropBag,
@@ -358,21 +360,7 @@ export default function EditCheckpointScreen() {
         {/* Cutoff Time */}
         <View style={styles.section}>
           <Label style={{ marginBottom: spacing.sm }}>CUTOFF TIME</Label>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.cream,
-                borderColor: colors.border,
-                color: colors.bark,
-                fontFamily: typography.mono.fontFamily,
-              },
-            ]}
-            value={cutoffTime}
-            onChangeText={setCutoffTime}
-            placeholder="e.g., Sun Sep 6, 02:00 (race local time)"
-            placeholderTextColor={colors.mist}
-          />
+          <DateTimeInput label="Checkpoint cutoff" value={cutoffTime} onChange={setCutoffTime} />
           <Caption style={{ marginTop: spacing.xs }}>
             Include the day/date for overnight races and use the race’s local time.
           </Caption>

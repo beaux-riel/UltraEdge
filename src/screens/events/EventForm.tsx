@@ -1,3 +1,5 @@
+import { DurationInput } from '../../components/StructuredTimeInput';
+import { Alert } from 'react-native';
 import { parseDateOnly, formatDateOnly } from '../../lib/dateOnly';
 /**
  * UltraEdge Event Form Component
@@ -88,6 +90,8 @@ export function EventForm({
       return; // Could add validation feedback
     }
 
+    if (eventTime && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(eventTime)) { Alert.alert('Invalid start time', 'Use hours 0–23 and minutes 00–59.'); return; }
+    if ([cutoffTime, targetTime].some(v => v && (!/^\d{1,3}:[0-5]\d$/.test(v) || v.split(':').every(p => Number(p) === 0)))) { Alert.alert('Invalid duration', 'Enter positive hours and minutes (00–59).'); return; }
     onSubmit({
       name: name.trim(),
       description: description.trim(),
@@ -194,13 +198,7 @@ export function EventForm({
           </View>
           <View style={styles.halfField}>
             <Label style={styles.label}>Start Time</Label>
-            <TextInput
-              style={inputStyle}
-              value={eventTime}
-              onChangeText={setEventTime}
-              placeholder="e.g., 5:00 AM"
-              placeholderTextColor={colors.mist}
-            />
+            <DurationInput label="Start time" value={eventTime} onChange={setEventTime} clock />
           </View>
         </View>
 
@@ -213,6 +211,7 @@ export function EventForm({
           />
         )}
 
+        <BodySmall style={inputRowStyle}>Start times use this device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</BodySmall>
         {/* Location */}
         <View style={inputRowStyle}>
           <Label style={styles.label}>Location</Label>
@@ -309,23 +308,11 @@ export function EventForm({
         <View style={[styles.row, inputRowStyle]}>
           <View style={styles.halfField}>
             <Label style={styles.label}>Cutoff Time</Label>
-            <TextInput
-              style={inputStyle}
-              value={cutoffTime}
-              onChangeText={setCutoffTime}
-              placeholder="e.g., 30:00"
-              placeholderTextColor={colors.mist}
-            />
+            <DurationInput label="Cutoff duration" value={cutoffTime} onChange={setCutoffTime} />
           </View>
           <View style={styles.halfField}>
             <Label style={styles.label}>Target moving time</Label>
-            <TextInput
-              style={inputStyle}
-              value={targetTime}
-              onChangeText={setTargetTime}
-              placeholder="e.g., 24:00"
-              placeholderTextColor={colors.mist}
-            />
+            <DurationInput label="Target moving time" value={targetTime} onChange={setTargetTime} />
           </View>
         </View>
 

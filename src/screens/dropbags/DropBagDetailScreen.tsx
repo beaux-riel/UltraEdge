@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Drop Bag Detail Screen
  * View a single drop bag with contents and checkpoint info
@@ -188,6 +189,7 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
 
         {/* Content */}
         <View style={[styles.content, { marginTop: -spacing.xl }]}>
+          <PhotoField value={dropBag.imageUrl} />
           {/* Checkpoint Info */}
           <Card variant="elevated" style={styles.section}>
             <CardContent>

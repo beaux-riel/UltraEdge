@@ -40,6 +40,8 @@ export interface Mover {
 }
 
 export interface Event {
+  mandatoryGear?: { id: string; name: string; quantity: number; gearIds: string[] }[];
+  raceGuide?: import('./attachments').PlanAttachment | null;
   id: string;
   mover_id: string;
   name: string;

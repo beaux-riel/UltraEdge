@@ -733,6 +733,8 @@ ${buildRouteSection(data, metrics)}
 ${buildCheckpointsSection(data)}
 ${buildOperationsSection(data)}
 ${buildCrewSection(data)}
+${data.event.mandatoryGear?.length ? `<section class="section"><h2>Mandatory race equipment</h2><p>Requirements entered for this race. Verify against the official guide.</p>${data.event.mandatoryGear.map(r => `<p>□ ${escapeHtml(r.name)} ×${r.quantity}</p>`).join('')}</section>` : ''}
+${data.event.raceGuide ? `<section class="section"><h2>Official race guide</h2><p>${escapeHtml(data.event.raceGuide.name)} — attached in UltraEdge. Share the original PDF separately with your crew.</p></section>` : ''}
 ${buildGearSection(data)}
 ${buildDropBagsSection(data)}
 <div class="footer">

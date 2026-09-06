@@ -26,6 +26,7 @@ export interface DropBagItem {
 }
 
 export interface DropBag {
+  imageUrl?: string | null;
   id: string;
   name: string;
   eventId: string;
@@ -37,6 +38,7 @@ export interface DropBag {
 }
 
 export interface DropBagInsert {
+  imageUrl?: string | null;
   name: string;
   eventId: string;
   checkpointId?: string | null;
@@ -45,6 +47,7 @@ export interface DropBagInsert {
 }
 
 export interface DropBagUpdate {
+  imageUrl?: string | null;
   name?: string;
   checkpointId?: string | null;
   items?: DropBagItem[];
@@ -155,6 +158,7 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
       checkpointId: bagData.checkpointId || null,
       items: copyDropBagItems(bagData.items || []),
       notes: bagData.notes || null,
+      imageUrl: bagData.imageUrl || null,
       created_at: now,
       updated_at: now,
     };

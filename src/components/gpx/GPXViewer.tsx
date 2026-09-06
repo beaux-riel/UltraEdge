@@ -52,7 +52,7 @@ import type { DistanceUnit } from '../../lib/database.types';
 import RouteMap, { RouteMapType } from './RouteMap';
 import ElevationProfile from './ElevationProfile';
 
-const PREVIEW_MAP_HEIGHT = 200;
+const PREVIEW_MAP_HEIGHT = 240;
 const PREVIEW_PROFILE_HEIGHT = 130;
 const FULLSCREEN_PROFILE_HEIGHT = 150;
 const DEFAULT_MARKER_INTERVAL = 5;
@@ -170,7 +170,7 @@ export default function GPXViewer({
           height={PREVIEW_MAP_HEIGHT}
           markerUnit={distanceUnit}
           markerInterval={showMarkers ? markerInterval : DEFAULT_MARKER_INTERVAL}
-          showMarkers={showMarkers}
+          showMarkers={false}
         />
         <View
           style={[
@@ -184,7 +184,7 @@ export default function GPXViewer({
       </Pressable>
 
       <View style={[styles.controlsRow, { marginTop: spacing.sm }]}>
-        <StatsRow metrics={metrics} distanceUnit={distanceUnit} style={styles.statsFlex} />
+        <Caption style={{ letterSpacing: 1.3 }}>COURSE MEASUREMENTS</Caption>
         <Segmented
           options={UNIT_OPTIONS}
           value={distanceUnit}
@@ -193,6 +193,8 @@ export default function GPXViewer({
         />
       </View>
 
+      <StatsRow metrics={metrics} distanceUnit={distanceUnit} />
+      <Caption style={{ marginTop: spacing.sm }}>Measured from the imported GPX. Map tiles may require a connection.</Caption>
       {metrics.hasElevation && (
         <ElevationProfile
           metrics={metrics}
@@ -402,11 +404,11 @@ function Segmented<T extends string | number>({
               styles.toggleButton,
               {
                 borderRadius: radius.sm - 2,
-                backgroundColor: selected ? colors.forest : 'transparent',
+                backgroundColor: selected ? colors.accent : 'transparent',
               },
             ]}
           >
-            <Caption style={{ color: selected ? colors.snow : colors.stone }}>
+            <Caption style={{ color: selected ? colors.onAccent : colors.stone }}>
               {option.label}
             </Caption>
           </TouchableOpacity>
@@ -438,7 +440,11 @@ const styles = StyleSheet.create({
   },
   controlsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
   },
   statsFlex: {
     flex: 1,
@@ -448,15 +454,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   statCell: {
-    width: '33.33%',
-    paddingVertical: 4,
+    flexGrow: 1,
+    flexBasis: '33.33%',
+    minWidth: 100,
+    paddingVertical: 8,
   },
   statValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    flexWrap: 'wrap',
   },
   statValue: {
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    fontSize: 17,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -492,6 +503,8 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

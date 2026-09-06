@@ -224,10 +224,7 @@ export default function ProfileScreen({ navigation }: any) {
       <MoverStorageNotice />
       {/* Header */}
       <LinearGradient
-        colors={isDarkMode 
-          ? [colors.forest, colors.parchment] 
-          : [colors.forest, colors.forestSoft, colors.parchment]
-        }
+        colors={[colors.hero, colors.hero]}
         style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <View style={styles.headerRow}>

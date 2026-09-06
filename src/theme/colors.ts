@@ -1,99 +1,25 @@
-/**
- * UltraEdge Color System
- * Aesthetic C: Warm/Organic — Trail-Focused & Approachable
- */
-
+/** Field guide palette. Legacy token names preserve existing screen compatibility. */
 export const colors = {
-  // ============================================================================
-  // LIGHT MODE
-  // ============================================================================
   light: {
-    // Primary Colors
-    forest: '#2D5A3D',      // Primary actions, headers, active states
-    trail: '#8B6F47',       // Secondary actions, accents, icons
-    sunrise: '#E07B4C',     // Highlights, notifications, CTAs
-
-    // Background Colors
-    parchment: '#FAF7F2',   // Primary background
-    cream: '#F5F0E6',       // Card backgrounds
-    birch: '#EDE6D9',       // Elevated surfaces, section dividers
-
-    // Text Colors
-    bark: '#2C2416',        // Primary text
-    stone: '#6B5D4D',       // Secondary text, labels
-    mist: '#9A8E7F',        // Tertiary text, placeholders
-
-    // Semantic Colors
-    meadow: '#5A9A6B',      // Success states
-    sunset: '#D4763B',      // Warning states
-    clay: '#C45B4A',        // Error states, destructive actions
-    sky: '#5B8FA8',         // Info states, links
-
-    // Surface Colors
-    surface: '#FFFFFF',
-    surfaceElevated: '#FFFFFF',
-    border: '#E5DED3',
-    borderLight: '#F0EBE3',
-
-    // On-color content — text/icons on saturated surfaces (buttons, gradients, chips).
-    // Intentionally identical in both modes.
-    snow: '#FFFFFF',
-
-    // Gradient mid-tones (header gradients)
-    forestSoft: '#4A8B5C',
-    sunriseSoft: '#E8A87C',
-
-    // Shadows (for StyleSheet)
-    shadow: 'rgba(44, 36, 22, 0.08)',
-    shadowMedium: 'rgba(44, 36, 22, 0.12)',
-    shadowHeavy: 'rgba(44, 36, 22, 0.16)',
+    forest: '#426015', trail: '#4D5960', sunrise: '#426015',
+    parchment: '#F3F5F1', cream: '#E9EDE7', birch: '#DDE3DB',
+    bark: '#171C20', stone: '#52605F', mist: '#65716D',
+    meadow: '#39662D', sunset: '#925414', clay: '#B33A32', sky: '#346477',
+    surface: '#FFFFFF', surfaceElevated: '#FFFFFF', border: '#CAD2C9', borderLight: '#DDE3DB',
+    snow: '#FFFFFF', forestSoft: '#344A20', sunriseSoft: '#516332',
+    accent: '#C3E76B', onAccent: '#171C20', hero: '#171C20', heroText: '#F3F5EF',
+    shadow: 'rgba(23,28,32,0.04)', shadowMedium: 'rgba(23,28,32,0.08)', shadowHeavy: 'rgba(23,28,32,0.12)',
   },
-
-  // ============================================================================
-  // DARK MODE
-  // ============================================================================
   dark: {
-    // Primary Colors (lightened for dark backgrounds)
-    forest: '#4A8B5C',      // +15% lightness
-    trail: '#B8956A',       // +15% lightness
-    sunrise: '#FF9B6C',     // +10% lightness for pop
-
-    // Background Colors (warm blacks)
-    parchment: '#0F0D0B',   // Ember Black - primary background
-    cream: '#1A1714',       // Charred - card backgrounds
-    birch: '#252019',       // Bark Dark - elevated surfaces
-
-    // Text Colors
-    bark: '#F5F0E6',        // Primary text (inverted cream)
-    stone: '#B8A99A',       // Secondary text
-    mist: '#7A6F63',        // Tertiary text, placeholders
-
-    // Semantic Colors (adjusted for dark)
-    meadow: '#6BB87A',      // Success - slightly brighter
-    sunset: '#E8924D',      // Warning - slightly brighter
-    clay: '#E07366',        // Error - slightly brighter
-    sky: '#7BB5CC',         // Info - slightly brighter
-
-    // Surface Colors
-    surface: '#1A1714',
-    surfaceElevated: '#252019',
-    border: '#3D352C',
-    borderLight: '#2D261F',
-
-    // On-color content — text/icons on saturated surfaces (buttons, gradients, chips).
-    // Intentionally identical in both modes.
-    snow: '#FFFFFF',
-
-    // Gradient mid-tones (header gradients)
-    forestSoft: '#4A8B5C',
-    sunriseSoft: '#E8A87C',
-
-    // Glows (replace shadows in dark mode)
-    shadow: 'rgba(255, 155, 108, 0.05)',   // Subtle sunrise glow
-    shadowMedium: 'rgba(255, 155, 108, 0.08)',
-    shadowHeavy: 'rgba(255, 155, 108, 0.12)',
+    forest: '#C3E76B', trail: '#B4C0BA', sunrise: '#C3E76B',
+    parchment: '#111619', cream: '#1B2226', birch: '#252E32',
+    bark: '#F3F5EF', stone: '#B5BFBA', mist: '#95A29B',
+    meadow: '#A6CF81', sunset: '#E5B46E', clay: '#F58B7F', sky: '#9BC8D8',
+    surface: '#1B2226', surfaceElevated: '#252E32', border: '#3B4649', borderLight: '#2F393D',
+    snow: '#FFFFFF', forestSoft: '#344A20', sunriseSoft: '#516332',
+    accent: '#C3E76B', onAccent: '#171C20', hero: '#171C20', heroText: '#F3F5EF',
+    shadow: 'rgba(0,0,0,0.08)', shadowMedium: 'rgba(0,0,0,0.12)', shadowHeavy: 'rgba(0,0,0,0.16)',
   },
-
   // ============================================================================
   // WEIGHT THRESHOLDS (same in both modes)
   // ============================================================================

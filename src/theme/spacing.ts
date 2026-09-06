@@ -47,21 +47,21 @@ export const shadows = {
   // Light mode shadows
   light: {
     sm: {
-      shadowColor: '#2C2416',
+      shadowColor: '#171C20',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 2,
       elevation: 1,
     },
     md: {
-      shadowColor: '#2C2416',
+      shadowColor: '#171C20',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 4,
       elevation: 2,
     },
     lg: {
-      shadowColor: '#2C2416',
+      shadowColor: '#171C20',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.12,
       shadowRadius: 8,
@@ -71,21 +71,21 @@ export const shadows = {
   // Dark mode glows
   dark: {
     sm: {
-      shadowColor: '#FF9B6C',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.05,
       shadowRadius: 4,
       elevation: 1,
     },
     md: {
-      shadowColor: '#FF9B6C',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.08,
       shadowRadius: 8,
       elevation: 2,
     },
     lg: {
-      shadowColor: '#FF9B6C',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.12,
       shadowRadius: 12,

@@ -121,10 +121,7 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
       >
         {/* Hero Header */}
         <LinearGradient
-          colors={isDarkMode 
-            ? [colors.sunrise, colors.parchment] 
-            : [colors.sunrise, colors.sunriseSoft, colors.parchment]
-          }
+          colors={[colors.hero, colors.hero]}
           style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
         >
           {/* Navigation */}

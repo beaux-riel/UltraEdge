@@ -103,8 +103,8 @@ function UnitSelector<T extends string>({
                 <BodySmall color="tertiary">{option.description}</BodySmall>
               </View>
               {isSelected && (
-                <View style={[styles.checkmark, { backgroundColor: colors.forest }]}>
-                  <Ionicons name="checkmark" size={16} color={colors.snow} />
+                <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
+                  <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                 </View>
               )}
             </View>

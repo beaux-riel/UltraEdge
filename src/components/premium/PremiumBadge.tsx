@@ -42,12 +42,12 @@ export function PremiumBadge({
       case 'filled':
         return {
           container: {
-            backgroundColor: colors.sunrise,
+            backgroundColor: colors.accent,
           },
           text: {
-            color: colors.snow,
+            color: colors.onAccent,
           },
-          iconColor: colors.snow,
+          iconColor: colors.onAccent,
         };
       case 'outline':
         return {

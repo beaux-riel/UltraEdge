@@ -45,7 +45,8 @@ export function Card({
         return {
           backgroundColor: colors.cream,
           borderRadius: radius.md,
-          ...shadows.sm,
+          borderWidth: 1,
+          borderColor: colors.borderLight,
         };
       case 'elevated':
         return {
@@ -55,7 +56,7 @@ export function Card({
         };
       case 'hero':
         return {
-          backgroundColor: colors.forest,
+          backgroundColor: colors.hero,
           borderRadius: radius.xl,
           ...shadows.lg,
         };
@@ -72,8 +73,9 @@ export function Card({
   if (onPress) {
     return (
       <TouchableOpacity
+        accessibilityRole="button"
         onPress={handlePress}
-        activeOpacity={0.95}
+        activeOpacity={0.75}
         style={[containerStyle, style]}
       >
         {children}

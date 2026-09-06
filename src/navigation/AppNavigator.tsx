@@ -172,9 +172,9 @@ function MainTabs() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.forest,
-        tabBarInactiveTintColor: colors.mist,
+        tabBarInactiveTintColor: colors.stone,
         tabBarStyle: {
-          backgroundColor: colors.cream,
+          backgroundColor: colors.parchment,
           borderTopColor: colors.borderLight,
           paddingTop: 8,
           height: 84,

@@ -370,8 +370,8 @@ export default function EditGearScreen({ navigation, route }: any) {
                   style={[
                     styles.unitButton,
                     {
-                      backgroundColor: weightUnit === unit.value ? colors.trail : colors.cream,
-                      borderColor: weightUnit === unit.value ? colors.trail : colors.border,
+                      backgroundColor: weightUnit === unit.value ? colors.accent : colors.cream,
+                      borderColor: weightUnit === unit.value ? colors.accent : colors.border,
                     },
                   ]}
                   onPress={() => {
@@ -382,7 +382,7 @@ export default function EditGearScreen({ navigation, route }: any) {
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: weightUnit === unit.value ? colors.snow : colors.stone,
+                      color: weightUnit === unit.value ? colors.onAccent : colors.stone,
                       fontWeight: '600',
                     }}
                   >

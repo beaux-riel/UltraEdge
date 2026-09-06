@@ -168,10 +168,7 @@ export default function SignInScreen({ navigation }: any) {
       >
         {/* Header */}
         <LinearGradient
-          colors={isDarkMode 
-            ? [colors.forest, colors.parchment] 
-            : [colors.forest, colors.forestSoft, colors.parchment]
-          }
+          colors={[colors.hero, colors.hero]}
           style={[styles.header, { paddingTop: insets.top + spacing.md }]}
         >
           {/* Back button */}

@@ -183,7 +183,7 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
             size="sm"
             disabled={loading || eventsLoading || checkpointsLoading || !!error || !!eventError || !!checkpointError}
             onPress={() => navigation.navigate('CreateDropBag', { eventId: eventIdFilter })}
-            icon={<Ionicons name="add" size={18} color={colors.snow} />}
+            icon={<Ionicons name="add" size={18} color={colors.onAccent} />}
           >
             Add drop bag
           </Button>
@@ -246,15 +246,15 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
               style={[
                 styles.filterPill,
                 {
-                  backgroundColor: selectedEventId === 'all' ? colors.forest : colors.cream,
-                  borderColor: selectedEventId === 'all' ? colors.forest : colors.border,
+                  backgroundColor: selectedEventId === 'all' ? colors.accent : colors.cream,
+                  borderColor: selectedEventId === 'all' ? colors.accent : colors.border,
                 },
               ]}
               onPress={() => setSelectedEventId('all')}
             >
               <Text
                 variant="bodySmall"
-                style={{ color: selectedEventId === 'all' ? colors.snow : colors.stone }}
+                style={{ color: selectedEventId === 'all' ? colors.onAccent : colors.stone }}
               >
                 All Events
               </Text>
@@ -268,8 +268,8 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
                   style={[
                     styles.filterPill,
                     {
-                      backgroundColor: isSelected ? colors.forest : colors.cream,
-                      borderColor: isSelected ? colors.forest : colors.border,
+                      backgroundColor: isSelected ? colors.accent : colors.cream,
+                      borderColor: isSelected ? colors.accent : colors.border,
                     },
                   ]}
                   onPress={() => setSelectedEventId(event.id)}
@@ -277,12 +277,12 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
                   <Ionicons
                     name="calendar"
                     size={14}
-                    color={isSelected ? colors.snow : colors.mist}
+                    color={isSelected ? colors.onAccent : colors.mist}
                     style={{ marginRight: 4 }}
                   />
                   <Text
                     variant="bodySmall"
-                    style={{ color: isSelected ? colors.snow : colors.stone }}
+                    style={{ color: isSelected ? colors.onAccent : colors.stone }}
                     numberOfLines={1}
                   >
                     {event.name}

@@ -231,22 +231,22 @@ export default function CreateCheckpointScreen() {
               <TouchableOpacity
                 style={[
                   styles.unitOption,
-                  !useMetric && { backgroundColor: colors.trail }
+                  !useMetric && { backgroundColor: colors.accent }
                 ]}
                 onPress={() => setUseMetric(false)}
               >
-                <BodySmall style={{ color: !useMetric ? colors.snow : colors.stone, fontWeight: '600' }}>
+                <BodySmall style={{ color: !useMetric ? colors.onAccent : colors.stone, fontWeight: '600' }}>
                   mi / ft
                 </BodySmall>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.unitOption,
-                  useMetric && { backgroundColor: colors.trail }
+                  useMetric && { backgroundColor: colors.accent }
                 ]}
                 onPress={() => setUseMetric(true)}
               >
-                <BodySmall style={{ color: useMetric ? colors.snow : colors.stone, fontWeight: '600' }}>
+                <BodySmall style={{ color: useMetric ? colors.onAccent : colors.stone, fontWeight: '600' }}>
                   km / m
                 </BodySmall>
               </TouchableOpacity>
@@ -354,7 +354,7 @@ export default function CreateCheckpointScreen() {
                 onPress={() => setHasCrewAccess(!hasCrewAccess)}
               >
                 <View style={styles.toggleLeft}>
-                  <View style={[styles.toggleIcon, { backgroundColor: colors.trail + '20' }]}>
+                  <View style={[styles.toggleIcon, { backgroundColor: colors.accent + '20' }]}>
                     <Ionicons name="people" size={20} color={colors.trail} />
                   </View>
                   <View>
@@ -366,13 +366,13 @@ export default function CreateCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasCrewAccess ? colors.forest : 'transparent',
-                      borderColor: hasCrewAccess ? colors.forest : colors.border,
+                      backgroundColor: hasCrewAccess ? colors.accent : 'transparent',
+                      borderColor: hasCrewAccess ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasCrewAccess && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -396,13 +396,13 @@ export default function CreateCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasDropBag ? colors.forest : 'transparent',
-                      borderColor: hasDropBag ? colors.forest : colors.border,
+                      backgroundColor: hasDropBag ? colors.accent : 'transparent',
+                      borderColor: hasDropBag ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasDropBag && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -426,13 +426,13 @@ export default function CreateCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasPacerPickup ? colors.forest : 'transparent',
-                      borderColor: hasPacerPickup ? colors.forest : colors.border,
+                      backgroundColor: hasPacerPickup ? colors.accent : 'transparent',
+                      borderColor: hasPacerPickup ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasPacerPickup && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -456,13 +456,13 @@ export default function CreateCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasPacerDropoff ? colors.forest : 'transparent',
-                      borderColor: hasPacerDropoff ? colors.forest : colors.border,
+                      backgroundColor: hasPacerDropoff ? colors.accent : 'transparent',
+                      borderColor: hasPacerDropoff ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasPacerDropoff && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>

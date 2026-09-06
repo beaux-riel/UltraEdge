@@ -346,7 +346,7 @@ export default function CheckpointsListScreen() {
         <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
           <Button
             onPress={handleCreateCheckpoint}
-            icon={<Ionicons name="add" size={20} color={colors.snow} />}
+            icon={<Ionicons name="add" size={20} color={colors.onAccent} />}
           >
             Add Checkpoint
           </Button>

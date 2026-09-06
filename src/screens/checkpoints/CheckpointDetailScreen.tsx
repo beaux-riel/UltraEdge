@@ -399,7 +399,7 @@ export default function CheckpointDetailScreen() {
       <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
         <Button
           onPress={handleEdit}
-          icon={<Ionicons name="pencil" size={18} color={colors.snow} />}
+          icon={<Ionicons name="pencil" size={18} color={colors.onAccent} />}
         >
           Edit Checkpoint
         </Button>

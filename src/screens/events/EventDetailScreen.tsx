@@ -14,9 +14,10 @@ import {
   RefreshControl,
   Animated,
   Linking,
+  StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -67,6 +68,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   
   // Contexts
   const { getEvent, updateEvent, deleteEvent, refreshEvents } = useEvents();
@@ -119,6 +121,11 @@ export default function EventDetailScreen({ navigation, route }: Props) {
       loadRelationships();
     }, [loadRelationships])
   );
+
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('light-content', true);
+    return () => StatusBar.setBarStyle(isDarkMode ? 'light-content' : 'dark-content', true);
+  }, [isDarkMode]));
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -307,7 +314,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     });
   };
 
-  // Calculate days until event
+  // Calculate days to the start line
   const getDaysUntil = (dateStr: string | null): number | null => {
     if (!dateStr) return null;
     return daysUntilDate(dateStr);
@@ -388,7 +395,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             <Body numberOfLines={1}>{checkpoint.name}</Body>
             <BodySmall color="tertiary">
               {typeInfo.label}
-              {checkpoint.distance_from_start ? ` • ${checkpoint.distance_from_start} mi` : ''}
+              {checkpoint.distance_from_start != null ? ` • ${checkpoint.distance_from_start.toLocaleString('en-US', { maximumFractionDigits: 1 })} mi` : ''}
             </BodySmall>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.stone} />
@@ -525,30 +532,27 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           }
         >
           {/* Hero Header */}
-          <LinearGradient
-            colors={isDarkMode 
-              ? [colors.forest, colors.parchment] 
-              : [colors.forest, colors.forestSoft, colors.parchment]
-            }
-            style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
-          >
+          <View style={[styles.hero, { backgroundColor: colors.hero, paddingTop: insets.top + spacing.md }]}>
             {/* Navigation */}
             <View style={styles.heroNav}>
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={styles.navButton}
+                accessibilityRole="button" accessibilityLabel="Back"
               >
                 <Ionicons name="arrow-back" size={24} color={colors.snow} />
               </TouchableOpacity>
               <View style={styles.heroActions}>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('EditEvent', { eventId })}
+                  accessibilityRole="button" accessibilityLabel="Edit race plan"
                   style={styles.navButton}
                 >
                   <Ionicons name="pencil" size={22} color={colors.snow} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleDelete}
+                  accessibilityRole="button" accessibilityLabel="Delete event"
                   style={styles.navButton}
                 >
                   <Ionicons name="trash-outline" size={22} color={colors.snow} />
@@ -561,14 +565,15 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: 'rgba(0,0,0,0.25)' },
+                  { backgroundColor: 'rgba(255,255,255,0.08)' },
                 ]}
               >
-                <Caption style={{ color: colors.snow, fontWeight: '600' }}>
+                <Caption style={{ color: colors.accent, fontWeight: '700', letterSpacing: 1.4 }}>
                   {event.status.toUpperCase().replace('_', ' ')}
                 </Caption>
               </View>
-              <H1 style={{ color: colors.snow, marginTop: spacing.xs }}>{event.name}</H1>
+              <Caption style={{ color: colors.heroText, letterSpacing: 2, marginTop: spacing.lg }}>RACE FIELD GUIDE</Caption>
+              <H1 style={{ color: colors.heroText, marginTop: spacing.sm, fontSize: fontScale > 1.5 ? 26 : 36, lineHeight: fontScale > 1.5 ? 31 : 40 }}>{event.name}</H1>
               <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: spacing.xs }}>
                 {formatEventDate(event.event_date)}
                 {event.event_time && ` • ${event.event_time}`}
@@ -585,53 +590,50 @@ export default function EventDetailScreen({ navigation, route }: Props) {
 
             {/* Countdown */}
             {daysUntil !== null && daysUntil > 0 && (
-              <View style={styles.countdown}>
-                <Text variant="display" style={{ color: colors.snow }}>
+              <View style={[styles.countdown, { borderTopColor: 'rgba(255,255,255,0.16)' }]}>
+                <Text variant="h2" style={{ color: colors.accent }}>
                   {daysUntil}
                 </Text>
                 <BodySmall style={{ color: 'rgba(255,255,255,0.8)' }}>
-                  days until event
+                  days to the start line
                 </BodySmall>
               </View>
             )}
-          </LinearGradient>
+          </View>
 
-          {/* Stats Cards */}
-          <View style={[styles.content, { marginTop: -spacing.xl }]}>
-            <View style={styles.statsRow}>
-              {/* Distance */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="navigate-outline" size={24} color={colors.forest} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.total_distance || '—'}
-                  </Text>
-                  <Caption>{event.distance_unit}</Caption>
-                </CardContent>
-              </Card>
-
-              {/* Elevation */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="trending-up-outline" size={24} color={colors.trail} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.total_elevation_gain?.toLocaleString() || '—'}
-                  </Text>
-                  <Caption>{event.elevation_unit}</Caption>
-                </CardContent>
-              </Card>
-
-              {/* Time */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="timer-outline" size={24} color={colors.sunrise} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.target_time || '—'}
-                  </Text>
-                  <Caption>target</Caption>
-                </CardContent>
-              </Card>
+          {/* Measured course figures, kept separate from preparation status. */}
+          <View style={styles.content}>
+            <View style={[styles.statsRow, { borderBottomColor: colors.border }]}>
+              {[
+                { label: 'DISTANCE', value: event.total_distance == null ? '—' : event.total_distance.toLocaleString('en-US', { maximumFractionDigits: 1 }), unit: event.distance_unit === 'kilometers' ? 'km' : 'mi' },
+                { label: 'ASCENT', value: event.total_elevation_gain == null ? '—' : event.total_elevation_gain.toLocaleString('en-US', { maximumFractionDigits: 0 }), unit: event.elevation_unit === 'meters' ? 'm' : 'ft' },
+                { label: 'TARGET', value: event.target_time || '—', unit: 'time' },
+              ].map(stat => (
+                <View key={stat.label} style={[styles.statCard, { minWidth: 85 * fontScale }]}>
+                  <Caption style={{ letterSpacing: 1, fontSize: 10 }}>{stat.label}</Caption>
+                  <Text variant="h2" style={{ marginTop: spacing.xs, fontSize: 24, lineHeight: 30, fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
+                  <Caption>{stat.unit}</Caption>
+                </View>
+              ))}
             </View>
+
+            {/* Course Route (GPX) */}
+            <GPXRouteSection
+              eventId={eventId}
+              gpxFileUrl={event.gpx_file_url}
+              onGpxChange={async (fileUri, stats) => {
+                const updates: EventUpdate = { gpx_file_url: fileUri };
+                if (stats) {
+                  Object.assign(
+                    updates,
+                    eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
+                  );
+                }
+                if (!await updateEvent(eventId, updates)) {
+                  throw new Error('The event is no longer available. Refresh before importing a route.');
+                }
+              }}
+            />
 
             {/* Description */}
             {event.description && (
@@ -685,24 +687,6 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 </Card>
               </TouchableOpacity>
             )}
-
-            {/* Course Route (GPX) */}
-            <GPXRouteSection
-              eventId={eventId}
-              gpxFileUrl={event.gpx_file_url}
-              onGpxChange={async (fileUri, stats) => {
-                const updates: EventUpdate = { gpx_file_url: fileUri };
-                if (stats) {
-                  Object.assign(
-                    updates,
-                    eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
-                  );
-                }
-                if (!await updateEvent(eventId, updates)) {
-                  throw new Error('The event is no longer available. Refresh before importing a route.');
-                }
-              }}
-            />
 
             {/* Race Plan Export */}
             <ExportRacePlanButton
@@ -882,9 +866,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: 20,
-    paddingBottom: 48,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 24,
   },
   heroNav: {
     flexDirection: 'row',
@@ -892,7 +874,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navButton: {
-    padding: 8,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
   },
   heroActions: {
     flexDirection: 'row',
@@ -913,23 +897,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   countdown: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    gap: 10,
+    borderTopWidth: 1,
+    paddingTop: 16,
+    marginTop: 20,
   },
   content: {
     paddingHorizontal: 20,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingVertical: 24,
+    borderBottomWidth: 1,
+    marginBottom: 4,
   },
   statCard: {
     flex: 1,
-    alignItems: 'center',
+    minWidth: 85,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -958,13 +949,13 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
   },
   listItemIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,

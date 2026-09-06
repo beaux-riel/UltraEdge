@@ -257,7 +257,7 @@ export default function GearListScreen({ navigation }: any) {
             size="sm"
             disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateGear')}
-            icon={<Ionicons name="add" size={18} color={colors.snow} />}
+            icon={<Ionicons name="add" size={18} color={colors.onAccent} />}
           >
             Add gear
           </Button>
@@ -320,15 +320,15 @@ export default function GearListScreen({ navigation }: any) {
             style={[
               styles.filterPill,
               {
-                backgroundColor: selectedCategory === 'all' ? colors.forest : colors.cream,
-                borderColor: selectedCategory === 'all' ? colors.forest : colors.border,
+                backgroundColor: selectedCategory === 'all' ? colors.accent : colors.cream,
+                borderColor: selectedCategory === 'all' ? colors.accent : colors.border,
               },
             ]}
             onPress={() => setSelectedCategory('all')}
           >
             <Text
               variant="bodySmall"
-              style={{ color: selectedCategory === 'all' ? colors.snow : colors.stone }}
+              style={{ color: selectedCategory === 'all' ? colors.onAccent : colors.stone }}
             >
               All
             </Text>

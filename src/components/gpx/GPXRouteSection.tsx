@@ -45,6 +45,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
   const { spacing } = theme;
   const { width } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
+  const [contentWidth, setContentWidth] = useState<number | null>(null);
   const [resolvedUri, setResolvedUri] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadFailed, setDownloadFailed] = useState(false);
@@ -165,7 +166,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
         <>
           <GPXViewer
             fileUri={resolvedUri}
-            width={width - spacing.lg * 2 - CARD_PADDING * 2}
+            width={contentWidth ?? width - spacing.lg * 2 - CARD_PADDING * 2}
           />
           <Button
             variant="secondary"
@@ -233,7 +234,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <H2>Route</H2>
+        <H2>The course</H2>
         {resolvedUri && (
           <Button variant="tertiary" size="sm" onPress={handlePick} disabled={busy}>
             Replace
@@ -241,7 +242,9 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
         )}
       </View>
       <Card>
-        <CardContent>{renderBody()}</CardContent>
+        <CardContent>
+          <View onLayout={e => setContentWidth(e.nativeEvent.layout.width)}>{renderBody()}</View>
+        </CardContent>
       </Card>
     </View>
   );
@@ -250,6 +253,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
 const styles = StyleSheet.create({
   section: {
     marginTop: 24,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',

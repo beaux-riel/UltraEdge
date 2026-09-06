@@ -277,9 +277,9 @@ export default function EventsListScreen({ navigation }: Props) {
             accessibilityLabel="Create event"
             disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateEvent')}
-            style={[styles.addButton, { backgroundColor: colors.forest }]}
+            style={[styles.addButton, { backgroundColor: colors.accent }]}
           >
-            <Ionicons name="add" size={24} color={colors.snow} />
+            <Ionicons name="add" size={24} color={colors.onAccent} />
           </TouchableOpacity>
         </View>
 

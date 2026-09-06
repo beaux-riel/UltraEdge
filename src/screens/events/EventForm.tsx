@@ -244,22 +244,22 @@ export function EventForm({
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  { backgroundColor: distanceUnit === 'miles' ? colors.forest : colors.surface },
+                  { backgroundColor: distanceUnit === 'miles' ? colors.accent : colors.surface },
                   { borderTopLeftRadius: radius.sm, borderBottomLeftRadius: radius.sm },
                 ]}
                 onPress={() => setDistanceUnit('miles')}
               >
-                <BodySmall color={distanceUnit === 'miles' ? 'inverse' : 'secondary'}>mi</BodySmall>
+                <BodySmall style={{ color: distanceUnit === 'miles' ? colors.onAccent : colors.stone }}>mi</BodySmall>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  { backgroundColor: distanceUnit === 'kilometers' ? colors.forest : colors.surface },
+                  { backgroundColor: distanceUnit === 'kilometers' ? colors.accent : colors.surface },
                   { borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm },
                 ]}
                 onPress={() => setDistanceUnit('kilometers')}
               >
-                <BodySmall color={distanceUnit === 'kilometers' ? 'inverse' : 'secondary'}>km</BodySmall>
+                <BodySmall style={{ color: distanceUnit === 'kilometers' ? colors.onAccent : colors.stone }}>km</BodySmall>
               </TouchableOpacity>
             </View>
           </View>
@@ -284,22 +284,22 @@ export function EventForm({
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  { backgroundColor: elevationUnit === 'feet' ? colors.forest : colors.surface },
+                  { backgroundColor: elevationUnit === 'feet' ? colors.accent : colors.surface },
                   { borderTopLeftRadius: radius.sm, borderBottomLeftRadius: radius.sm },
                 ]}
                 onPress={() => setElevationUnit('feet')}
               >
-                <BodySmall color={elevationUnit === 'feet' ? 'inverse' : 'secondary'}>ft</BodySmall>
+                <BodySmall style={{ color: elevationUnit === 'feet' ? colors.onAccent : colors.stone }}>ft</BodySmall>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.unitButton,
-                  { backgroundColor: elevationUnit === 'meters' ? colors.forest : colors.surface },
+                  { backgroundColor: elevationUnit === 'meters' ? colors.accent : colors.surface },
                   { borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm },
                 ]}
                 onPress={() => setElevationUnit('meters')}
               >
-                <BodySmall color={elevationUnit === 'meters' ? 'inverse' : 'secondary'}>m</BodySmall>
+                <BodySmall style={{ color: elevationUnit === 'meters' ? colors.onAccent : colors.stone }}>m</BodySmall>
               </TouchableOpacity>
             </View>
           </View>
@@ -354,13 +354,13 @@ export function EventForm({
                 style={[
                   styles.statusChip,
                   { 
-                    backgroundColor: status === s ? colors.forest : colors.cream,
-                    borderColor: status === s ? colors.forest : colors.border,
+                    backgroundColor: status === s ? colors.accent : colors.cream,
+                    borderColor: status === s ? colors.accent : colors.border,
                   },
                 ]}
                 onPress={() => setStatus(s)}
               >
-                <BodySmall color={status === s ? 'inverse' : 'secondary'}>
+                <BodySmall style={{ color: status === s ? colors.onAccent : colors.stone }}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </BodySmall>
               </TouchableOpacity>

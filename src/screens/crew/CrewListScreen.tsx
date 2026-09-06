@@ -134,7 +134,7 @@ export default function CrewListScreen({ navigation }: any) {
             size="sm"
             disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateCrew')}
-            icon={<Ionicons name="add" size={18} color={colors.snow} />}
+            icon={<Ionicons name="add" size={18} color={colors.onAccent} />}
           >
             Add crew member
           </Button>

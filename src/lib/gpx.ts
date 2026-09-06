@@ -83,22 +83,27 @@ const ELEVATION_NOISE_THRESHOLD_M = 3;
 
 /** Extract track (or route) points from GPX XML. Invalid points are skipped. */
 export function parseGpx(xml: string): GpxPoint[] {
-  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  const doc = new DOMParser({
+    onError: () => { throw new Error('The GPX file contains malformed XML.'); },
+  }).parseFromString(xml, 'text/xml');
+  if (doc.documentElement?.localName !== 'gpx') {
+    throw new Error('Choose a GPX course file.');
+  }
   let nodes = doc.getElementsByTagName('trkpt');
   if (nodes.length === 0) nodes = doc.getElementsByTagName('rtept');
 
   const points: GpxPoint[] = [];
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
-    const lat = parseFloat(node.getAttribute('lat') || '');
-    const lon = parseFloat(node.getAttribute('lon') || '');
-    if (isNaN(lat) || isNaN(lon)) continue;
+    const lat = Number(node.getAttribute('lat')?.trim() || NaN);
+    const lon = Number(node.getAttribute('lon')?.trim() || NaN);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
 
     let ele: number | undefined;
     const eleNodes = node.getElementsByTagName('ele');
     if (eleNodes.length > 0) {
-      const parsed = parseFloat(eleNodes[0].textContent || '');
-      if (!isNaN(parsed)) ele = parsed;
+      const parsed = Number(eleNodes[0].textContent?.trim() || NaN);
+      if (Number.isFinite(parsed)) ele = parsed;
     }
     points.push({ lat, lon, ele });
   }
@@ -117,7 +122,7 @@ export function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: n
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(a));
+  return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
 }
 
 // ============================================================================

@@ -1,23 +1,22 @@
+import { resolveLocalGpxUri } from '../../lib/localGpxUri';
 /**
  * GPX route section for the event detail screen:
  * upload, preview, replace, and remove a course GPX file.
  *
- * Signed-in users get cloud sync: files upload to Supabase Storage and
- * `gpx_file_url` holds the storage path, so routes follow the account across
- * devices. Signed-out (or offline) imports fall back to a device-local
- * `file:` URI, and are opportunistically uploaded once the user is signed in.
+ * V1 imports remain on this device. Legacy remote references can still be
+ * read, but importing never uploads private course data automatically.
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, Dimensions } from 'react-native';
+import { View, StyleSheet, Alert, useWindowDimensions } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 
 import { useTheme } from '../../theme';
-import { useAuth } from '../../context/AuthContext';
 import { H2, BodySmall, Button, Card, CardContent } from '../ui';
-import { isRemoteGpxPath, uploadGpx, downloadGpx, removeGpx } from '../../lib/gpxStorage';
-import { GpxRouteStats, parseGpx, computeRouteMetrics } from '../../lib/gpx';
+import { isRemoteGpxPath, downloadGpx } from '../../lib/gpxStorage';
+import { GpxRouteStats } from '../../lib/gpx';
+import { importLocalGpx } from '../../lib/importGpx';
 import GPXViewer from './GPXViewer';
 
 interface GPXRouteSectionProps {
@@ -44,7 +43,7 @@ const cachedGpxFile = (eventId: string) => new File(gpxDir(), `${eventId}.gpx`);
 export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GPXRouteSectionProps) {
   const { theme } = useTheme();
   const { spacing } = theme;
-  const { user } = useAuth();
+  const { width } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   const [resolvedUri, setResolvedUri] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -54,6 +53,8 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
   useEffect(() => {
     let cancelled = false;
     setDownloadFailed(false);
+    setDownloading(false);
+    setResolvedUri(null);
 
     const resolve = async () => {
       if (!gpxFileUrl) {
@@ -62,7 +63,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
       }
 
       if (!isRemoteGpxPath(gpxFileUrl)) {
-        const local = new File(gpxFileUrl);
+        const local = new File(resolveLocalGpxUri(gpxFileUrl, Paths.document.uri));
         const exists = (() => {
           try {
             return local.exists;
@@ -70,18 +71,8 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
             return false;
           }
         })();
-        setResolvedUri(exists ? gpxFileUrl : null);
+        setResolvedUri(exists ? local.uri : null);
 
-        // Legacy device-local route + signed-in user: promote it to cloud
-        // storage so it syncs. Failures are silent; the local copy still works.
-        if (exists && user) {
-          try {
-            const path = await uploadGpx(user.id, eventId, local);
-            if (!cancelled) await onGpxChange(path);
-          } catch {
-            // offline or storage unavailable — retry next time
-          }
-        }
         return;
       }
 
@@ -105,13 +96,19 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
       }
     };
 
-    resolve();
+    resolve().catch(() => {
+      if (!cancelled) {
+        setResolvedUri(null);
+        setDownloadFailed(true);
+        setDownloading(false);
+      }
+    });
     return () => {
       cancelled = true;
     };
     // onGpxChange is an inline prop; re-running on its identity would loop the effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gpxFileUrl, eventId, user?.id, retryToken]);
+  }, [gpxFileUrl, eventId, retryToken]);
 
   const handlePick = async () => {
     try {
@@ -129,49 +126,19 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
       }
 
       setBusy(true);
-      const dest = cachedGpxFile(eventId);
-      if (dest.exists) dest.delete();
-      new File(asset.uri).copy(dest);
-      setResolvedUri(dest.uri);
+      const uri = await importLocalGpx(asset.uri, eventId, onGpxChange);
+      setResolvedUri(uri);
+      // Prior files remain recoverable until explicit local-data cleanup.
 
-      // Derive course stats from the imported route so the event's
-      // distance/elevation fields can be auto-populated.
-      let stats: GpxRouteStats | undefined;
-      try {
-        const metrics = computeRouteMetrics(parseGpx(await dest.text()));
-        if (metrics) {
-          stats = {
-            totalDistanceMi: metrics.totalDistanceMi,
-            elevationGainFt: metrics.elevationGainFt,
-            elevationLossFt: metrics.elevationLossFt,
-          };
-        }
-      } catch {
-        // Unparseable file — the viewer will surface the error; skip stats.
-      }
-
-      if (user) {
-        try {
-          const path = await uploadGpx(user.id, eventId, dest);
-          await onGpxChange(path, stats);
-          return;
-        } catch {
-          Alert.alert(
-            'Saved On This Device',
-            'The route was imported but could not be uploaded to your account yet. It will sync automatically later.'
-          );
-        }
-      }
-      await onGpxChange(dest.uri, stats);
     } catch (e) {
-      Alert.alert('Error', 'Failed to import the GPX file. Please try again.');
+      Alert.alert('Import Failed', e instanceof Error ? e.message : 'Failed to import the GPX file. Your previous route is unchanged.');
     } finally {
       setBusy(false);
     }
   };
 
   const handleRemove = () => {
-    Alert.alert('Remove Route?', 'The GPX file will be removed from this event on all devices.', [
+    Alert.alert('Remove Route?', 'Remove the route from this plan on this device?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -179,22 +146,9 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
         onPress: async () => {
           setBusy(true);
           try {
-            if (isRemoteGpxPath(gpxFileUrl)) {
-              try {
-                await removeGpx(gpxFileUrl);
-              } catch {
-                // storage cleanup is best-effort; the event reference is the
-                // source of truth and is cleared below
-              }
-            }
-            const cached = cachedGpxFile(eventId);
-            if (cached.exists) cached.delete();
-            if (gpxFileUrl && !isRemoteGpxPath(gpxFileUrl)) {
-              const legacy = new File(gpxFileUrl);
-              if (legacy.exists) legacy.delete();
-            }
-            setResolvedUri(null);
+            // Clear the durable reference first. Existing files remain recoverable.
             await onGpxChange(null);
+            setResolvedUri(null);
           } catch (e) {
             Alert.alert('Error', 'Failed to remove the route.');
           } finally {
@@ -211,7 +165,7 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
         <>
           <GPXViewer
             fileUri={resolvedUri}
-            width={Dimensions.get('window').width - spacing.lg * 2 - CARD_PADDING * 2}
+            width={width - spacing.lg * 2 - CARD_PADDING * 2}
           />
           <Button
             variant="secondary"

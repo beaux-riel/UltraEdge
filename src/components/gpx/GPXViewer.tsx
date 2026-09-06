@@ -1,3 +1,4 @@
+import { resolveLocalGpxUri } from '../../lib/localGpxUri';
 /**
  * GPX course viewer.
  *
@@ -27,7 +28,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import { File } from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -104,7 +105,7 @@ export default function GPXViewer({
       setLoading(true);
       setError(null);
       try {
-        const content = await new File(fileUri).text();
+        const content = await new File(resolveLocalGpxUri(fileUri, Paths.document.uri)).text();
         const computed = computeRouteMetrics(parseGpx(content));
         if (!computed) throw new Error('No track points found');
         if (!cancelled) setMetrics(computed);

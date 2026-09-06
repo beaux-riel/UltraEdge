@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { View, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { BodySmall, Button } from './ui';
-import { attachmentUri, saveAttachment } from '../lib/attachments';
+import { attachmentUri, saveAttachment, retainAttachment, releaseAttachmentImport } from '../lib/attachments';
 export default function PhotoField({
   value,
   onChange,
@@ -15,15 +15,36 @@ export default function PhotoField({
   onBusyChange?: (busy: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const mounted = useRef(true);
+  const lock = useRef(false);
+  const imported = useRef(new Set<string>());
+  useLayoutEffect(() => {
+    const release = retainAttachment(value);
+    if (value && imported.current.delete(value)) {
+      releaseAttachmentImport(value);
+    }
+    return release;
+  }, [value]);
+  useEffect(() => {
+    mounted.current = true;
+    const pendingImports = imported.current;
+    return () => {
+      mounted.current = false;
+      pendingImports.forEach(releaseAttachmentImport);
+      pendingImports.clear();
+    };
+  }, []);
   useEffect(() => {
     onBusyChange?.(busy);
     return () => onBusyChange?.(false);
   }, [busy, onBusyChange]);
   const pick = async () => {
-    if (busy) {
+    if (lock.current) {
       return;
     }
+    lock.current = true;
     setBusy(true);
+    let path: string | undefined;
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
@@ -31,22 +52,35 @@ export default function PhotoField({
         allowsEditing: false,
         exif: false,
       });
-      if (!result.canceled) {
+      if (!result.canceled && mounted.current) {
         const asset = result.assets[0];
         const saved = await saveAttachment(
           asset.uri,
           asset.fileName || 'Gear photo',
           asset.mimeType || 'image/jpeg',
         );
-        await onChange?.(saved.path);
+        path = saved.path;
+        if (!mounted.current) {
+          releaseAttachmentImport(path);
+          return;
+        }
+        imported.current.add(path);
+        await onChange?.(path);
       }
     } catch (e) {
+      if (path) {
+        imported.current.delete(path);
+        releaseAttachmentImport(path);
+      }
       Alert.alert(
         'Photo not saved',
         e instanceof Error ? e.message : 'Please try again.',
       );
     } finally {
-      setBusy(false);
+      lock.current = false;
+      if (mounted.current) {
+        setBusy(false);
+      }
     }
   };
   let uri: string | undefined;
@@ -83,13 +117,20 @@ export default function PhotoField({
               disabled={busy || disabled}
               variant="tertiary"
               onPress={async () => {
+                if (lock.current) {
+                  return;
+                }
+                lock.current = true;
                 setBusy(true);
                 try {
                   await onChange(null);
                 } catch {
                   Alert.alert('Photo not removed', 'Please try again.');
                 } finally {
-                  setBusy(false);
+                  lock.current = false;
+                  if (mounted.current) {
+                    setBusy(false);
+                  }
                 }
               }}
             >

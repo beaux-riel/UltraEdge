@@ -5,7 +5,7 @@ import * as Sharing from 'expo-sharing';
 import * as FS from 'expo-file-system/legacy';
 import { useEvents } from '../context/EventContext';
 import { Event } from '../lib/database.types';
-import { saveAttachment, attachmentUri, attachmentShareUri } from '../lib/attachments';
+import { saveAttachment, attachmentUri, attachmentShareUri, releaseAttachmentImport } from '../lib/attachments';
 import { Button, H3, BodySmall, Card, CardContent } from './ui';
 export default function RaceGuidePanel({ event }: { event: Event }) {
   const { updateEvent } = useEvents();
@@ -41,8 +41,12 @@ export default function RaceGuidePanel({ event }: { event: Event }) {
       }
       const a = result.assets[0];
       const file = await saveAttachment(a.uri, a.name, 'application/pdf');
-      if (!(await updateEvent(event.id, { raceGuide: file }))) {
-        throw new Error('Race no longer exists.');
+      try {
+        if (!(await updateEvent(event.id, { raceGuide: file }))) {
+          throw new Error('Race no longer exists.');
+        }
+      } finally {
+        releaseAttachmentImport(file.path);
       }
     });
   const share = () =>

@@ -4,13 +4,14 @@ import {View,Modal,ScrollView,TextInput,Alert,Share,AppState,Keyboard} from 'rea
 import {Body,BodySmall,H2,H3,Button} from './ui';
 import {useTheme} from '../theme';
 import {LiveRoom,LiveSnapshot,liveProjection} from '../lib/liveRaceModel';
-import {readLiveCache,createLiveRoom,joinLiveRoom,syncLiveRoom,queueLiveReport,publishLiveRoom,removeLiveAccess,discardPendingReports,forgetLiveRoom,recoverLiveRooms,deleteLiveIdentity,LiveCache} from '../lib/liveRaceSync';
+import {readLiveCache,createLiveRoom,joinLiveRoom,syncLiveRoom,queueLiveReport,publishLiveRoom,removeLiveAccess,discardPendingReports,forgetLiveRoom,recoverLiveRooms,deleteLiveIdentity,reportLiveAbuse,blockLiveUser,abuseReasons,LiveCache} from '../lib/liveRaceSync';
 import {clockLabel,parseLocalRaceTime,projectedDistance} from '../lib/raceOperations';
 interface Props { snapshot?:()=>LiveSnapshot; }
 export default function LiveRacePanel({snapshot}:Props){
  const {theme:{colors}}=useTheme();const [open,setOpen]=useState(false);const [cache,setCache]=useState<LiveCache>({rooms:[],pending:[],actorId:null,lastSync:{}});
  const [roomId,setRoomId]=useState<string|null>(null);const [name,setName]=useState('');const [code,setCode]=useState('');const [at,setAt]=useState('');const [busy,setBusy]=useState(false);const [status,setStatus]=useState('');const active=useRef(false);const polling=useRef(false);
  const room=cache.rooms.find(r=>r.id===roomId);const projection=room?liveProjection(room):null;
+ const [reportTarget,setReportTarget]=useState<string|null>(null);const [reportDetails,setReportDetails]=useState('');
  const refreshCache=async()=>{const value=await readLiveCache();if(active.current)setCache(value);};
  const sync=async(id:string)=>{if(polling.current)return;polling.current=true;try{await syncLiveRoom(id);if(active.current)setStatus('Connected — team updates checked every 10 seconds while open.');}catch(e){if(active.current)setStatus(`Not synced: ${e instanceof Error?e.message:(e as {message?:string})?.message??'Connection unavailable. Saved reports will retry.'}`);}finally{polling.current=false;await refreshCache();}};
  useEffect(()=>{active.current=open;if(open)refreshCache();return()=>{active.current=false;};},[open]);
@@ -23,11 +24,11 @@ export default function LiveRacePanel({snapshot}:Props){
  {!room?<>
  <Body>Share a private race with your crew. Only joined team members can read it or record times.</Body>
  <BodySmall>Team access is saved securely on this phone. Keep the app installed to retain access; a new phone needs a new crew invitation. Race timing, crew names and vehicle/cargo labels are shared. Phone numbers, emails, personal notes and route files are excluded.</BodySmall>
+ <BodySmall>Keep team content respectful. No harassment, hate, threats or sexual content. Basic server filtering applies to shared text. Report a member or the plan owner from Team access; blocking also prevents joining teams together with the same guest identities.</BodySmall>
  {field('Your team display name',name,setName)}
  {snapshot&&<Button disabled={busy||!name.trim()} onPress={()=>confirm('Share this race?','Publish the current timing and logistics plan. Existing local time reports stay local; use this live room for team observations.',async()=>{const result=await createLiveRoom(snapshot(),name.trim());setRoomId(result.id);})}>Create / open shared race</Button>}
  {field('Private invitation code',code,setCode)}<Button disabled={busy||!name.trim()||!code.trim()} onPress={()=>work(async()=>{const result=await joinLiveRoom(code,name.trim());setRoomId(result.id);})}>Join team race</Button>
  <Button disabled={busy} variant="tertiary" onPress={()=>work(recoverLiveRooms)}>Reload my team races</Button>
- {cache.actorId&&<Button disabled={busy} variant="tertiary" onPress={()=>confirm('Delete collaboration identity and data?','Deletes all team rooms you own and your reports/memberships, and clears unsent reports on this device. Your local race plans remain.',deleteLiveIdentity)}>Delete my collaboration data</Button>}
  {cache.rooms.map(r=><Button key={r.id} variant="tertiary" onPress={()=>setRoomId(r.id)}>{r.snapshot.event.name}</Button>)}
  </>:<>
  <Button variant="tertiary" onPress={()=>setRoomId(null)}>All shared races</Button><H3>{room.snapshot.event.name}</H3>
@@ -49,9 +50,22 @@ export default function LiveRacePanel({snapshot}:Props){
  </View>;})}
  <H3>Team logistics</H3>{room.snapshot.logistics.map((line,i)=><BodySmall key={i}>{line}</BodySmall>)}
  <H3>Team access</H3>{room.members.map(m=><View key={m.id}><BodySmall>{m.name}{m.id===room.ownerId?' • runner / owner':''}</BodySmall>{room.ownerId===cache.actorId&&m.id!==cache.actorId&&<Button variant="tertiary" disabled={busy} onPress={()=>confirm('Remove team member?','Their existing reports remain in the history. The invitation code changes to prevent rejoining with the old code.',async()=>{await removeLiveAccess(room,m.id);})}>Remove {m.name}</Button>}</View>)}
+ <BodySmall>For abusive plan text, report the runner / owner. Reports send the selected reason, details, member identity and relevant shared content to a private server queue, not to the team. This is not an emergency service; submission does not guarantee a human response.</BodySmall>
+ {room.members.filter(member=>member.id!==cache.actorId).map(member=><View key={`safety-${member.id}`} style={{gap:8}}>
+ <Button variant="tertiary" disabled={busy} onPress={()=>{setReportTarget(member.id);setReportDetails('');}}>Report {member.name}</Button>
+ <Button variant="tertiary" disabled={busy} onPress={()=>confirm(`Block ${member.name}?`,'You leave every shared team with this person unless you own it; in your teams they are removed and invites rotate. Unsent observations for teams you leave are discarded. Their observations are hidden from you. Report first if needed. Blocks persist for these guest identities until either identity is deleted; saved copies on other phones cannot be recalled.',async()=>{await blockLiveUser(room,member.id);setReportTarget(null);setRoomId(null);setStatus('User blocked.');})}>Block {member.name}</Button>
+ </View>)}
+ {reportTarget&&room.members.some(member=>member.id===reportTarget)&&<View style={{gap:8}}>
+ <H3>Report {room.members.find(member=>member.id===reportTarget)?.name}</H3>
+ <BodySmall>Do not include private contacts or health details. Choose a reason below to send. A connection is required; failed reports are not queued offline.</BodySmall>
+ {field('Report details (optional, 1,000 characters maximum)',reportDetails,setReportDetails)}
+ {abuseReasons.map(reason=><Button key={reason} disabled={busy||reportDetails.trim().length>1000} variant="tertiary" onPress={()=>confirm('Send private abuse report?',`Send this report as ${cache.rooms.find(saved=>saved.id===room.id)?.members.find(member=>member.id===cache.actorId)?.name??'your guest identity'} with the relevant shared content.`,async()=>{const receipt=await reportLiveAbuse(room,reportTarget,reason,reportDetails);setReportTarget(null);setReportDetails('');Alert.alert('Report received',`Saved to the report queue. Reference: ${receipt.id}. This is not confirmation of human review. You can also block the member.`);})}>Send report: {reason.replace('_',' ')}</Button>)}
+ <Button variant="tertiary" onPress={()=>setReportTarget(null)}>Cancel report</Button>
+ </View>}
  {!!cache.pending.filter(r=>r.roomId===room.id).length&&<Button variant="tertiary" onPress={()=>confirm('Discard unsent reports?','This removes all pending observations for this race from this device. Synced observations remain.',async()=>{await discardPendingReports(room.id);})}>Discard pending reports</Button>}
  <Button disabled={busy} variant="tertiary" onPress={()=>confirm(room.ownerId===cache.actorId?'Stop sharing?':'Leave team race?',room.ownerId===cache.actorId?'Delete the shared room and its reports for everyone. Your local race remains.':'Remove your team access and saved copy on this device.',async()=>{await removeLiveAccess(room);setRoomId(null);})}>{room.ownerId===cache.actorId?'Stop sharing and delete team room':'Leave team race'}</Button>
  <Button variant="tertiary" onPress={()=>confirm('Remove saved copy from this device?','Also discards unsent reports. This does not revoke server access or stop sharing; use the controls above when online.',async()=>{await forgetLiveRoom(room.id);setRoomId(null);})}>Remove offline copy</Button>
  </>}
+ <Button disabled={busy} variant="tertiary" onPress={()=>confirm('Delete collaboration identity and data?','Requires a connection. Deletes all team rooms you own, your observations and memberships, abuse reports involving your identity, and blocks. Clears unsent observations on this device. Your local race plans remain. If the server request fails, your saved collaboration data stays here so you can retry.',async()=>{await deleteLiveIdentity();setRoomId(null);setReportTarget(null);Alert.alert('Collaboration data deleted','Your guest identity and associated server data were deleted. Local race plans remain. Previously downloaded copies on other phones and provider backups are separate.');})}>Delete my collaboration data</Button>
  </ScrollView></View></Modal></>;
 }

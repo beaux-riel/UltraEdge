@@ -1,5 +1,4 @@
 import { DateTimeInput, DurationInput } from './StructuredTimeInput';
-import LiveRacePanel from './LiveRacePanel';
 import { makeLiveSnapshot } from '../lib/liveRaceModel';
 import React, { useEffect, useState, useRef } from 'react';
 import { View, TextInput, Alert, Modal, ScrollView, TouchableOpacity, Keyboard } from 'react-native';
@@ -62,7 +61,6 @@ export default function RaceOperationsPanel({ event, checkpoints, crew, bags, ge
   return <Card style={{ marginVertical: 16 }}><CardContent>
     <H2>Race operations</H2>
     <BodySmall style={{ marginVertical: 8 }}>{projection ? `Projected finish ${clockLabel(projection.finish)} • ${projection.stopMinutes} min at stations` : 'Set a start date/time, target HH:MM, total distance and ordered checkpoint distances to see ETAs.'}</BodySmall>
-    <LiveRacePanel snapshot={() => makeLiveSnapshot(event, checkpoints, ops, [...ops.duties.map(d => `${checkpoints.find(cp=>cp.id===d.checkpointId)?.name}: ${crew.find(c=>c.id===d.crewMemberId)?.name} — ${d.role}`), ...ops.vehicles.map(v=>`${v.name} • Owner: ${crew.find(c=>c.id===v.ownerId)?.name??'Unassigned'} • Crew: ${v.crewIds.map(id=>crew.find(c=>c.id===id)?.name).join(', ')} • Cargo: ${ops.cargo.filter(c=>c.vehicleId===v.id).map(c=>c.label).join(', ')}`)])} />
     <Button disabled={!ready} onPress={() => { setTab('planning'); setOpen(true); }}>Plan aid-station stops</Button>
     <Button disabled={!ready} variant="secondary" onPress={() => { setTab('timeline'); setOpen(true); }}>Race day: record actual times</Button>
     <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>

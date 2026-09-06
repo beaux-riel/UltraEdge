@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerAttachmentCleanup, retainAttachmentRecords, assertAttachmentRecordsAvailable } from './attachmentRetention';
 
 const JOURNAL_KEY = '@ultraedge/pending-plan-write';
 type Entry = [string, string];
@@ -9,11 +10,32 @@ const listeners = new Set<(keys: string[]) => void>();
 export function runLocalPlanOperation<T>(operation: () => Promise<T>): Promise<T> {
   const result = queue.then(async () => {
     await recoverPendingPlanWrite();
-    return operation();
+    const value = await operation();
+    await sweepAttachments();
+    return value;
   });
   queue = result.catch(() => undefined);
   return result;
 }
+
+async function sweepAttachments(): Promise<void> {
+  try {
+    if (await AsyncStorage.getItem(JOURNAL_KEY)) return;
+    const records = [];
+    for (const key of ['@ultraedge/events', '@ultraedge/gear-items', '@ultraedge/dropbags', '@ultraedge/dropbag-templates', '@ultraedge/crew', '@ultraedge/event-crew', '@ultraedge/event-gear', '@ultraedge/race-operations']) {
+      records.push(await readArray(key));
+    }
+    records.push(await readCheckpointMap());
+    const { cleanupAttachments }: typeof import('./attachments') = require('./attachments');
+    await cleanupAttachments(records);
+  } catch {
+    return;
+  }
+}
+
+registerAttachmentCleanup(() => {
+  void runLocalPlanOperation(async () => undefined).catch(() => undefined);
+});
 
 export function subscribePlanChanges(listener: (keys: string[]) => void): () => void {
   listeners.add(listener);
@@ -77,7 +99,9 @@ export async function deleteLocalEvent(eventId: string): Promise<void> {
 
 /** Merge this screen's changes into the latest disk state without erasing concurrent additions. */
 export async function saveArrayChanges<T extends { id: string }>(key: string, previous: T[], next: T[]): Promise<T[]> {
-  return runLocalPlanOperation(async () => {
+  const release = retainAttachmentRecords(next);
+  try {
+    return await runLocalPlanOperation(async () => {
     const current = await readArray<T>(key);
     const before = new Map(previous.map(row => [row.id, row]));
     const after = new Map(next.map(row => [row.id, row]));
@@ -100,9 +124,13 @@ export async function saveArrayChanges<T extends { id: string }>(key: string, pr
       merged.set(row.id, row);
     }
     const result = [...merged.values()];
+    assertAttachmentRecordsAvailable(result);
     await AsyncStorage.setItem(key, JSON.stringify(result));
     return result;
-  });
+    });
+  } finally {
+    release();
+  }
 }
 
 /** Call within the operation lock before creating or changing a child record. */

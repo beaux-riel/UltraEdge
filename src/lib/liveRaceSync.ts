@@ -69,4 +69,28 @@ export async function forgetLiveRoom(id:string){await exclusive(()=>dropRoomCach
 export async function discardPendingReports(id:string){await editCache(c=>({...c,pending:c.pending.filter(r=>r.roomId!==id)}));}
 
 export async function recoverLiveRooms(){await identify();const list=await rpc<{id:string}[]>('list');for(const item of list)await syncLiveRoom(item.id);}
-export async function deleteLiveIdentity(){await exclusive(async()=>{await identify();await rpc('delete_identity');try{await connection().auth.signOut({scope:'local'});}finally{await editCache(()=>({rooms:[],pending:[],actorId:null,lastSync:{}}));}});}
+export const abuseReasons = ['harassment','hate','sexual_content','threats','other'] as const;
+export type AbuseReason = typeof abuseReasons[number];
+export async function reportLiveAbuse(room:LiveRoom,userId:string,reason:AbuseReason,details:string){
+ if(!abuseReasons.includes(reason)||details.trim().length>1000)throw new Error('Choose a reason and keep details under 1,000 characters.');
+ await identify();
+ return rpc<{id:string}>('abuse_report',{roomId:room.id,userId,reason,details:details.trim(),requestId:Crypto.randomUUID()});
+}
+export async function blockLiveUser(room:LiveRoom,userId:string){
+ await exclusive(async()=>{
+  await identify();
+  const {removedRoomIds}=await rpc<{removedRoomIds:string[]}>('block_user',{roomId:room.id,userId});
+  await editCache(c=>({...c,rooms:c.rooms.filter(saved=>!removedRoomIds.includes(saved.id)).map(saved=>({...saved,members:saved.members.filter(member=>member.id!==userId),reports:saved.reports.filter(report=>report.authorId!==userId)})),pending:c.pending.filter(report=>!removedRoomIds.includes(report.roomId)),lastSync:Object.fromEntries(Object.entries(c.lastSync).filter(([id])=>!removedRoomIds.includes(id)))}));
+ });
+}
+export async function deleteLiveIdentity(){await exclusive(async()=>{
+ const {data:{session},error}=await connection().auth.getSession();
+ if(error)throw error;
+ if(!session)throw new Error('No active collaboration identity was found. Keep the app installed and retry when connected.');
+ await rpc('delete_identity');
+ let sessionCleanupFailed=false;
+ try{const result=await connection().auth.signOut({scope:'local'});sessionCleanupFailed=!!result.error;}catch{sessionCleanupFailed=true;}
+ try{await editCache(()=>({rooms:[],pending:[],actorId:null,lastSync:{}}));}
+ catch{throw new Error('Server collaboration data was deleted, but this phone could not clear its saved copy. Check device storage and remove saved offline copies before sharing again.');}
+ if(sessionCleanupFailed)throw new Error('Server collaboration data was deleted, but this phone could not clear its saved session. Restart and retry before sharing again.');
+});}

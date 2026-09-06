@@ -5,15 +5,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { H2, Body, BodySmall } from '../../components/ui';
 
-const SUPPORT_URL = 'https://github.com/beaux-riel/UltraEdge/issues';
+const SUPPORT_URL = 'https://ultraedge.heybeaux.dev/support';
+const PRIVACY_URL = 'https://ultraedge.heybeaux.dev/privacy';
+const PRIVATE_EMAIL = 'hello@heybeaux.dev';
 
 export default function PrivacySupportScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const openSupport = async () => {
-    try { await Linking.openURL(SUPPORT_URL); }
+  const openLink = async (url:string, label:string) => {
+    try { await Linking.openURL(url); }
     catch {
-      Alert.alert('Could not open support', 'Connect to the internet and try again, or visit github.com/beaux-riel/UltraEdge/issues in your browser.');
+      Alert.alert(`Could not open ${label}`, `Connect to the internet and try again, or visit ${url} in your browser.`);
+    }
+  };
+  const openPrivateEmail = async () => {
+    try { await Linking.openURL(`mailto:${PRIVATE_EMAIL}`); }
+    catch {
+      Alert.alert('Could not open email', `Open your email app and write to ${PRIVATE_EMAIL} for private privacy, support or abuse concerns. UltraEdge has not sent an email.`);
     }
   };
 
@@ -23,10 +31,13 @@ export default function PrivacySupportScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
     >
       <BodySmall>UltraEdge 1.0 · Updated September 6, 2026</BodySmall>
-      <Body style={styles.paragraph}>This information is available offline. Opening the support link requires an internet connection.</Body>
+      <Body style={styles.paragraph}>This information is available offline. Opening policy or support links requires an internet connection.</Body>
+      <TouchableOpacity accessibilityRole="link" accessibilityLabel="Open UltraEdge privacy policy" onPress={() => { void openLink(PRIVACY_URL,'privacy policy'); }} style={styles.link}>
+        <Body style={{ color: theme.colors.forest, textDecorationLine: 'underline' }}>Privacy policy</Body>
+      </TouchableOpacity>
 
       <View style={styles.section}>
-        <H2 accessibilityRole="header">Local plans and optional team sharing</H2>
+        <H2 accessibilityRole="header">Your plans stay on this device</H2>
         <Body style={styles.paragraph}>
           UltraEdge stores your event plans, checkpoints, gear, drop bags, crew names and contact details,
           roles, notes, profile, weight entries, preferences and imported GPX files locally.
@@ -39,26 +50,6 @@ export default function PrivacySupportScreen() {
         </Body>
       </View>
 
-      <View style={styles.section}>
-        <H2 accessibilityRole="header">Live team races</H2>
-        <Body style={styles.paragraph}>
-          Creating or joining a team race connects to Supabase in Canada and creates a guest identity
-          whose session is stored securely on this phone. Shared race timing, checkpoint names,
-          stop plans, crew display names, vehicle and cargo labels, and time observations are stored
-          on the server and cached on joined phones. Crew phone numbers, emails, personal notes
-          and route files are excluded from this upload. The service also processes connection
-          information such as IP addresses for authentication and abuse prevention.
-        </Body>
-        <Body style={styles.paragraph}>
-          Sharing is optional. Team members can read the plan and submit their own observations.
-          The owner can remove members or stop sharing and delete the room. In Events, open the
-          live team panel and choose Delete my collaboration data to delete your guest identity,
-          owned rooms and reports. Removing a local race or deleting the app does not delete
-          server copies. Previously downloaded or exported copies held by others remain with them.
-          Pending reports stay on the device until synchronized. A new phone needs a new invitation;
-          guest owner access has no email or password recovery.
-        </Body>
-      </View>
       <View style={styles.section}>
         <H2 accessibilityRole="header">Maps, files and sharing</H2>
         <Body style={styles.paragraph}>
@@ -101,22 +92,34 @@ export default function PrivacySupportScreen() {
       <View style={styles.section}>
         <H2 accessibilityRole="header">Support and privacy questions</H2>
         <Body style={styles.paragraph}>
-          Report problems through the UltraEdge GitHub issue tracker. Include your app version,
-          device model, iOS version and the steps that led to the problem. GitHub may require an account
-          to post and handles posts under its own privacy practices.
+          UltraEdge is operated by Beaux Walton. For private privacy, support or abuse concerns,
+          contact hello@heybeaux.dev. The email link opens your email app; you review and send
+          the message. It is not an emergency service.
         </Body>
         <Body style={styles.paragraph}>
-          Issues are public. Do not post private routes, crew contact details, health information or
-          screenshots containing them. For a sensitive concern, first request a private contact method
-          without including sensitive details.
+          Visit the support page for contact options and troubleshooting. Include your app version,
+          device model, iOS version and the steps that led to the problem. For collaboration abuse,
+          open a shared race and use Report or Block under Team access.
+        </Body>
+        <Body style={styles.paragraph}>
+          Do not post private routes, crew contact details, health information or screenshots
+          containing them to a public issue tracker. Do not use team reports for emergencies.
         </Body>
         <TouchableOpacity
           accessibilityRole="link"
-          accessibilityLabel="Open UltraEdge support on GitHub, public issue tracker"
-          onPress={() => { void openSupport(); }}
+          accessibilityLabel="Open UltraEdge support"
+          onPress={() => { void openLink(SUPPORT_URL,'support'); }}
           style={styles.link}
         >
-          <Body style={{ color: theme.colors.forest, textDecorationLine: 'underline' }}>Open public GitHub issue tracker</Body>
+          <Body style={{ color: theme.colors.forest, textDecorationLine: 'underline' }}>Support and contact options</Body>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="link"
+          accessibilityLabel="Email Beaux Walton privately for privacy, support or abuse concerns at hello@heybeaux.dev"
+          onPress={() => { void openPrivateEmail(); }}
+          style={styles.link}
+        >
+          <Body style={{ color: theme.colors.forest, textDecorationLine: 'underline' }}>Email hello@heybeaux.dev privately</Body>
         </TouchableOpacity>
       </View>
     </ScrollView>

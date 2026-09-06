@@ -18,7 +18,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.beaux.ultraedge"
+      "bundleIdentifier": "com.beaux.ultraedge",
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyCollectedDataTypes": []
+      }
     },
     "android": {
       "adaptiveIcon": {

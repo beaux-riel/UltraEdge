@@ -15,6 +15,7 @@ jest.mock('expo-file-system', () => ({
     get size() { return mockSize; }
     text = async () => mockXml;
     copy = mockCopy;
+    write = mockCopy;
     delete() { mockDelete(this.uri); }
   },
   Directory: class { create() {} }, Paths: { document: 'file:///docs' },
@@ -45,8 +46,8 @@ it('returns a new file only after the saved reference succeeds', async () => {
   expect(mockDelete).not.toHaveBeenCalled();
 });
 
-it('imports the original Gaia Fat Dog XML into 15 ordered, persistent checkpoints without duplicating reimports', async () => {
-  mockXml = readFileSync(resolve(__dirname, '../../docs/release/fixtures/fatdog-120-gaia.xml'), 'utf8');
+it.each(['fatdog-120-gaia.xml', 'fatdog-120-gaia.kml'])('imports original Gaia %s into 15 ordered, persistent checkpoints without duplicates', async (fixture) => {
+  mockXml = readFileSync(resolve(__dirname, '../../docs/release/fixtures', fixture), 'utf8');
   mockSize = Buffer.byteLength(mockXml);
   await AsyncStorage.clear();
   await AsyncStorage.setItem('@ultraedge/events', JSON.stringify([{ id: 'fatdog', distance_unit: 'miles', elevation_unit: 'feet' }]));

@@ -79,12 +79,13 @@ export default function EditCrewScreen({ navigation, route }: any) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await updateCrewMember(originalMember.id, {
+      const saved = await updateCrewMember(originalMember.id, {
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
         notes: notes.trim() || null,
       });
+      if (!saved) throw new Error('This record was deleted. Return to the list and refresh.');
 
       Alert.alert(
         'Crew Member Updated',
@@ -93,7 +94,7 @@ export default function EditCrewScreen({ navigation, route }: any) {
       );
     } catch (error) {
       console.error('Failed to update crew member:', error);
-      Alert.alert('Error', 'Failed to update crew member. Please try again.');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update crew member. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -111,9 +112,12 @@ export default function EditCrewScreen({ navigation, route }: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteCrewMember(originalMember.id);
-            // Go back to list
-            navigation.popToTop();
+            try {
+              if (!await deleteCrewMember(originalMember.id)) throw new Error('The record could not be found. Refresh and try again.');
+              navigation.popToTop();
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
           },
         },
       ]

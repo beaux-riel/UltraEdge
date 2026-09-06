@@ -1,3 +1,4 @@
+import { parseDateOnly, daysUntilDate } from '../lib/dateOnly';
 /**
  * UltraEdge Home Screen
  * Dashboard with upcoming events and quick stats
@@ -50,7 +51,8 @@ export default function HomeScreen({ navigation }: any) {
   // Format date for display
   const formatEventDate = (dateStr: string | null) => {
     if (!dateStr) return 'Date TBD';
-    const date = new Date(dateStr);
+    const date = parseDateOnly(dateStr);
+    if (!date) return 'Date TBD';
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -61,11 +63,7 @@ export default function HomeScreen({ navigation }: any) {
   // Calculate days until event
   const getDaysUntil = (dateStr: string | null) => {
     if (!dateStr) return null;
-    const eventDate = new Date(dateStr);
-    const today = new Date();
-    const diffTime = eventDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return daysUntilDate(dateStr);
   };
 
   return (

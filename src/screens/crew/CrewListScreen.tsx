@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
+import StorageLoadNotice from '../../components/StorageLoadNotice';
 import { useTheme } from '../../theme';
 import { Text, H1, H2, H3, Body, BodySmall, Button, Card, CardContent } from '../../components/ui';
 import { useCrewMembers } from '../../context/CrewContext';
@@ -25,7 +26,7 @@ export default function CrewListScreen({ navigation }: any) {
   const { colors, spacing } = theme;
   const insets = useSafeAreaInsets();
 
-  const { crewMembers, loading, refreshCrewMembers } = useCrewMembers();
+  const { crewMembers, loading, error, refreshCrewMembers } = useCrewMembers();
 
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,10 +132,11 @@ export default function CrewListScreen({ navigation }: any) {
           <H1>Crew</H1>
           <Button
             size="sm"
+            disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateCrew')}
             icon={<Ionicons name="add" size={18} color={colors.snow} />}
           >
-            Add
+            Add crew member
           </Button>
         </View>
 
@@ -170,7 +172,7 @@ export default function CrewListScreen({ navigation }: any) {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setSearchQuery('')}>
               <Ionicons name="close-circle" size={18} color={colors.mist} />
             </TouchableOpacity>
           )}
@@ -179,7 +181,9 @@ export default function CrewListScreen({ navigation }: any) {
       </View>
 
       {/* Crew List */}
-      {crewMembers.length === 0 && !searchQuery ? (
+      {loading || error ? (
+        <StorageLoadNotice error={error} loading={loading} onRetry={refreshCrewMembers} />
+      ) : crewMembers.length === 0 && !searchQuery ? (
         renderEmptyState()
       ) : (
         <FlatList

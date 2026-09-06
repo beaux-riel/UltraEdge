@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readArray, runLocalPlanOperation, saveArrayChanges, subscribePlanChanges, deleteLocalGear } from '../lib/localPlanStorage';
 
 // Types
 export type WeightUnit = 'g' | 'oz' | 'kg' | 'lbs';
@@ -97,11 +97,7 @@ export function GearProvider({ children }: GearProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setGearItems(parsed);
-      }
+      setGearItems(await runLocalPlanOperation(() => readArray<GearItem>(STORAGE_KEY)));
     } catch (err) {
       console.error('Failed to load gear:', err);
       setError('Failed to load gear items');
@@ -112,9 +108,11 @@ export function GearProvider({ children }: GearProviderProps) {
 
   // Save gear to AsyncStorage
   const saveGear = async (items: GearItem[]) => {
+    if (loading || error) throw new Error('Reload your saved gear before editing.');
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      setGearItems(items);
+      const saved = await saveArrayChanges(STORAGE_KEY, gearItems, items);
+      setGearItems(saved);
+      setError(null);
     } catch (err) {
       console.error('Failed to save gear:', err);
       setError('Failed to save gear items');
@@ -125,6 +123,7 @@ export function GearProvider({ children }: GearProviderProps) {
   // Load on mount
   useEffect(() => {
     loadGear();
+    return subscribePlanChanges(keys => { if (keys.includes(STORAGE_KEY)) void loadGear(); });
   }, []);
 
   // Add gear item
@@ -167,9 +166,15 @@ export function GearProvider({ children }: GearProviderProps) {
     const index = gearItems.findIndex(g => g.id === id);
     if (index === -1) return false;
     
-    const updated = gearItems.filter(g => g.id !== id);
-    await saveGear(updated);
-    return true;
+    if (loading || error) throw new Error('Reload your saved gear before editing.');
+    try {
+      await deleteLocalGear(id);
+      await loadGear();
+      return true;
+    } catch (err) {
+      setError('Gear could not be deleted. Reload and try again.');
+      throw err;
+    }
   };
 
   // Get single gear item

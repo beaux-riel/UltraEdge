@@ -182,7 +182,7 @@ export default function EditCheckpointScreen() {
         notes: notes.trim() || null,
       };
 
-      updateCheckpoint(eventId, checkpointId, updates);
+      await updateCheckpoint(eventId, checkpointId, updates);
       navigation.goBack();
     } catch (error) {
       console.error('Failed to update checkpoint:', error);
@@ -370,11 +370,11 @@ export default function EditCheckpointScreen() {
             ]}
             value={cutoffTime}
             onChangeText={setCutoffTime}
-            placeholder="e.g., 18:00 or 6:00 PM"
+            placeholder="e.g., Sun Sep 6, 02:00 (race local time)"
             placeholderTextColor={colors.mist}
           />
           <Caption style={{ marginTop: spacing.xs }}>
-            Time by which you must leave this checkpoint
+            Include the day/date for overnight races and use the race’s local time.
           </Caption>
         </View>
 

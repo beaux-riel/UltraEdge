@@ -99,8 +99,12 @@ export default function CrewDetailScreen({ navigation, route }: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteCrewMember(member.id);
-            navigation.goBack();
+            try {
+              if (!await deleteCrewMember(member.id)) throw new Error('The record could not be found. Refresh and try again.');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
           },
         },
       ]

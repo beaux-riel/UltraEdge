@@ -4,6 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readArray, runLocalPlanOperation, requireLocalEvent } from './localPlanStorage';
 
 import type { CrewRole } from '../context/CrewContext';
 
@@ -20,13 +21,7 @@ export interface EventCrewAssignment {
 }
 
 export async function loadEventCrewAssignments(): Promise<EventCrewAssignment[]> {
-  try {
-    const raw = await AsyncStorage.getItem(EVENT_CREW_KEY);
-    return raw ? (JSON.parse(raw) as EventCrewAssignment[]) : [];
-  } catch (err) {
-    console.error('Failed to load event crew assignments:', err);
-    return [];
-  }
+  return runLocalPlanOperation(() => readArray<EventCrewAssignment>(EVENT_CREW_KEY));
 }
 
 export async function saveEventCrewAssignments(
@@ -101,4 +96,42 @@ export function migrateLegacyCrewRoles(
   });
 
   return { members: migratedMembers, assignments: migratedAssignments, changed };
+}
+
+/** Assignments must become durable before removing the only legacy role copy. */
+export async function loadAndMigrateCrew(): Promise<StoredCrewMemberRecord[]> {
+  return runLocalPlanOperation(async () => {
+    const members = await readArray<StoredCrewMemberRecord>('@ultraedge/crew');
+    const assignments = await readArray<EventCrewAssignment>(EVENT_CREW_KEY);
+    const result = migrateLegacyCrewRoles(members, assignments);
+    if (result.changed) {
+      await AsyncStorage.setItem(EVENT_CREW_KEY, JSON.stringify(result.assignments));
+      await AsyncStorage.setItem('@ultraedge/crew', JSON.stringify(result.members));
+    }
+    return result.members;
+  });
+}
+
+/** Upsert under one lock; a slow initial screen load cannot duplicate a member. */
+export async function upsertEventCrewAssignments(assignments: EventCrewAssignment[]): Promise<void> {
+  await runLocalPlanOperation(async () => {
+    const current = await readArray<EventCrewAssignment>(EVENT_CREW_KEY);
+    const byMember = new Map(current.map(item => [JSON.stringify([item.eventId, item.crewMemberId]), item]));
+    const members = await readArray<{ id: string }>('@ultraedge/crew');
+    for (const assignment of assignments) {
+      await requireLocalEvent(assignment.eventId);
+      if (!members.some(member => member.id === assignment.crewMemberId)) throw new Error('This crew member was deleted. Refresh before assigning.');
+    }
+    assignments.forEach(item => byMember.set(JSON.stringify([item.eventId, item.crewMemberId]), item));
+    await saveEventCrewAssignments([...byMember.values()]);
+  });
+}
+
+export async function removeEventCrewAssignment(eventId: string, crewMemberId: string): Promise<EventCrewAssignment[]> {
+  return runLocalPlanOperation(async () => {
+    const current = await readArray<EventCrewAssignment>(EVENT_CREW_KEY);
+    const next = current.filter(item => item.eventId !== eventId || item.crewMemberId !== crewMemberId);
+    await saveEventCrewAssignments(next);
+    return next;
+  });
 }

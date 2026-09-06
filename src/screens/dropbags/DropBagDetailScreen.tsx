@@ -69,8 +69,12 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteDropBag(dropBagId);
-            navigation.goBack();
+            try {
+              if (!await deleteDropBag(dropBagId)) throw new Error('The record could not be found. Refresh and try again.');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
           },
         },
       ]

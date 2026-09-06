@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
+import StorageLoadNotice from '../../components/StorageLoadNotice';
 import { useTheme } from '../../theme';
 import { Text, H1, H2, H3, Body, BodySmall, Button, Card, CardContent, WeightBadge } from '../../components/ui';
 import { useGear } from '../../context/GearContext';
@@ -79,7 +80,7 @@ export default function GearListScreen({ navigation }: any) {
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
 
-  const { gearItems, loading, deleteGearItem } = useGear();
+  const { gearItems, loading, error, refreshGear, deleteGearItem } = useGear();
 
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,10 +145,10 @@ export default function GearListScreen({ navigation }: any) {
     };
   }, [gearItems, searchQuery, selectedCategory]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 500);
-  }, []);
+    try { await refreshGear(); } finally { setRefreshing(false); }
+  }, [refreshGear]);
 
   const handleDeleteItem = (item: GearItem, index: number) => {
     Alert.alert(
@@ -254,10 +255,11 @@ export default function GearListScreen({ navigation }: any) {
           <H1>Gear Closet</H1>
           <Button
             size="sm"
+            disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateGear')}
             icon={<Ionicons name="add" size={18} color={colors.snow} />}
           >
-            Add
+            Add gear
           </Button>
         </View>
 
@@ -301,7 +303,7 @@ export default function GearListScreen({ navigation }: any) {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setSearchQuery('')}>
               <Ionicons name="close-circle" size={18} color={colors.mist} />
             </TouchableOpacity>
           )}
@@ -368,7 +370,9 @@ export default function GearListScreen({ navigation }: any) {
       </View>
 
       {/* Gear List */}
-      {itemCount === 0 && !searchQuery && selectedCategory === 'all' ? (
+      {loading || error ? (
+        <StorageLoadNotice error={error} loading={loading} onRetry={refreshGear} />
+      ) : itemCount === 0 && !searchQuery && selectedCategory === 'all' ? (
         renderEmptyState()
       ) : (
         <SectionList

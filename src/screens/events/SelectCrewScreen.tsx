@@ -31,7 +31,7 @@ import { useCrewMembers, CrewMember, CrewRole, ROLES, ROLE_CONFIG } from '../../
 import {
   EventCrewAssignment,
   loadEventCrewAssignments,
-  saveEventCrewAssignments,
+  upsertEventCrewAssignments,
 } from '../../lib/eventCrew';
 
 type Props = NativeStackScreenProps<any, 'SelectCrew'>;
@@ -40,7 +40,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { colors, spacing } = theme;
   const insets = useSafeAreaInsets();
-  const { crewMembers } = useCrewMembers();
+  const { crewMembers, loading: crewLoading, error: crewError } = useCrewMembers();
 
   const eventId = route.params?.eventId;
 
@@ -48,25 +48,35 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
   const [rolesById, setRolesById] = useState<Record<string, CrewRole[]>>({});
   const [customRoleById, setCustomRoleById] = useState<Record<string, string>>({});
   const [alreadyAddedIds, setAlreadyAddedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Load already assigned crew
   useEffect(() => {
     const loadExisting = async () => {
-      const allCrew = await loadEventCrewAssignments();
-      const eventCrewIds = new Set(
-        allCrew.filter(c => c.eventId === eventId).map(c => c.crewMemberId)
-      );
-      setAlreadyAddedIds(eventCrewIds);
+      setLoading(true);
+      try {
+        const allCrew = await loadEventCrewAssignments();
+        const existing = allCrew.filter(c => c.eventId === eventId);
+        setAlreadyAddedIds(new Set(existing.map(c => c.crewMemberId)));
+        setSelectedIds(new Set(existing.map(c => c.crewMemberId)));
+        setRolesById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.roles || []])));
+        setCustomRoleById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.customRole || ''])));
+        setLoadError(null);
+      } catch {
+        setLoadError('Crew assignments could not be loaded. Close this screen and try again.');
+      } finally { setLoading(false); }
     };
     loadExisting();
   }, [eventId]);
 
-  // Filter out already-assigned crew
-  const availableCrew = crewMembers.filter(c => !alreadyAddedIds.has(c.id));
+  // Existing assignments remain visible so their roles can be edited.
+  const availableCrew = loading || crewLoading || loadError || crewError ? [] : crewMembers;
 
   // Toggle member selection
   const toggleSelection = (id: string) => {
+    if (alreadyAddedIds.has(id)) return;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -92,6 +102,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
 
   // Save selections
   const handleSave = async () => {
+    if (loading || crewLoading || loadError || crewError || saving || !eventId) return;
     if (selectedIds.size === 0) {
       navigation.goBack();
       return;
@@ -99,8 +110,6 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
 
     setSaving(true);
     try {
-      const allCrew = await loadEventCrewAssignments();
-
       // Add new assignments with their per-event roles
       const newAssignments: EventCrewAssignment[] = Array.from(selectedIds).map(
         crewMemberId => {
@@ -116,7 +125,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         }
       );
 
-      await saveEventCrewAssignments([...allCrew, ...newAssignments]);
+      await upsertEventCrewAssignments(newAssignments);
 
       navigation.goBack();
     } catch (error) {
@@ -149,7 +158,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
           },
         ]}
       >
-        <TouchableOpacity onPress={() => toggleSelection(item.id)} style={styles.memberRow}>
+        <TouchableOpacity onPress={() => toggleSelection(item.id)} accessibilityRole="checkbox" accessibilityState={{ checked: isSelected }} accessibilityLabel={item.name} style={styles.memberRow}>
           <View style={[styles.listItemIcon, { backgroundColor: colors.trail + '20' }]}>
             <Text variant="h3" style={{ color: colors.trail }}>
               {getInitials(item.name)}
@@ -174,7 +183,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         {isSelected && (
           <View style={styles.rolesSection}>
             <BodySmall color="secondary" style={{ marginBottom: 6 }}>
-              Roles for this event
+              Roles for this event{alreadyAddedIds.has(item.id) ? ' · Assigned' : ''}
             </BodySmall>
             <View style={styles.roleChips}>
               {ROLES.map(role => {
@@ -243,12 +252,10 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
     <View style={styles.emptyState}>
       <Ionicons name="people-outline" size={64} color={colors.mist} />
       <H3 color="secondary" style={{ marginTop: spacing.md }}>
-        No Crew Available
+        {loading || crewLoading ? 'Loading crew…' : loadError || crewError ? 'Unable to load crew' : 'No Crew Available'}
       </H3>
       <Body color="tertiary" align="center" style={{ marginTop: spacing.xs, marginHorizontal: spacing.xl }}>
-        {alreadyAddedIds.size > 0
-          ? 'All your crew members are already assigned to this event.'
-          : 'Create some crew members first, then come back to assign them.'}
+        {loadError || crewError || (loading || crewLoading ? 'Reading saved assignments…' : 'Create some crew members first, then come back to assign them.')}
       </Body>
       <Button
         variant="secondary"
@@ -280,10 +287,10 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         <TouchableOpacity
           onPress={handleSave}
           style={styles.saveButton}
-          disabled={saving}
+          disabled={saving || loading || crewLoading || !!loadError || !!crewError}
         >
           <Body style={{ color: colors.forest, fontWeight: '600' }}>
-            {saving ? 'Saving...' : `Add (${selectedIds.size})`}
+            {saving ? 'Saving...' : 'Save'}
           </Body>
         </TouchableOpacity>
       </View>

@@ -19,6 +19,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { parseDateOnly, daysUntilDate } from '../../lib/dateOnly';
+import StorageLoadNotice from '../../components/StorageLoadNotice';
 import { useTheme } from '../../theme';
 import { 
   H1, 
@@ -39,7 +41,7 @@ export default function EventsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
-  const { events, loading, refreshEvents, deleteEvent } = useEvents();
+  const { events, loading, error, refreshEvents, deleteEvent } = useEvents();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -66,7 +68,13 @@ export default function EventsListScreen({ navigation }: Props) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteEvent(event.id),
+          onPress: async () => {
+            try {
+              if (!await deleteEvent(event.id)) throw new Error('Refresh your events and try again.');
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
+          },
         },
       ]
     );
@@ -74,8 +82,8 @@ export default function EventsListScreen({ navigation }: Props) {
 
   // Format date for display
   const formatEventDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Date TBD';
-    const date = new Date(dateStr);
+    const date = parseDateOnly(dateStr);
+    if (!date) return 'Date TBD';
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
@@ -85,13 +93,7 @@ export default function EventsListScreen({ navigation }: Props) {
   };
 
   // Calculate days until event
-  const getDaysUntil = (dateStr: string | null): number | null => {
-    if (!dateStr) return null;
-    const eventDate = new Date(dateStr);
-    const today = new Date();
-    const diffTime = eventDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
+  const getDaysUntil = (dateStr: string | null): number | null => daysUntilDate(dateStr);
 
   // Get status badge color
   const getStatusColor = (status: EventStatus) => {
@@ -271,6 +273,9 @@ export default function EventsListScreen({ navigation }: Props) {
             <H1>Events</H1>
           </View>
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Create event"
+            disabled={loading || !!error}
             onPress={() => navigation.navigate('CreateEvent')}
             style={[styles.addButton, { backgroundColor: colors.forest }]}
           >
@@ -279,7 +284,9 @@ export default function EventsListScreen({ navigation }: Props) {
         </View>
 
         {/* Events List */}
-        <FlatList
+        {loading || error ? (
+          <StorageLoadNotice error={error} loading={loading} onRetry={refreshEvents} />
+        ) : <FlatList
           data={events}
           renderItem={renderEventCard}
           keyExtractor={(item) => item.id}
@@ -297,7 +304,7 @@ export default function EventsListScreen({ navigation }: Props) {
           }
           ListEmptyComponent={renderEmptyState}
           ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-        />
+        />}
       </View>
     </GestureHandlerRootView>
   );

@@ -5,7 +5,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveArrayChanges, runLocalPlanOperation, readArray, subscribePlanChanges } from '../lib/localPlanStorage';
 
 // Simple UUID generator for local storage
 const generateId = (): string => {
@@ -93,13 +93,10 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as DropBag[];
-        // Sort by created_at descending (newest first)
-        parsed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setDropBags(parsed);
-      }
+      const parsed = await runLocalPlanOperation(() => readArray<DropBag>('@ultraedge/dropbags'));
+      // Sort by created_at descending (newest first)
+      parsed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setDropBags(parsed);
     } catch (err) {
       console.error('Failed to load drop bags:', err);
       setError('Failed to load drop bags');
@@ -110,17 +107,22 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
 
   // Save drop bags to storage
   const saveDropBags = async (updatedBags: DropBag[]) => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBags));
+      const saved = await saveArrayChanges(STORAGE_KEY, dropBags, updatedBags);
+      setDropBags(saved);
     } catch (err) {
       console.error('Failed to save drop bags:', err);
-      throw new Error('Failed to save drop bags');
+      throw err instanceof Error ? err : new Error('Failed to save drop bags');
     }
   };
 
   // Initial load
   useEffect(() => {
-    loadDropBags();
+    void loadDropBags();
+    return subscribePlanChanges(keys => {
+      if (keys.includes('@ultraedge/dropbags')) void loadDropBags();
+    });
   }, [loadDropBags]);
 
   // Create a new drop bag
@@ -139,7 +141,6 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
 
     const updatedBags = [newBag, ...dropBags];
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return newBag;
   };
 
@@ -157,7 +158,6 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     const updatedBags = [...dropBags];
     updatedBags[index] = updatedBag;
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return updatedBag;
   };
 
@@ -168,7 +168,6 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
 
     const updatedBags = dropBags.filter(b => b.id !== id);
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return true;
   };
 

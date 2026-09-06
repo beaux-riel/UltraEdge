@@ -6,6 +6,7 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { runLocalPlanOperation, readCheckpointMap, subscribePlanChanges, requireLocalEvent, deleteLocalCheckpoints } from '../lib/localPlanStorage';
 import { Checkpoint, CheckpointInsert, CheckpointUpdate, CheckpointType } from '../lib/database.types';
 
 // Generate UUID (simple version for client-side)
@@ -16,16 +17,18 @@ const generateId = (): string => {
 interface CheckpointContextType {
   checkpoints: Record<string, Checkpoint[]>; // eventId -> checkpoints[]
   loading: boolean;
+  error: string | null;
+  refreshCheckpoints: () => Promise<void>;
   // CRUD operations
   getCheckpointsByEventId: (eventId: string) => Checkpoint[];
   getCheckpointById: (eventId: string, checkpointId: string) => Checkpoint | undefined;
-  addCheckpoint: (eventId: string, checkpoint: Omit<CheckpointInsert, 'event_id' | 'order_index'>) => Checkpoint;
-  updateCheckpoint: (eventId: string, checkpointId: string, updates: CheckpointUpdate) => void;
-  deleteCheckpoint: (eventId: string, checkpointId: string) => void;
-  reorderCheckpoints: (eventId: string, checkpointIds: string[]) => void;
+  addCheckpoint: (eventId: string, checkpoint: Omit<CheckpointInsert, 'event_id' | 'order_index'>) => Promise<Checkpoint>;
+  updateCheckpoint: (eventId: string, checkpointId: string, updates: CheckpointUpdate) => Promise<void>;
+  deleteCheckpoint: (eventId: string, checkpointId: string) => Promise<void>;
+  reorderCheckpoints: (eventId: string, checkpointIds: string[]) => Promise<void>;
   // Bulk operations
-  deleteAllCheckpointsForEvent: (eventId: string) => void;
-  duplicateCheckpoint: (eventId: string, checkpointId: string) => Checkpoint | undefined;
+  deleteAllCheckpointsForEvent: (eventId: string) => Promise<void>;
+  duplicateCheckpoint: (eventId: string, checkpointId: string) => Promise<Checkpoint | undefined>;
 }
 
 const CheckpointContext = createContext<CheckpointContextType | undefined>(undefined);
@@ -36,41 +39,43 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
   const [checkpoints, setCheckpoints] = useState<Record<string, Checkpoint[]>>({});
   const [loading, setLoading] = useState(true);
 
-  // Load checkpoints from AsyncStorage on mount
-  useEffect(() => {
-    const loadCheckpoints = async () => {
-      try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && typeof parsed === 'object') {
-            setCheckpoints(parsed);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load checkpoints from storage:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCheckpoints();
+  const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const refreshCheckpoints = useCallback(async () => {
+    setLoading(true);
+    try {
+      const loaded = await runLocalPlanOperation(() => readCheckpointMap<Checkpoint>());
+      setCheckpoints(loaded);
+      setReady(true);
+      setError(null);
+    } catch {
+      setReady(false);
+      setError('Checkpoints could not be loaded. Your saved data has been preserved. Try again.');
+    } finally { setLoading(false); }
   }, []);
-
-  // Save checkpoints to AsyncStorage whenever they change
   useEffect(() => {
-    const saveCheckpoints = async () => {
-      if (!loading) {
-        try {
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(checkpoints));
-        } catch (error) {
-          console.error('Failed to save checkpoints to storage:', error);
-        }
-      }
-    };
+    void refreshCheckpoints();
+    return subscribePlanChanges(keys => {
+      if (keys.includes(STORAGE_KEY)) void refreshCheckpoints();
+    });
+  }, [refreshCheckpoints]);
 
-    saveCheckpoints();
-  }, [checkpoints, loading]);
+  const persist = useCallback(async (eventId: string, transform: (previous: Record<string, Checkpoint[]>) => Record<string, Checkpoint[]>) => {
+    if (!ready || loading) throw new Error('Load checkpoints successfully before editing.');
+    try {
+      await runLocalPlanOperation(async () => {
+        await requireLocalEvent(eventId);
+        const previous = await readCheckpointMap<Checkpoint>();
+        const next = transform(previous);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        setCheckpoints(next);
+        setError(null);
+      });
+    } catch (cause) {
+      setError('Changes were not saved. Please try again.');
+      throw cause;
+    }
+  }, [ready, loading]);
 
   // Get all checkpoints for an event, sorted by order_index
   const getCheckpointsByEventId = useCallback((eventId: string): Checkpoint[] => {
@@ -85,20 +90,16 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
   }, [checkpoints]);
 
   // Add a new checkpoint
-  const addCheckpoint = useCallback((
+  const addCheckpoint = useCallback(async (
     eventId: string,
     checkpointData: Omit<CheckpointInsert, 'event_id' | 'order_index'>
-  ): Checkpoint => {
+  ): Promise<Checkpoint> => {
     const now = new Date().toISOString();
-    const eventCheckpoints = checkpoints[eventId] || [];
-    const maxOrder = eventCheckpoints.length > 0
-      ? Math.max(...eventCheckpoints.map(cp => cp.order_index))
-      : -1;
 
     const newCheckpoint: Checkpoint = {
       id: generateId(),
       event_id: eventId,
-      order_index: maxOrder + 1,
+      order_index: 0,
       name: checkpointData.name,
       checkpoint_type: checkpointData.checkpoint_type,
       distance_from_start: checkpointData.distance_from_start ?? null,
@@ -120,22 +121,23 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
       updated_at: now,
     };
 
-    setCheckpoints(prev => ({
-      ...prev,
-      [eventId]: [...(prev[eventId] || []), newCheckpoint],
-    }));
+    await persist(eventId, prev => {
+      newCheckpoint.order_index = Math.max(-1, ...(prev[eventId] || []).map(cp => cp.order_index)) + 1;
+      return { ...prev, [eventId]: [...(prev[eventId] || []), newCheckpoint] };
+    });
 
     return newCheckpoint;
-  }, [checkpoints]);
+  }, [persist]);
 
   // Update an existing checkpoint
-  const updateCheckpoint = useCallback((
+  const updateCheckpoint = useCallback(async (
     eventId: string,
     checkpointId: string,
     updates: CheckpointUpdate
   ) => {
-    setCheckpoints(prev => {
+    await persist(eventId, prev => {
       const eventCheckpoints = prev[eventId] || [];
+      if (!eventCheckpoints.some(cp => cp.id === checkpointId)) throw new Error('This checkpoint was deleted. Refresh before editing.');
       return {
         ...prev,
         [eventId]: eventCheckpoints.map(cp =>
@@ -145,28 +147,19 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
         ),
       };
     });
-  }, []);
+  }, [persist]);
 
   // Delete a checkpoint
-  const deleteCheckpoint = useCallback((eventId: string, checkpointId: string) => {
-    setCheckpoints(prev => {
-      const eventCheckpoints = prev[eventId] || [];
-      const filtered = eventCheckpoints.filter(cp => cp.id !== checkpointId);
-      // Reindex order_index after deletion
-      const reindexed = filtered
-        .sort((a, b) => a.order_index - b.order_index)
-        .map((cp, index) => ({ ...cp, order_index: index }));
-      return {
-        ...prev,
-        [eventId]: reindexed,
-      };
-    });
-  }, []);
+  const deleteCheckpoint = useCallback(async (eventId: string, checkpointId: string) => {
+    if (!ready || loading) throw new Error('Load checkpoints successfully before deleting.');
+    await deleteLocalCheckpoints(eventId, checkpointId);
+  }, [ready, loading]);
 
   // Reorder checkpoints
-  const reorderCheckpoints = useCallback((eventId: string, checkpointIds: string[]) => {
-    setCheckpoints(prev => {
+  const reorderCheckpoints = useCallback(async (eventId: string, checkpointIds: string[]) => {
+    await persist(eventId, prev => {
       const eventCheckpoints = prev[eventId] || [];
+      if (new Set(checkpointIds).size !== eventCheckpoints.length || checkpointIds.length !== eventCheckpoints.length || eventCheckpoints.some(cp => !checkpointIds.includes(cp.id))) throw new Error('Checkpoint order must include every checkpoint exactly once.');
       const reordered = checkpointIds.map((id, index) => {
         const cp = eventCheckpoints.find(c => c.id === id);
         return cp ? { ...cp, order_index: index, updated_at: new Date().toISOString() } : null;
@@ -176,18 +169,16 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
         [eventId]: reordered,
       };
     });
-  }, []);
+  }, [persist]);
 
   // Delete all checkpoints for an event
-  const deleteAllCheckpointsForEvent = useCallback((eventId: string) => {
-    setCheckpoints(prev => {
-      const { [eventId]: _, ...rest } = prev;
-      return rest;
-    });
-  }, []);
+  const deleteAllCheckpointsForEvent = useCallback(async (eventId: string) => {
+    if (!ready || loading) throw new Error('Load checkpoints successfully before deleting.');
+    await deleteLocalCheckpoints(eventId);
+  }, [ready, loading]);
 
   // Duplicate a checkpoint
-  const duplicateCheckpoint = useCallback((eventId: string, checkpointId: string): Checkpoint | undefined => {
+  const duplicateCheckpoint = useCallback(async (eventId: string, checkpointId: string): Promise<Checkpoint | undefined> => {
     const original = getCheckpointById(eventId, checkpointId);
     if (!original) return undefined;
 
@@ -203,6 +194,8 @@ export function CheckpointProvider({ children }: { children: React.ReactNode }) 
       value={{
         checkpoints,
         loading,
+        error,
+        refreshCheckpoints,
         getCheckpointsByEventId,
         getCheckpointById,
         addCheckpoint,

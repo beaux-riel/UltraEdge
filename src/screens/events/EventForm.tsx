@@ -1,3 +1,4 @@
+import { parseDateOnly, formatDateOnly } from '../../lib/dateOnly';
 /**
  * UltraEdge Event Form Component
  * Shared between Create and Edit screens
@@ -66,7 +67,7 @@ export function EventForm({
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [eventDate, setEventDate] = useState<Date | null>(
-    initialData?.event_date ? new Date(initialData.event_date) : null
+    parseDateOnly(initialData?.event_date)
   );
   const [eventTime, setEventTime] = useState(initialData?.event_time || '');
   const [location, setLocation] = useState(initialData?.location || '');
@@ -90,7 +91,7 @@ export function EventForm({
     onSubmit({
       name: name.trim(),
       description: description.trim(),
-      event_date: eventDate ? eventDate.toISOString().split('T')[0] : null,
+      event_date: eventDate ? formatDateOnly(eventDate) : null,
       event_time: eventTime.trim() || null,
       location: location.trim(),
       total_distance: totalDistance,
@@ -209,7 +210,6 @@ export function EventForm({
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDateChange}
-            minimumDate={new Date()}
           />
         )}
 

@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveArrayChanges, runLocalPlanOperation, readArray, subscribePlanChanges, deleteLocalEvent } from '../lib/localPlanStorage';
 import { Event, EventInsert, EventUpdate, EventStatus, DistanceUnit, ElevationUnit } from '../lib/database.types';
 
 // Simple UUID generator for local storage
@@ -63,18 +63,15 @@ export function EventProvider({ children }: EventProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(EVENTS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Event[];
-        // Sort by event_date, nulls last
-        parsed.sort((a, b) => {
-          if (!a.event_date && !b.event_date) return 0;
-          if (!a.event_date) return 1;
-          if (!b.event_date) return -1;
-          return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
-        });
-        setEvents(parsed);
-      }
+      const parsed = await runLocalPlanOperation(() => readArray<Event>('@ultraedge/events'));
+      // Sort by event_date, nulls last
+      parsed.sort((a, b) => {
+        if (!a.event_date && !b.event_date) return 0;
+        if (!a.event_date) return 1;
+        if (!b.event_date) return -1;
+        return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
+      });
+      setEvents(parsed);
     } catch (err) {
       console.error('Failed to load events:', err);
       setError('Failed to load events');
@@ -85,17 +82,22 @@ export function EventProvider({ children }: EventProviderProps) {
 
   // Save events to storage
   const saveEvents = async (updatedEvents: Event[]) => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
     try {
-      await AsyncStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(updatedEvents));
+      const saved = await saveArrayChanges(EVENTS_STORAGE_KEY, events, updatedEvents);
+      setEvents(saved);
     } catch (err) {
       console.error('Failed to save events:', err);
-      throw new Error('Failed to save events');
+      throw err instanceof Error ? err : new Error('Failed to save events');
     }
   };
 
   // Initial load
   useEffect(() => {
-    loadEvents();
+    void loadEvents();
+    return subscribePlanChanges(keys => {
+      if (keys.includes('@ultraedge/events')) void loadEvents();
+    });
   }, [loadEvents]);
 
   // Create a new event
@@ -132,7 +134,6 @@ export function EventProvider({ children }: EventProviderProps) {
 
     const updatedEvents = [...events, newEvent];
     await saveEvents(updatedEvents);
-    setEvents(updatedEvents);
     return newEvent;
   };
 
@@ -150,7 +151,6 @@ export function EventProvider({ children }: EventProviderProps) {
     const updatedEvents = [...events];
     updatedEvents[index] = updatedEvent;
     await saveEvents(updatedEvents);
-    setEvents(updatedEvents);
     return updatedEvent;
   };
 
@@ -159,9 +159,8 @@ export function EventProvider({ children }: EventProviderProps) {
     const index = events.findIndex(e => e.id === id);
     if (index === -1) return false;
 
-    const updatedEvents = events.filter(e => e.id !== id);
-    await saveEvents(updatedEvents);
-    setEvents(updatedEvents);
+    if (loading || error) throw new Error('Load events successfully before deleting.');
+    await deleteLocalEvent(id);
     return true;
   };
 

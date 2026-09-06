@@ -1,3 +1,4 @@
+import { parseDateOnly, daysUntilDate } from '../../lib/dateOnly';
 /**
  * UltraEdge Event Detail Screen
  * View a single event with all details, checkpoints, gear, and crew
@@ -20,7 +21,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useTheme } from '../../theme';
 import { 
@@ -41,7 +41,9 @@ import { useGear, GearItem } from '../../context/GearContext';
 import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
 import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.types';
-import { EVENT_CREW_KEY, EventCrewAssignment } from '../../lib/eventCrew';
+import { EVENT_CREW_KEY, EventCrewAssignment, removeEventCrewAssignment } from '../../lib/eventCrew';
+import { runLocalPlanOperation, readArray } from '../../lib/localPlanStorage';
+import { removeEventGear } from '../../lib/eventGear';
 import { eventStatsFromRoute } from '../../lib/gpx';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
@@ -86,22 +88,14 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   // Load event relationships from AsyncStorage
   const loadRelationships = useCallback(async () => {
     try {
-      const [gearData, crewData] = await Promise.all([
-        AsyncStorage.getItem(EVENT_GEAR_KEY),
-        AsyncStorage.getItem(EVENT_CREW_KEY),
-      ]);
-      
-      if (gearData) {
-        const allGear: EventGearAllocation[] = JSON.parse(gearData);
-        setEventGear(allGear.filter(g => g.eventId === eventId));
-      }
-      
-      if (crewData) {
-        const allCrew: EventCrewAssignment[] = JSON.parse(crewData);
-        setEventCrew(allCrew.filter(c => c.eventId === eventId));
-      }
+      const [allGear, allCrew] = await runLocalPlanOperation(() => Promise.all([
+        readArray<EventGearAllocation>(EVENT_GEAR_KEY),
+        readArray<EventCrewAssignment>(EVENT_CREW_KEY),
+      ]));
+      setEventGear(allGear.filter(g => g.eventId === eventId));
+      setEventCrew(allCrew.filter(c => c.eventId === eventId));
     } catch (error) {
-      console.error('Failed to load event relationships:', error);
+      Alert.alert('Plan unavailable', 'Gear and crew could not be loaded. Pull to refresh before relying on this plan.');
     }
   }, [eventId]);
 
@@ -142,7 +136,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteCheckpoint(eventId, checkpoint.id),
+          onPress: async () => {
+            try { await deleteCheckpoint(eventId, checkpoint.id); }
+            catch { Alert.alert('Not deleted', 'The checkpoint could not be deleted. Please try again.'); }
+          },
         },
       ]
     );
@@ -160,13 +157,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const stored = await AsyncStorage.getItem(EVENT_GEAR_KEY);
-              const allGear: EventGearAllocation[] = stored ? JSON.parse(stored) : [];
-              const updated = allGear.filter(g => !(g.eventId === eventId && g.gearItemId === gearItemId));
-              await AsyncStorage.setItem(EVENT_GEAR_KEY, JSON.stringify(updated));
+              const updated = await removeEventGear(eventId, gearItemId);
               setEventGear(updated.filter(g => g.eventId === eventId));
             } catch (error) {
-              console.error('Failed to remove gear:', error);
+              Alert.alert('Not removed', 'Gear could not be removed. Please try again.');
             }
           },
         },
@@ -186,13 +180,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const stored = await AsyncStorage.getItem(EVENT_CREW_KEY);
-              const allCrew: EventCrewAssignment[] = stored ? JSON.parse(stored) : [];
-              const updated = allCrew.filter(c => !(c.eventId === eventId && c.crewMemberId === crewMemberId));
-              await AsyncStorage.setItem(EVENT_CREW_KEY, JSON.stringify(updated));
+              const updated = await removeEventCrewAssignment(eventId, crewMemberId);
               setEventCrew(updated.filter(c => c.eventId === eventId));
             } catch (error) {
-              console.error('Failed to unassign crew:', error);
+              Alert.alert('Not removed', 'Crew could not be unassigned. Please try again.');
             }
           },
         },
@@ -211,8 +202,12 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteEvent(eventId);
-            navigation.goBack();
+            try {
+              if (await deleteEvent(eventId)) navigation.goBack();
+              else Alert.alert('Not deleted', 'The event could not be deleted. Please refresh and try again.');
+            } catch {
+              Alert.alert('Not deleted', 'The event could not be deleted. Please refresh and try again.');
+            }
           },
         },
       ]
@@ -302,7 +297,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   // Format date for display
   const formatEventDate = (dateStr: string | null) => {
     if (!dateStr) return 'Date TBD';
-    const date = new Date(dateStr);
+    const date = parseDateOnly(dateStr);
+    if (!date) return 'Date TBD';
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
@@ -314,10 +310,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   // Calculate days until event
   const getDaysUntil = (dateStr: string | null): number | null => {
     if (!dateStr) return null;
-    const eventDate = new Date(dateStr);
-    const today = new Date();
-    const diffTime = eventDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return daysUntilDate(dateStr);
   };
 
   // Get status badge color
@@ -568,10 +561,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: getStatusColor(event.status) + '30' },
+                  { backgroundColor: 'rgba(0,0,0,0.25)' },
                 ]}
               >
-                <Caption style={{ color: getStatusColor(event.status), fontWeight: '600' }}>
+                <Caption style={{ color: colors.snow, fontWeight: '600' }}>
                   {event.status.toUpperCase().replace('_', ' ')}
                 </Caption>
               </View>
@@ -705,7 +698,9 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                     eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
                   );
                 }
-                await updateEvent(eventId, updates);
+                if (!await updateEvent(eventId, updates)) {
+                  throw new Error('The event is no longer available. Refresh before importing a route.');
+                }
               }}
             />
 

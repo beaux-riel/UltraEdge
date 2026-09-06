@@ -124,7 +124,7 @@ export default function CreateCheckpointScreen() {
         notes: notes.trim() || null,
       };
 
-      addCheckpoint(eventId, checkpointData);
+      await addCheckpoint(eventId, checkpointData);
       navigation.goBack();
     } catch (error) {
       console.error('Failed to create checkpoint:', error);
@@ -313,11 +313,11 @@ export default function CreateCheckpointScreen() {
             ]}
             value={cutoffTime}
             onChangeText={setCutoffTime}
-            placeholder="e.g., 18:00 or 6:00 PM"
+            placeholder="e.g., Sun Sep 6, 02:00 (race local time)"
             placeholderTextColor={colors.mist}
           />
           <Caption style={{ marginTop: spacing.xs }}>
-            Time by which you must leave this checkpoint
+            Include the day/date for overnight races and use the race’s local time.
           </Caption>
         </View>
 

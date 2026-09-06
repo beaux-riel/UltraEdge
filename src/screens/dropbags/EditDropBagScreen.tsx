@@ -124,16 +124,17 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
 
     try {
       setSaving(true);
-      await updateDropBag(dropBagId, {
+      const saved = await updateDropBag(dropBagId, {
         name: name.trim(),
         checkpointId: selectedCheckpointId || null,
         items: selectedItems,
         notes: notes.trim() || null,
       });
+      if (!saved) throw new Error('This record was deleted. Return to the list and refresh.');
       navigation.goBack();
     } catch (error) {
       console.error('Failed to update drop bag:', error);
-      Alert.alert('Error', 'Failed to update drop bag. Please try again.');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update drop bag. Please try again.');
     } finally {
       setSaving(false);
     }

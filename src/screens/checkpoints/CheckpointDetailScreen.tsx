@@ -123,9 +123,13 @@ export default function CheckpointDetailScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Duplicate',
-          onPress: () => {
-            duplicateCheckpoint(eventId, checkpointId);
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              await duplicateCheckpoint(eventId, checkpointId);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Not saved', 'Changes could not be saved. Please try again.');
+            }
           },
         },
       ]
@@ -141,9 +145,13 @@ export default function CheckpointDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            deleteCheckpoint(eventId, checkpointId);
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              await deleteCheckpoint(eventId, checkpointId);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Not saved', 'Changes could not be saved. Please try again.');
+            }
           },
         },
       ]

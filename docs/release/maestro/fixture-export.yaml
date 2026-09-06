@@ -1,0 +1,16 @@
+appId: com.beaux.ultraedge
+---
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*Moonridge.*"
+- assertVisible: ".*Saturday, September 19, 2026.*"
+- takeScreenshot: corrected-race-date
+- scrollUntilVisible:
+    element: ".*Export Race Plan.*"
+    direction: DOWN
+    speed: 30
+    timeout: 40000
+- tapOn: ".*Export Race Plan.*"
+- extendedWaitUntil:
+    visible: "Copy"
+    timeout: 30000
+- takeScreenshot: final-pdf-share

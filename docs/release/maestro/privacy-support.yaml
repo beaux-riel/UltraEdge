@@ -1,0 +1,11 @@
+appId: com.beaux.ultraedge
+---
+- stopApp
+- launchApp
+- tapOn: "Profile, tab, 5 of 5"
+- scrollUntilVisible:
+    element: "Privacy and support"
+    direction: DOWN
+- tapOn: "Privacy and support"
+- assertVisible: "Your data stays on this device"
+- takeScreenshot: privacy-support

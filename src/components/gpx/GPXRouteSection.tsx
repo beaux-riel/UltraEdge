@@ -114,17 +114,13 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
   const handlePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        // GPX mime types are inconsistent across providers; validate extension below
+        // Providers may label GPX as XML; importLocalGpx validates the file contents.
         type: '*/*',
         copyToCacheDirectory: true,
       });
       if (result.canceled) return;
 
       const asset = result.assets[0];
-      if (!asset.name.toLowerCase().endsWith('.gpx')) {
-        Alert.alert('Invalid File', 'Please select a GPX file (.gpx extension).');
-        return;
-      }
 
       setBusy(true);
       const uri = await importLocalGpx(asset.uri, eventId, onGpxChange);

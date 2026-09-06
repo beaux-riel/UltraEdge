@@ -1,3 +1,4 @@
+import { RaceOperations, projectRace, clockLabel } from './raceOperations';
 import { resolveLocalGpxUri } from './localGpxUri';
 import { parseDateOnly } from './dateOnly';
 /**
@@ -73,6 +74,8 @@ export interface RacePlanData {
   dropBags: RacePlanDropBag[];
   /** Raw GPX XML for the course, when the event has one. */
   gpxXml?: string | null;
+  operations?: RaceOperations;
+  operationsLogistics?: string[];
 }
 
 // ============================================================================
@@ -683,8 +686,24 @@ const STYLES = `
   }
 `;
 
+function buildOperationsSection(data: RacePlanData): string {
+  if (!data.operations) return '';
+  const projection = projectRace(data.event, data.checkpoints, data.operations);
+  const rows = projection?.rows.map(row => `<tr><td>${escapeHtml(row.name)}</td><td>${escapeHtml(clockLabel(row.best))}</td><td>${escapeHtml(clockLabel(row.arrival))}</td><td>${escapeHtml(clockLabel(row.slow))}</td><td>${row.stop} min</td><td>${escapeHtml(clockLabel(row.departure))}</td></tr>`).join('') ?? '';
+  return `<section class="section"><h2>Race timeline & logistics</h2><p>Target is moving time; stops add to finish. Distance-based projections, ±${data.operations.variation}%. Times use the exporting device’s timezone. Offline reports on this device.</p>
+    ${projection ? `<p>Expected finish: ${escapeHtml(clockLabel(projection.finish))}. Planned stops: ${projection.stopMinutes} minutes. ${projection.lastReport ? 'Last report: ' + escapeHtml(clockLabel(Date.parse(projection.lastReport))) : 'No actual reports yet.'}</p><table><thead><tr><th>Station</th><th>Best</th><th>Expected in</th><th>Slow</th><th>Stop</th><th>Out</th></tr></thead><tbody>${rows}</tbody></table>` : '<p>Complete race timing and checkpoint distances to calculate ETAs.</p>'}
+    ${(data.operationsLogistics ?? []).map(line => `<p>${escapeHtml(line)}</p>`).join('')}
+    ${data.operations.reports.map(report => `<p>${escapeHtml(data.checkpoints.find(cp => cp.id === report.checkpointId)?.name ?? 'Checkpoint')} — ${report.source} ${report.kind}: ${escapeHtml(clockLabel(Date.parse(report.at)))}</p>`).join('')}
+    </section>`;
+}
+
 /** Assemble the complete printable HTML document. */
 export function buildRacePlanHtml(data: RacePlanData): string {
+  const projection = data.operations ? projectRace(data.event, data.checkpoints, data.operations) : null;
+  if (projection) data = { ...data, checkpoints: data.checkpoints.map(cp => {
+    const row = projection.rows.find(row => row.id === cp.id);
+    return row ? { ...cp, estimated_arrival: clockLabel(row.arrival) } : cp;
+  }) };
   let metrics: RouteMetrics | null = null;
   if (data.gpxXml) {
     try {
@@ -712,6 +731,7 @@ export function buildRacePlanHtml(data: RacePlanData): string {
 ${buildCover(data, metrics)}
 ${buildRouteSection(data, metrics)}
 ${buildCheckpointsSection(data)}
+${buildOperationsSection(data)}
 ${buildCrewSection(data)}
 ${buildGearSection(data)}
 ${buildDropBagsSection(data)}

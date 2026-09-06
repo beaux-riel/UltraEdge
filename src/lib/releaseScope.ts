@@ -1,4 +1,3 @@
-/** V1 ships as a free local planner. Re-enabling services requires a reviewed release
- * and verified account, privacy and entitlement lifecycles; build secrets alone
- * must never change the product boundary. */
+/** Legacy account, backup and premium services remain disabled. Optional guest
+ * race collaboration uses its own scoped client and explicit sharing workflow. */
 export const ACCOUNT_SERVICES_ENABLED = false;

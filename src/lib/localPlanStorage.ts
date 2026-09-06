@@ -63,6 +63,8 @@ export async function deleteLocalEvent(eventId: string): Promise<void> {
       const rows = await readArray<{ eventId: string }>(key);
       entries.push([key, JSON.stringify(rows.filter(row => row.eventId !== eventId))]);
     }
+    const operations = await readArray<{ id: string }>('@ultraedge/race-operations');
+    entries.push(['@ultraedge/race-operations', JSON.stringify(operations.filter(row => row.id !== eventId))]);
     const checkpoints = await readCheckpointMap();
     delete checkpoints[eventId];
     entries.push(['ultraedge_checkpoints', JSON.stringify(checkpoints)]);

@@ -318,7 +318,7 @@ export function EventForm({
             />
           </View>
           <View style={styles.halfField}>
-            <Label style={styles.label}>Target Time</Label>
+            <Label style={styles.label}>Target moving time</Label>
             <TextInput
               style={inputStyle}
               value={targetTime}

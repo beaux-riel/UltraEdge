@@ -1,3 +1,4 @@
+import { loadOperations } from '../lib/raceOperations';
 /**
  * ExportRacePlanButton — generates a shareable race day plan PDF.
  *
@@ -158,7 +159,13 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
         ));
         if (!proceed) return;
       }
-      await exportRacePlan({ event, checkpoints, crew, gear, dropBags, gpxXml });
+      const operations = await loadOperations(eventId);
+      const operationsLogistics = operations.duties.map(duty => `${getCheckpointById(eventId, duty.checkpointId)?.name ?? 'Checkpoint'}: ${getCrewMember(duty.crewMemberId)?.name ?? 'Crew'} — ${duty.role.replace('_', ' ')}`);
+      for (const vehicle of operations.vehicles) {
+        operationsLogistics.push(`${vehicle.name} • Owner: ${vehicle.ownerId ? getCrewMember(vehicle.ownerId)?.name ?? 'Unassigned' : 'Unassigned'} • Crew: ${vehicle.crewIds.map(id => getCrewMember(id)?.name ?? 'Unassigned').join(', ') || 'None'} • Cargo: ${operations.cargo.filter(item => item.vehicleId === vehicle.id).map(item => item.label).join(', ') || 'None'}`);
+      }
+      operationsLogistics.push('Bag items travel with their bag unless a separate item allocation is listed.');
+      await exportRacePlan({ event, checkpoints, crew, gear, dropBags, gpxXml, operations, operationsLogistics });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong.';
       Alert.alert('Export Failed', `Could not generate the race plan PDF. ${message}`);

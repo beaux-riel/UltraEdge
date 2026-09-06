@@ -47,6 +47,7 @@ import { runLocalPlanOperation, readArray } from '../../lib/localPlanStorage';
 import { removeEventGear, updateEventGear, EVENT_GEAR_KEY, EventGearAllocation } from '../../lib/eventGear';
 import { saveGpxPlan } from '../../lib/importGpxPlan';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
+import RaceOperationsPanel from '../../components/RaceOperationsPanel';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
@@ -613,6 +614,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 </View>
               ))}
             </View>
+
+            <RaceOperationsPanel initialStation={route.params?.operationsCheckpointId} event={event} checkpoints={checkpoints} crew={eventCrewMembers.map(row => row.member)} bags={eventDropBags} gear={eventGearItems.map(row => row.item)} />
 
             {/* Course Route (GPX) */}
             <GPXRouteSection

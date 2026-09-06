@@ -1,3 +1,5 @@
+> Historical local-only build package. Superseded for the new collaboration candidate by RACE-OPERATIONS.md and LIVE-COLLABORATION.md. Do not reuse its local-only privacy or feature claims for the new candidate.
+
 # UltraEdge V1 release package
 
 Draft for the free local-planner release. See [build 3 verification](VERIFICATION-2026-09-05.md) for completed local checks and remaining gates. The table below is the full TestFlight/device matrix, whose statuses remain NOT RUN until that exact uploaded candidate is tested. This file is preparation, not evidence of App Store submission or a completed device test. Every test below starts **NOT RUN**; replace its status only with a recorded result and candidate build identifier.

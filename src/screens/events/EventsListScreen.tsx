@@ -1,3 +1,4 @@
+import LiveRacePanel from '../../components/LiveRacePanel';
 /**
  * UltraEdge Events List Screen
  * List all events with swipe to delete
@@ -283,6 +284,7 @@ export default function EventsListScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
 
+        <LiveRacePanel />
         {/* Events List */}
         {loading || error ? (
           <StorageLoadNotice error={error} loading={loading} onRetry={refreshEvents} />

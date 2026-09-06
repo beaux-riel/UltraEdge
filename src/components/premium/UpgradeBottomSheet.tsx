@@ -54,8 +54,8 @@ export const UpgradeBottomSheet = forwardRef<UpgradeBottomSheetRef, UpgradeBotto
             is available in this version.
           </Body>
           <Body color="secondary" style={styles.paragraph}>
-            Plans stay on this device. Cloud sync, crew notifications and live predictions
-            are not available. Export your event PDF to share a readable copy with your crew.
+            Local plans stay on this device. Optional live team rooms share timing and observations.
+            Export your event PDF to keep a readable copy with your crew.
           </Body>
           <Button fullWidth onPress={() => sheetRef.current?.close()} style={styles.button}>
             Continue planning

@@ -25,8 +25,7 @@ export function SubscriptionScreen() {
         copy, not a backup you can import to restore a plan.
       </Body>
       <Body color="secondary" style={styles.paragraph}>
-        Cloud sync, live tracking, crew notifications and automatic backups are not available
-        in this version. Map backgrounds may require an internet connection.
+        Optional live team rooms synchronize race timing and observations. GPS tracking, push notifications and automatic full-plan backups are not available. Map backgrounds may require an internet connection.
       </Body>
     </ScrollView>
   );

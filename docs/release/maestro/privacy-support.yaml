@@ -7,5 +7,5 @@ appId: com.beaux.ultraedge
     element: "Privacy and support"
     direction: DOWN
 - tapOn: "Privacy and support"
-- assertVisible: "Your data stays on this device"
+- assertVisible: "Local plans and optional team sharing"
 - takeScreenshot: privacy-support

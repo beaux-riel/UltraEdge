@@ -429,7 +429,7 @@ export default function ProfileScreen({ navigation }: any) {
               <Body>Free planning on this device</Body>
               <BodySmall color="secondary" style={{ marginTop: spacing.sm }}>
                 No account or payment is needed. Editable plans stay on this device;
-                there is no cloud sync or automatic backup. Deleting the app can remove
+                optional live team races share timing and logistics separately. There is no automatic full-plan backup. Deleting the app can remove
                 your plans. Export a PDF before race day and save it outside the app.
                 PDFs cannot restore editable plans.
               </BodySmall>

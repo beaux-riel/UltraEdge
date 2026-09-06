@@ -22,15 +22,15 @@ export default function PrivacySupportScreen() {
       style={{ backgroundColor: theme.colors.parchment }}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
     >
-      <BodySmall>UltraEdge 1.0 · Updated September 5, 2026</BodySmall>
+      <BodySmall>UltraEdge 1.0 · Updated September 6, 2026</BodySmall>
       <Body style={styles.paragraph}>This information is available offline. Opening the support link requires an internet connection.</Body>
 
       <View style={styles.section}>
-        <H2 accessibilityRole="header">Your data stays on this device</H2>
+        <H2 accessibilityRole="header">Local plans and optional team sharing</H2>
         <Body style={styles.paragraph}>
           UltraEdge stores your event plans, checkpoints, gear, drop bags, crew names and contact details,
           roles, notes, profile, weight entries, preferences and imported GPX files locally.
-          The free planner has no account sign-in, cloud plan sync, purchases, advertising,
+          The free planner has no purchases, advertising,
           or app-operated analytics and crash reporting enabled.
         </Body>
         <Body style={styles.paragraph}>
@@ -39,6 +39,26 @@ export default function PrivacySupportScreen() {
         </Body>
       </View>
 
+      <View style={styles.section}>
+        <H2 accessibilityRole="header">Live team races</H2>
+        <Body style={styles.paragraph}>
+          Creating or joining a team race connects to Supabase in Canada and creates a guest identity
+          whose session is stored securely on this phone. Shared race timing, checkpoint names,
+          stop plans, crew display names, vehicle and cargo labels, and time observations are stored
+          on the server and cached on joined phones. Crew phone numbers, emails, personal notes
+          and route files are excluded from this upload. The service also processes connection
+          information such as IP addresses for authentication and abuse prevention.
+        </Body>
+        <Body style={styles.paragraph}>
+          Sharing is optional. Team members can read the plan and submit their own observations.
+          The owner can remove members or stop sharing and delete the room. In Events, open the
+          live team panel and choose Delete my collaboration data to delete your guest identity,
+          owned rooms and reports. Removing a local race or deleting the app does not delete
+          server copies. Previously downloaded or exported copies held by others remain with them.
+          Pending reports stay on the device until synchronized. A new phone needs a new invitation;
+          guest owner access has no email or password recovery.
+        </Body>
+      </View>
       <View style={styles.section}>
         <H2 accessibilityRole="header">Maps, files and sharing</H2>
         <Body style={styles.paragraph}>

@@ -9,6 +9,9 @@ const { getDefaultConfig } = require("expo/metro-config");
 // /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Release bundling must not wait on a machine-wide Watchman daemon.
+if (process.env.ULTRAEDGE_DISABLE_WATCHMAN === "1") config.resolver.useWatchman = false;
+
 // Polyfills and stubs for Node.js modules
 const emptyModule = require.resolve('./src/lib/empty-module.js');
 config.resolver.extraNodeModules = {

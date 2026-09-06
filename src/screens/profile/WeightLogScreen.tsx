@@ -33,7 +33,8 @@ import {
   Card,
   CardContent,
 } from '../../components/ui';
-import { useMover, WeightEntry } from '../../context/MoverContext';
+import MoverStorageNotice from '../../components/MoverStorageNotice';
+import { useMover, WeightEntry, convertMoverWeight } from '../../context/MoverContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -262,7 +263,7 @@ export default function WeightLogScreen({ navigation }: any) {
       setNotes('');
     } catch (error) {
       console.error('Error logging weight:', error);
-      Alert.alert('Error', 'Failed to log weight. Please try again.');
+      Alert.alert('Error', 'The save could not be confirmed. Retry loading your profile to recover any pending save, then check the history before logging again.');
     } finally {
       setIsLogging(false);
     }
@@ -320,6 +321,7 @@ export default function WeightLogScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <MoverStorageNotice />
           {/* Log Weight Section */}
           <View style={styles.logSection}>
             <Card variant="elevated">
@@ -488,7 +490,7 @@ export default function WeightLogScreen({ navigation }: any) {
                             // Find previous entry (next in array since newest first)
                             const allIndex = weightHistory.findIndex(e => e.id === entry.id);
                             const previousWeight = allIndex < weightHistory.length - 1 
-                              ? weightHistory[allIndex + 1].weight 
+                              ? convertMoverWeight(weightHistory[allIndex + 1].weight, weightHistory[allIndex + 1].weight_unit, entry.weight_unit)
                               : null;
                             
                             return (
@@ -504,7 +506,9 @@ export default function WeightLogScreen({ navigation }: any) {
                                 <HistoryItem
                                   entry={entry}
                                   previousWeight={previousWeight}
-                                  onDelete={() => deleteWeightEntry(entry.id)}
+                                  onDelete={() => { void deleteWeightEntry(entry.id).catch(() => {
+                                    Alert.alert('Save not confirmed', 'Retry loading your profile to recover any pending change before trying again.');
+                                  }); }}
                                   colors={colors}
                                   isFirst={allIndex === 0}
                                 />

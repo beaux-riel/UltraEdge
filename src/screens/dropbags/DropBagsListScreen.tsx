@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import StorageLoadNotice from '../../components/StorageLoadNotice';
 import { useTheme } from '../../theme';
 import { Text, H1, H2, Body, BodySmall, Button, Card, CardContent } from '../../components/ui';
 import { useDropBags, DropBag } from '../../context/DropBagContext';
@@ -34,9 +35,9 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
   // Optional event filter from route params
   const eventIdFilter = route.params?.eventId;
 
-  const { dropBags, loading, refreshDropBags } = useDropBags();
-  const { getEvent, events } = useEvents();
-  const { getCheckpointById } = useCheckpoints();
+  const { dropBags, loading, error, refreshDropBags } = useDropBags();
+  const { getEvent, events, error: eventError, loading: eventsLoading, refreshEvents } = useEvents();
+  const { getCheckpointById, error: checkpointError, loading: checkpointsLoading, refreshCheckpoints } = useCheckpoints();
 
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,9 +73,9 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshDropBags();
-    setRefreshing(false);
-  }, [refreshDropBags]);
+    try { await Promise.all([refreshDropBags(), refreshEvents(), refreshCheckpoints()]); }
+    finally { setRefreshing(false); }
+  }, [refreshDropBags, refreshEvents, refreshCheckpoints]);
 
   const renderDropBag = ({ item }: { item: DropBag }) => {
     const event = getEvent(item.eventId);
@@ -163,6 +164,8 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
       <View style={[styles.navHeader, { paddingTop: insets.top + spacing.xs }]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: colors.bark + '20' }]}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="chevron-back" size={20} color={colors.cream} />
@@ -178,10 +181,11 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
           <H1>Drop Bags</H1>
           <Button
             size="sm"
+            disabled={loading || eventsLoading || checkpointsLoading || !!error || !!eventError || !!checkpointError}
             onPress={() => navigation.navigate('CreateDropBag', { eventId: eventIdFilter })}
-            icon={<Ionicons name="add" size={18} color={colors.snow} />}
+            icon={<Ionicons name="add" size={18} color={colors.onAccent} />}
           >
-            Add
+            Add drop bag
           </Button>
         </View>
 
@@ -224,7 +228,7 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setSearchQuery('')}>
               <Ionicons name="close-circle" size={18} color={colors.mist} />
             </TouchableOpacity>
           )}
@@ -242,15 +246,15 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
               style={[
                 styles.filterPill,
                 {
-                  backgroundColor: selectedEventId === 'all' ? colors.forest : colors.cream,
-                  borderColor: selectedEventId === 'all' ? colors.forest : colors.border,
+                  backgroundColor: selectedEventId === 'all' ? colors.accent : colors.cream,
+                  borderColor: selectedEventId === 'all' ? colors.accent : colors.border,
                 },
               ]}
               onPress={() => setSelectedEventId('all')}
             >
               <Text
                 variant="bodySmall"
-                style={{ color: selectedEventId === 'all' ? colors.snow : colors.stone }}
+                style={{ color: selectedEventId === 'all' ? colors.onAccent : colors.stone }}
               >
                 All Events
               </Text>
@@ -264,8 +268,8 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
                   style={[
                     styles.filterPill,
                     {
-                      backgroundColor: isSelected ? colors.forest : colors.cream,
-                      borderColor: isSelected ? colors.forest : colors.border,
+                      backgroundColor: isSelected ? colors.accent : colors.cream,
+                      borderColor: isSelected ? colors.accent : colors.border,
                     },
                   ]}
                   onPress={() => setSelectedEventId(event.id)}
@@ -273,12 +277,12 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
                   <Ionicons
                     name="calendar"
                     size={14}
-                    color={isSelected ? colors.snow : colors.mist}
+                    color={isSelected ? colors.onAccent : colors.mist}
                     style={{ marginRight: 4 }}
                   />
                   <Text
                     variant="bodySmall"
-                    style={{ color: isSelected ? colors.snow : colors.stone }}
+                    style={{ color: isSelected ? colors.onAccent : colors.stone }}
                     numberOfLines={1}
                   >
                     {event.name}
@@ -291,7 +295,9 @@ export default function DropBagsListScreen({ navigation, route }: Props) {
       </View>
 
       {/* Drop Bags List */}
-      {dropBags.length === 0 && !searchQuery && selectedEventId === 'all' ? (
+      {loading || eventsLoading || checkpointsLoading || error || eventError || checkpointError ? (
+        <StorageLoadNotice error={error || eventError || checkpointError} loading={loading || eventsLoading || checkpointsLoading} onRetry={onRefresh} />
+      ) : dropBags.length === 0 && !searchQuery && selectedEventId === 'all' ? (
         renderEmptyState()
       ) : (
         <FlatList

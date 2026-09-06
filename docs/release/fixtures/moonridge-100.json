@@ -1,0 +1,937 @@
+{
+  "@ultraedge/events": [
+    {
+      "id": "fixture-moonridge-100",
+      "mover_id": "local",
+      "name": "Moonridge 100 \u2014 Overnight Rehearsal",
+      "description": "FICTIONAL release-test race. Overnight crew plan; course is synthetic and must never be used for navigation.",
+      "event_date": "2026-09-19",
+      "event_time": "05:00",
+      "location": "Fictional Moonridge Range",
+      "start_location": "Cedar Base",
+      "finish_location": "Dawn Meadow",
+      "total_distance": 100,
+      "distance_unit": "miles",
+      "total_elevation_gain": 12400,
+      "total_elevation_loss": 12400,
+      "elevation_unit": "feet",
+      "cutoff_time": "32:00",
+      "target_time": "28:00",
+      "status": "ready",
+      "mover_weight_snapshot": null,
+      "total_gear_weight": null,
+      "total_nutrition_weight": null,
+      "total_hydration_weight": null,
+      "race_website": null,
+      "course_map_url": null,
+      "gpx_file_url": "__FIXTURE_GPX_URI__",
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    }
+  ],
+  "ultraedge_checkpoints": {
+    "fixture-moonridge-100": [
+      {
+        "id": "fixture-cp-00",
+        "event_id": "fixture-moonridge-100",
+        "name": "Cedar Base",
+        "checkpoint_type": "start",
+        "order_index": 0,
+        "distance_from_start": 0,
+        "elevation": 1476,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.0,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 05:00",
+        "estimated_duration": null,
+        "has_crew_access": true,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-01",
+        "event_id": "fixture-moonridge-100",
+        "name": "Fern Creek",
+        "checkpoint_type": "aid_station",
+        "order_index": 1,
+        "distance_from_start": 8,
+        "elevation": 2184,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.1157852,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 07:00",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-02",
+        "event_id": "fixture-moonridge-100",
+        "name": "Granite Pass",
+        "checkpoint_type": "aid_station",
+        "order_index": 2,
+        "distance_from_start": 17,
+        "elevation": 2302,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.24604355,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 09:30",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-03",
+        "event_id": "fixture-moonridge-100",
+        "name": "North Fork",
+        "checkpoint_type": "aid_station",
+        "order_index": 3,
+        "distance_from_start": 26,
+        "elevation": 1495,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.3763019,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 12:00",
+        "estimated_duration": null,
+        "has_crew_access": true,
+        "has_drop_bag": true,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-04",
+        "event_id": "fixture-moonridge-100",
+        "name": "Lake Lookout",
+        "checkpoint_type": "aid_station",
+        "order_index": 4,
+        "distance_from_start": 36,
+        "elevation": 2048,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.5210334,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 15:00",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-05",
+        "event_id": "fixture-moonridge-100",
+        "name": "Raven Saddle",
+        "checkpoint_type": "aid_station",
+        "order_index": 5,
+        "distance_from_start": 46,
+        "elevation": 2395,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.6657649,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 18:00",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-06",
+        "event_id": "fixture-moonridge-100",
+        "name": "Moonrise Camp",
+        "checkpoint_type": "aid_station",
+        "order_index": 6,
+        "distance_from_start": 55,
+        "elevation": 1554,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.79602325,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sat 21:00",
+        "estimated_duration": null,
+        "has_crew_access": true,
+        "has_drop_bag": true,
+        "has_pacer_pickup": true,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Headlamps on before leaving. Confirm spare batteries and warm layer.\nPacer handoff; no reliable cell coverage.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-07",
+        "event_id": "fixture-moonridge-100",
+        "name": "High Ridge",
+        "checkpoint_type": "aid_station",
+        "order_index": 7,
+        "distance_from_start": 65,
+        "elevation": 1907,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 48.940754749999996,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sun 00:30",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-08",
+        "event_id": "fixture-moonridge-100",
+        "name": "Silver Creek",
+        "checkpoint_type": "aid_station",
+        "order_index": 8,
+        "distance_from_start": 74,
+        "elevation": 2454,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 49.0710131,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sun 03:30",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-09",
+        "event_id": "fixture-moonridge-100",
+        "name": "Owl Hollow",
+        "checkpoint_type": "aid_station",
+        "order_index": 9,
+        "distance_from_start": 83,
+        "elevation": 1645,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 49.20127145,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sun 06:00",
+        "estimated_duration": null,
+        "has_crew_access": true,
+        "has_drop_bag": true,
+        "has_pacer_pickup": true,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-10",
+        "event_id": "fixture-moonridge-100",
+        "name": "Last Climb",
+        "checkpoint_type": "aid_station",
+        "order_index": 10,
+        "distance_from_start": 92,
+        "elevation": 1771,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 49.3315298,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": null,
+        "estimated_arrival": "Sun 08:00",
+        "estimated_duration": null,
+        "has_crew_access": false,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": false,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      },
+      {
+        "id": "fixture-cp-11",
+        "event_id": "fixture-moonridge-100",
+        "name": "Dawn Meadow",
+        "checkpoint_type": "finish",
+        "order_index": 11,
+        "distance_from_start": 100,
+        "elevation": 2475,
+        "location_description": "Fictional location. Crew parking only where access is marked.",
+        "latitude": 49.447315,
+        "longitude": -123,
+        "cutoff_time": null,
+        "cutoff_duration": "32:00",
+        "estimated_arrival": "Sun 09:00",
+        "estimated_duration": null,
+        "has_crew_access": true,
+        "has_drop_bag": false,
+        "has_pacer_pickup": false,
+        "has_pacer_dropoff": true,
+        "aid_supplies": [
+          "Water",
+          "Broth",
+          "Potatoes"
+        ],
+        "notes": "Check bottle labels & personal packing list; no live tracking assumed.",
+        "created_at": "2026-09-05T12:00:00Z",
+        "updated_at": "2026-09-05T12:00:00Z"
+      }
+    ]
+  },
+  "@ultraedge/crew": [
+    {
+      "id": "fixture-crew-0",
+      "name": "Alex River",
+      "phone": "+1 202-555-0110",
+      "email": "crew0@example.com",
+      "notes": "Fictional contact for simulator only.",
+      "avatar_url": null,
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-crew-1",
+      "name": "Sam Pine",
+      "phone": "+1 202-555-0111",
+      "email": "crew1@example.com",
+      "notes": "Fictional contact for simulator only.",
+      "avatar_url": null,
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-crew-2",
+      "name": "Jordan Vale",
+      "phone": "+1 202-555-0112",
+      "email": "crew2@example.com",
+      "notes": "Fictional contact for simulator only.",
+      "avatar_url": null,
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    }
+  ],
+  "@ultraedge/event-crew": [
+    {
+      "eventId": "fixture-moonridge-100",
+      "crewMemberId": "fixture-crew-0",
+      "roles": [
+        "crew_chief",
+        "driver"
+      ],
+      "customRole": null,
+      "notes": "Carry printed plan; coordinate overnight driver rest."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "crewMemberId": "fixture-crew-1",
+      "roles": [
+        "pacer"
+      ],
+      "customRole": null,
+      "notes": "Pace Moonrise Camp to Owl Hollow; bring independent lighting."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "crewMemberId": "fixture-crew-2",
+      "roles": [
+        "pacer",
+        "other"
+      ],
+      "customRole": "Finish logistics",
+      "notes": "Pace Owl Hollow to finish; verify handoff at 06:00 Sunday."
+    }
+  ],
+  "@ultraedge/gear-items": [
+    {
+      "id": "fixture-gear-00",
+      "name": "Trail shoes",
+      "category": "footwear",
+      "weight": 600,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-01",
+      "name": "Spare socks",
+      "category": "clothing",
+      "weight": 60,
+      "weightUnit": "g",
+      "quantity": 2,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-02",
+      "name": "Rain shell",
+      "category": "clothing",
+      "weight": 220,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-03",
+      "name": "Warm midlayer",
+      "category": "clothing",
+      "weight": 260,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-04",
+      "name": "Gloves",
+      "category": "clothing",
+      "weight": 50,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-05",
+      "name": "Beanie",
+      "category": "clothing",
+      "weight": 45,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-06",
+      "name": "Running vest",
+      "category": "pack",
+      "weight": 300,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-07",
+      "name": "Soft flask",
+      "category": "hydration",
+      "weight": 45,
+      "weightUnit": "g",
+      "quantity": 2,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-08",
+      "name": "Reserve bottle",
+      "category": "hydration",
+      "weight": 80,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-09",
+      "name": "Primary headlamp",
+      "category": "lighting",
+      "weight": 100,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-10",
+      "name": "Backup headlamp",
+      "category": "lighting",
+      "weight": 90,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-11",
+      "name": "Spare batteries",
+      "category": "lighting",
+      "weight": 80,
+      "weightUnit": "g",
+      "quantity": 2,
+      "notes": "Replace batteries at Moonrise Camp <mandatory>.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-12",
+      "name": "Paper course notes",
+      "category": "navigation",
+      "weight": 20,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-13",
+      "name": "Compass",
+      "category": "navigation",
+      "weight": 30,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-14",
+      "name": "Emergency blanket",
+      "category": "safety",
+      "weight": 60,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-15",
+      "name": "Whistle",
+      "category": "safety",
+      "weight": 10,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-16",
+      "name": "Foot care pouch",
+      "category": "safety",
+      "weight": 90,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-17",
+      "name": "Poles",
+      "category": "poles",
+      "weight": 360,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-18",
+      "name": "Personal snack pack",
+      "category": "nutrition",
+      "weight": 250,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-gear-19",
+      "name": "Cup",
+      "category": "other",
+      "weight": 25,
+      "weightUnit": "g",
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs.",
+      "isActive": true,
+      "retired": false,
+      "createdAt": "2026-09-05T12:00:00Z",
+      "updatedAt": "2026-09-05T12:00:00Z"
+    }
+  ],
+  "@ultraedge/event-gear": [
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-00",
+      "isWorn": true,
+      "isCarried": false,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-01",
+      "isWorn": false,
+      "isCarried": false,
+      "quantity": 2,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-02",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-03",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-04",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-05",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-06",
+      "isWorn": true,
+      "isCarried": false,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-07",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 2,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-08",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-09",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-10",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-11",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 2,
+      "notes": "Replace batteries at Moonrise Camp <mandatory>."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-12",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-13",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-14",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-15",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-16",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-17",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-18",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    },
+    {
+      "eventId": "fixture-moonridge-100",
+      "gearItemId": "fixture-gear-19",
+      "isWorn": false,
+      "isCarried": true,
+      "quantity": 1,
+      "notes": "Fictional packing item; adjust quantities to personal race needs."
+    }
+  ],
+  "@ultraedge/dropbags": [
+    {
+      "id": "fixture-bag-0",
+      "name": "North Fork \u2014 Blue",
+      "eventId": "fixture-moonridge-100",
+      "checkpointId": "fixture-cp-03",
+      "items": [
+        {
+          "id": "fixture-bagitem-0-1",
+          "type": "gear",
+          "refId": "fixture-gear-01",
+          "name": "Spare socks",
+          "quantity": 1,
+          "notes": "Pack in labeled waterproof pouch."
+        },
+        {
+          "id": "fixture-bagitem-0-18",
+          "type": "gear",
+          "refId": "fixture-gear-18",
+          "name": "Personal snack pack",
+          "quantity": 1,
+          "notes": "Pack in labeled waterproof pouch."
+        },
+        {
+          "id": "fixture-bagitem-0-7",
+          "type": "gear",
+          "refId": "fixture-gear-07",
+          "name": "Soft flask",
+          "quantity": 1,
+          "notes": "Pack in labeled waterproof pouch."
+        }
+      ],
+      "notes": "Runner bib 100; collect after race. Keep dry.",
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-bag-1",
+      "name": "Moonrise \u2014 Overnight",
+      "eventId": "fixture-moonridge-100",
+      "checkpointId": "fixture-cp-06",
+      "items": [
+        {
+          "id": "fixture-bagitem-1-3",
+          "type": "gear",
+          "refId": "fixture-gear-03",
+          "name": "Warm midlayer",
+          "quantity": 1,
+          "notes": "Pack in labeled waterproof pouch."
+        },
+        {
+          "id": "fixture-bagitem-1-10",
+          "type": "gear",
+          "refId": "fixture-gear-10",
+          "name": "Backup headlamp",
+          "quantity": 1,
+          "notes": "Pack in labeled waterproof pouch."
+        },
+        {
+          "id": "fixture-bagitem-1-11",
+          "type": "gear",
+          "refId": "fixture-gear-11",
+          "name": "Spare batteries",
+          "quantity": 2,
+          "notes": "Pack in labeled waterproof pouch."
+        }
+      ],
+      "notes": "Runner bib 100; collect after race. Keep dry.",
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    },
+    {
+      "id": "fixture-bag-2",
+      "name": "Owl Hollow \u2014 Empty Reserve",
+      "eventId": "fixture-moonridge-100",
+      "checkpointId": "fixture-cp-09",
+      "items": [],
+      "notes": "Reserved for final packing check.",
+      "created_at": "2026-09-05T12:00:00Z",
+      "updated_at": "2026-09-05T12:00:00Z"
+    }
+  ]
+}

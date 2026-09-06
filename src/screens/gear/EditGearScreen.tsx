@@ -1,3 +1,5 @@
+import PhotoField from '../../components/PhotoField';
+import BrandSelect from '../../components/BrandSelect';
 /**
  * UltraEdge Edit Gear Screen
  * Form to edit existing gear items
@@ -54,6 +56,7 @@ interface GearItem {
   id: string;
   name: string;
   brand?: string;
+  imageUrl?: string;
   model?: string;
   category: GearCategory | 'nutrition';
   weight?: number;
@@ -84,6 +87,7 @@ export default function EditGearScreen({ navigation, route }: any) {
 
   // Form state
   const [name, setName] = useState(originalItem?.name || '');
+  const [imageUrl, setImageUrl] = useState<string | null>(originalItem?.imageUrl || null);
   const [brand, setBrand] = useState(originalItem?.brand || '');
   const [model, setModel] = useState(originalItem?.model || '');
   const [category, setCategory] = useState<GearCategory | 'nutrition'>(originalItem?.category || 'other');
@@ -94,6 +98,7 @@ export default function EditGearScreen({ navigation, route }: any) {
   const [size, setSize] = useState(originalItem?.size || '');
   const [notes, setNotes] = useState(originalItem?.notes || '');
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   if (!originalItem) {
     return (
@@ -121,7 +126,7 @@ export default function EditGearScreen({ navigation, route }: any) {
 
   const hasChanges = 
     name !== originalItem.name ||
-    brand !== (originalItem.brand || '') ||
+    brand !== (originalItem.brand || '') || imageUrl !== (originalItem.imageUrl || null) ||
     model !== (originalItem.model || '') ||
     category !== originalItem.category ||
     weight !== (originalItem.weight?.toString() || '') ||
@@ -132,7 +137,7 @@ export default function EditGearScreen({ navigation, route }: any) {
     notes !== (originalItem.notes || '');
 
   const handleSave = async () => {
-    if (!canSave || saving) return;
+    if (!canSave || saving || photoBusy) return;
 
     setSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -142,6 +147,7 @@ export default function EditGearScreen({ navigation, route }: any) {
         ...originalItem,
         name: name.trim(),
         brand: brand.trim() || undefined,
+        imageUrl: imageUrl || undefined,
         model: model.trim() || undefined,
         category,
         weight: weight ? parseFloat(weight) : undefined,
@@ -261,23 +267,11 @@ export default function EditGearScreen({ navigation, route }: any) {
           />
         </View>
 
+        <PhotoField value={imageUrl} onChange={setImageUrl} disabled={saving} onBusyChange={setPhotoBusy} />
         {/* Brand */}
         <View style={styles.field}>
           <Label>Brand</Label>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.cream,
-                borderColor: colors.border,
-                color: colors.bark,
-              },
-            ]}
-            placeholder="e.g., Salomon"
-            placeholderTextColor={colors.mist}
-            value={brand}
-            onChangeText={setBrand}
-          />
+          <BrandSelect value={brand} onChange={setBrand} />
         </View>
 
         {/* Model */}
@@ -370,8 +364,8 @@ export default function EditGearScreen({ navigation, route }: any) {
                   style={[
                     styles.unitButton,
                     {
-                      backgroundColor: weightUnit === unit.value ? colors.trail : colors.cream,
-                      borderColor: weightUnit === unit.value ? colors.trail : colors.border,
+                      backgroundColor: weightUnit === unit.value ? colors.accent : colors.cream,
+                      borderColor: weightUnit === unit.value ? colors.accent : colors.border,
                     },
                   ]}
                   onPress={() => {
@@ -382,7 +376,7 @@ export default function EditGearScreen({ navigation, route }: any) {
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: weightUnit === unit.value ? colors.snow : colors.stone,
+                      color: weightUnit === unit.value ? colors.onAccent : colors.stone,
                       fontWeight: '600',
                     }}
                   >

@@ -1,0 +1,44 @@
+appId: com.beaux.ultraedge
+---
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: "Create event"
+- tapOn: "e.g., Western States 100"
+- inputText: "QA Alpine 100"
+- tapOn: "DESCRIPTION"
+- scrollUntilVisible:
+    element: "Create Event"
+    direction: DOWN
+- tapOn: "Create Event"
+- assertVisible: "QA Alpine 100"
+- tapOn: "Back"
+- tapOn: "Create event"
+- tapOn: "e.g., Western States 100"
+- inputText: "QA Forest 50"
+- tapOn: "DESCRIPTION"
+- scrollUntilVisible:
+    element: "Create Event"
+    direction: DOWN
+- tapOn: "Create Event"
+- assertVisible: "QA Forest 50"
+- tapOn: "Back"
+- tapOn: "Gear, tab, 3 of 5"
+- tapOn: ".*Add gear"
+- tapOn: "e.g., Salomon Sense Ride 5"
+- inputText: "QA Soft Flask"
+- tapOn: "Save"
+- tapOn: "OK"
+- assertVisible: ".*QA Soft Flask.*"
+- tapOn: "Crew, tab, 4 of 5"
+- tapOn: ".*Add crew member"
+- tapOn: "e.g., John Smith"
+- inputText: "QA Alex"
+- tapOn: "Save"
+- tapOn: "OK"
+- assertVisible: ".*QA Alex.*"
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- assertVisible: ".*QA Alpine 100.*"
+- assertVisible: ".*QA Forest 50.*"
+- takeScreenshot: workflow-created-races

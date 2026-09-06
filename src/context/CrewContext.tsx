@@ -4,7 +4,11 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveArrayChanges, deleteLocalCrewMember, subscribePlanChanges } from '../lib/localPlanStorage';
+
+import {
+  loadAndMigrateCrew,
+} from '../lib/eventCrew';
 
 // Simple UUID generator for local storage
 const generateId = (): string => {
@@ -26,8 +30,6 @@ export interface CrewMember {
   name: string;
   phone: string | null;
   email: string | null;
-  role: CrewRole;
-  customRole: string | null;
   notes: string | null;
   avatar_url: string | null;
   created_at: string;
@@ -38,8 +40,6 @@ export interface CrewMemberInsert {
   name: string;
   phone?: string | null;
   email?: string | null;
-  role?: CrewRole;
-  customRole?: string | null;
   notes?: string | null;
   avatar_url?: string | null;
 }
@@ -48,8 +48,6 @@ export interface CrewMemberUpdate {
   name?: string;
   phone?: string | null;
   email?: string | null;
-  role?: CrewRole;
-  customRole?: string | null;
   notes?: string | null;
   avatar_url?: string | null;
 }
@@ -106,13 +104,9 @@ export function CrewProvider({ children }: CrewProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(CREW_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CrewMember[];
-        // Sort by name alphabetically
-        parsed.sort((a, b) => a.name.localeCompare(b.name));
-        setCrewMembers(parsed);
-      }
+      const loaded = await loadAndMigrateCrew() as unknown as CrewMember[];
+      loaded.sort((a, b) => a.name.localeCompare(b.name));
+      setCrewMembers(loaded);
     } catch (err) {
       console.error('Failed to load crew members:', err);
       setError('Failed to load crew members');
@@ -123,17 +117,22 @@ export function CrewProvider({ children }: CrewProviderProps) {
 
   // Save crew members to storage
   const saveCrewMembers = async (updatedMembers: CrewMember[]) => {
+    if (loading || error) throw new Error('Crew data must load successfully before saving.');
     try {
-      await AsyncStorage.setItem(CREW_STORAGE_KEY, JSON.stringify(updatedMembers));
+      const saved = await saveArrayChanges(CREW_STORAGE_KEY, crewMembers, updatedMembers);
+      setCrewMembers(saved);
     } catch (err) {
       console.error('Failed to save crew members:', err);
-      throw new Error('Failed to save crew members');
+      throw err instanceof Error ? err : new Error('Failed to save crew members');
     }
   };
 
   // Initial load
   useEffect(() => {
-    loadCrewMembers();
+    void loadCrewMembers();
+    return subscribePlanChanges(keys => {
+      if (keys.includes(CREW_STORAGE_KEY)) void loadCrewMembers();
+    });
   }, [loadCrewMembers]);
 
   // Create a new crew member
@@ -144,8 +143,6 @@ export function CrewProvider({ children }: CrewProviderProps) {
       name: memberData.name,
       phone: memberData.phone || null,
       email: memberData.email || null,
-      role: memberData.role || 'other',
-      customRole: memberData.customRole || null,
       notes: memberData.notes || null,
       avatar_url: memberData.avatar_url || null,
       created_at: now,
@@ -156,7 +153,6 @@ export function CrewProvider({ children }: CrewProviderProps) {
     // Sort by name
     updatedMembers.sort((a, b) => a.name.localeCompare(b.name));
     await saveCrewMembers(updatedMembers);
-    setCrewMembers(updatedMembers);
     return newMember;
   };
 
@@ -176,7 +172,6 @@ export function CrewProvider({ children }: CrewProviderProps) {
     // Re-sort by name
     updatedMembers.sort((a, b) => a.name.localeCompare(b.name));
     await saveCrewMembers(updatedMembers);
-    setCrewMembers(updatedMembers);
     return updatedMember;
   };
 
@@ -185,9 +180,8 @@ export function CrewProvider({ children }: CrewProviderProps) {
     const index = crewMembers.findIndex(m => m.id === id);
     if (index === -1) return false;
 
-    const updatedMembers = crewMembers.filter(m => m.id !== id);
-    await saveCrewMembers(updatedMembers);
-    setCrewMembers(updatedMembers);
+    if (loading || error) throw new Error('Crew data must load successfully before deleting.');
+    await deleteLocalCrewMember(id);
     return true;
   };
 

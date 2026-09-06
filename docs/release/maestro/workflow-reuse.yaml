@@ -1,0 +1,59 @@
+appId: com.beaux.ultraedge
+---
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*QA Forest 50.*"
+- scrollUntilVisible:
+    element: "Add race gear"
+    direction: DOWN
+- tapOn: "Add race gear"
+- tapOn: "Select Existing"
+- tapOn: ".*QA Soft Flask.*"
+- tapOn: "Add \\(1\\)"
+- scrollUntilVisible:
+    element: "Packed QA Soft Flask"
+    direction: DOWN
+- assertVisible: ".*To pack.*"
+- takeScreenshot: workflow-second-race-unpacked
+- scrollUntilVisible:
+    element: "Add race crew"
+    direction: DOWN
+- tapOn: "Add race crew"
+- tapOn: "Select Existing"
+- tapOn: "QA Alex"
+- tapOn: ".*Driver.*"
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: "Add race drop bag"
+    direction: DOWN
+- tapOn: "Add race drop bag"
+- tapOn: "Choose template"
+- tapOn: "Use QA Night Bag template"
+- tapOn: "Create Drop Bag"
+- assertNotVisible: "New Drop Bag"
+- scrollUntilVisible:
+    element: ".*QA Night Bag.*"
+    direction: DOWN
+- tapOn: ".*QA Night Bag.*"
+- assertVisible: ".*QA Forest 50.*"
+- scrollUntilVisible:
+    element: ".*QA Soft Flask.*"
+    direction: DOWN
+- takeScreenshot: workflow-reused-bag
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*QA Alpine 100.*"
+- scrollUntilVisible:
+    element: "Packed QA Soft Flask"
+    direction: DOWN
+- assertVisible: ".*Packed.*"
+- scrollUntilVisible:
+    element: ".*Export Race Plan.*"
+    direction: UP
+- tapOn: ".*Export Race Plan.*"
+- extendedWaitUntil:
+    visible: "Copy"
+    timeout: 30000
+- takeScreenshot: workflow-pdf-share

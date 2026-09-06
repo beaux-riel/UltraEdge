@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Drop Bag Detail Screen
  * View a single drop bag with contents and checkpoint info
@@ -34,7 +35,7 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
 
   const dropBagId = route.params?.dropBagId;
 
-  const { getDropBag, deleteDropBag, refreshDropBags } = useDropBags();
+  const { getDropBag, deleteDropBag, refreshDropBags, saveDropBagTemplate, loading, error } = useDropBags();
   const { getEvent } = useEvents();
   const { getCheckpointById } = useCheckpoints();
   const { getGearItem } = useGear();
@@ -59,6 +60,17 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
     setRefreshing(false);
   };
 
+  const [savingTemplate, setSavingTemplate] = React.useState(false);
+  const handleSaveTemplate = async () => {
+    setSavingTemplate(true);
+    try {
+      await saveDropBagTemplate(dropBagId);
+      Alert.alert('Template saved', 'Choose this template when creating a drop bag for any race. Each bag has its own items and checkpoint.');
+    } catch (err) {
+      Alert.alert('Template not saved', err instanceof Error ? err.message : 'Please try again.');
+    } finally { setSavingTemplate(false); }
+  };
+
   const handleDelete = () => {
     Alert.alert(
       'Delete Drop Bag',
@@ -69,8 +81,12 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteDropBag(dropBagId);
-            navigation.goBack();
+            try {
+              if (!await deleteDropBag(dropBagId)) throw new Error('The record could not be found. Refresh and try again.');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
           },
         },
       ]
@@ -117,15 +133,13 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
       >
         {/* Hero Header */}
         <LinearGradient
-          colors={isDarkMode 
-            ? [colors.sunrise, colors.parchment] 
-            : [colors.sunrise, colors.sunriseSoft, colors.parchment]
-          }
+          colors={[colors.hero, colors.hero]}
           style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
         >
           {/* Navigation */}
           <View style={styles.heroNav}>
             <TouchableOpacity
+              accessibilityRole="button" accessibilityLabel="Back"
               onPress={() => navigation.goBack()}
               style={styles.navButton}
             >
@@ -175,7 +189,19 @@ export default function DropBagDetailScreen({ navigation, route }: Props) {
 
         {/* Content */}
         <View style={[styles.content, { marginTop: -spacing.xl }]}>
+          <PhotoField value={dropBag.imageUrl} />
           {/* Checkpoint Info */}
+          <Card variant="elevated" style={styles.section}>
+            <CardContent>
+              <H3>Reuse this packing list</H3>
+              <BodySmall color="secondary" style={{ marginVertical: spacing.sm }}>
+                Save the contents and notes as a template for any race. Future edits to a bag keep your template unchanged.
+              </BodySmall>
+              <Button variant="secondary" onPress={handleSaveTemplate} loading={savingTemplate} disabled={loading || !!error || savingTemplate}>
+                Save as template
+              </Button>
+            </CardContent>
+          </Card>
           <Card variant="elevated" style={styles.section}>
             <CardContent>
               <View style={styles.sectionHeader}>

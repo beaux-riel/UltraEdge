@@ -38,7 +38,7 @@ export default function SignInScreen({ navigation }: any) {
   const { colors, spacing, radius, typography } = theme;
   const insets = useSafeAreaInsets();
   
-  const { signInWithEmail, signInWithApple, signInWithGoogle, resetPassword } = useAuth();
+  const { isAuthAvailable, signInWithEmail, signInWithApple, signInWithGoogle, resetPassword } = useAuth();
 
   // Form state
   const [email, setEmail] = useState('');
@@ -153,7 +153,7 @@ export default function SignInScreen({ navigation }: any) {
     }
   };
 
-  const isFormDisabled = isLoading || socialLoading !== null;
+  const isFormDisabled = !isAuthAvailable || isLoading || socialLoading !== null;
 
   return (
     <KeyboardAvoidingView
@@ -168,10 +168,7 @@ export default function SignInScreen({ navigation }: any) {
       >
         {/* Header */}
         <LinearGradient
-          colors={isDarkMode 
-            ? [colors.forest, colors.parchment] 
-            : [colors.forest, colors.forestSoft, colors.parchment]
-          }
+          colors={[colors.hero, colors.hero]}
           style={[styles.header, { paddingTop: insets.top + spacing.md }]}
         >
           {/* Back button */}
@@ -186,11 +183,12 @@ export default function SignInScreen({ navigation }: any) {
             <Ionicons name="trail-sign-outline" size={48} color={colors.snow} style={{ marginBottom: spacing.sm }} />
             <H1 style={{ color: colors.snow }}>Welcome Back</H1>
             <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Sign in to sync your data across devices
+              Optional account access. Race plans stay on this device.
             </BodySmall>
           </View>
         </LinearGradient>
 
+        {!isAuthAvailable && <Body style={{ padding: 24 }}>Account services are unavailable in this build. Continue without an account to use your local planner.</Body>}
         {/* Form */}
         <View style={[styles.content, { marginTop: -spacing.xl }]}>
           <Card variant="elevated" style={styles.formCard}>
@@ -394,7 +392,7 @@ export default function SignInScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.skipContainer}
             onPress={() => navigation.goBack()}
-            disabled={isFormDisabled}
+            disabled={isLoading || socialLoading !== null}
           >
             <BodySmall color="tertiary">
               Continue without signing in →

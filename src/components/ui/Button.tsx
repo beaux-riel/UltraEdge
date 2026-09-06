@@ -20,6 +20,8 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
   children: React.ReactNode;
+  accessibilityLabel?: string;
+  testID?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   onPress: () => void;
@@ -33,6 +35,8 @@ interface ButtonProps {
 
 export function Button({
   children,
+  accessibilityLabel,
+  testID,
   variant = 'primary',
   size = 'md',
   onPress,
@@ -54,7 +58,7 @@ export function Button({
 
   // Size configurations
   const sizeConfig = {
-    sm: { height: 36, paddingHorizontal: 16, fontSize: 14 },
+    sm: { height: 44, paddingHorizontal: 16, fontSize: 14 },
     md: { height: 48, paddingHorizontal: 24, fontSize: 16 },
     lg: { height: 56, paddingHorizontal: 32, fontSize: 18 },
   };
@@ -67,11 +71,11 @@ export function Button({
       case 'primary':
         return {
           container: {
-            backgroundColor: isDisabled ? colors.mist : colors.forest,
+            backgroundColor: isDisabled ? colors.birch : colors.accent,
             ...shadows.md,
           },
           text: {
-            color: colors.snow,
+            color: colors.onAccent,
           },
         };
       case 'secondary':
@@ -92,8 +96,7 @@ export function Button({
           },
           text: {
             color: isDisabled ? colors.mist : colors.forest,
-            textDecorationLine: 'underline',
-            textDecorationStyle: 'dotted',
+
           },
         };
       case 'danger':
@@ -116,15 +119,20 @@ export function Button({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.8}
       style={[
         styles.container,
         {
-          height: sizeStyles.height,
+          minHeight: sizeStyles.height,
+          paddingVertical: 10,
           paddingHorizontal: sizeStyles.paddingHorizontal,
-          borderRadius: sizeStyles.height / 2, // Fully rounded
+          borderRadius: 10,
         },
         variantStyles.container,
         fullWidth && styles.fullWidth,

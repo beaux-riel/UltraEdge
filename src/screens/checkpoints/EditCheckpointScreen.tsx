@@ -1,3 +1,5 @@
+import { DateTimeInput } from '../../components/StructuredTimeInput';
+import { parseLocalRaceTime } from '../../lib/raceOperations';
 /**
  * UltraEdge Edit Checkpoint Screen
  * Form to edit an existing checkpoint/aid station
@@ -172,7 +174,7 @@ export default function EditCheckpointScreen() {
         checkpoint_type: checkpointType,
         distance_from_start: distance ? parseFloat(distance) : null,
         elevation: elevation ? parseFloat(elevation) : null,
-        cutoff_time: cutoffTime.trim() || null,
+        cutoff_time: cutoffTime.trim() ? (parseLocalRaceTime(cutoffTime), cutoffTime.trim()) : null,
         location_description: locationDescription.trim() || null,
         has_crew_access: hasCrewAccess,
         has_drop_bag: hasDropBag,
@@ -182,7 +184,7 @@ export default function EditCheckpointScreen() {
         notes: notes.trim() || null,
       };
 
-      updateCheckpoint(eventId, checkpointId, updates);
+      await updateCheckpoint(eventId, checkpointId, updates);
       navigation.goBack();
     } catch (error) {
       console.error('Failed to update checkpoint:', error);
@@ -358,23 +360,9 @@ export default function EditCheckpointScreen() {
         {/* Cutoff Time */}
         <View style={styles.section}>
           <Label style={{ marginBottom: spacing.sm }}>CUTOFF TIME</Label>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.cream,
-                borderColor: colors.border,
-                color: colors.bark,
-                fontFamily: typography.mono.fontFamily,
-              },
-            ]}
-            value={cutoffTime}
-            onChangeText={setCutoffTime}
-            placeholder="e.g., 18:00 or 6:00 PM"
-            placeholderTextColor={colors.mist}
-          />
+          <DateTimeInput label="Checkpoint cutoff" value={cutoffTime} onChange={setCutoffTime} />
           <Caption style={{ marginTop: spacing.xs }}>
-            Time by which you must leave this checkpoint
+            Include the day/date for overnight races and use the race’s local time.
           </Caption>
         </View>
 
@@ -411,7 +399,7 @@ export default function EditCheckpointScreen() {
                 onPress={() => setHasCrewAccess(!hasCrewAccess)}
               >
                 <View style={styles.toggleLeft}>
-                  <View style={[styles.toggleIcon, { backgroundColor: colors.trail + '20' }]}>
+                  <View style={[styles.toggleIcon, { backgroundColor: colors.accent + '20' }]}>
                     <Ionicons name="people" size={20} color={colors.trail} />
                   </View>
                   <View>
@@ -423,13 +411,13 @@ export default function EditCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasCrewAccess ? colors.forest : 'transparent',
-                      borderColor: hasCrewAccess ? colors.forest : colors.border,
+                      backgroundColor: hasCrewAccess ? colors.accent : 'transparent',
+                      borderColor: hasCrewAccess ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasCrewAccess && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -453,13 +441,13 @@ export default function EditCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasDropBag ? colors.forest : 'transparent',
-                      borderColor: hasDropBag ? colors.forest : colors.border,
+                      backgroundColor: hasDropBag ? colors.accent : 'transparent',
+                      borderColor: hasDropBag ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasDropBag && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -483,13 +471,13 @@ export default function EditCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasPacerPickup ? colors.forest : 'transparent',
-                      borderColor: hasPacerPickup ? colors.forest : colors.border,
+                      backgroundColor: hasPacerPickup ? colors.accent : 'transparent',
+                      borderColor: hasPacerPickup ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasPacerPickup && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -513,13 +501,13 @@ export default function EditCheckpointScreen() {
                   style={[
                     styles.checkbox,
                     {
-                      backgroundColor: hasPacerDropoff ? colors.forest : 'transparent',
-                      borderColor: hasPacerDropoff ? colors.forest : colors.border,
+                      backgroundColor: hasPacerDropoff ? colors.accent : 'transparent',
+                      borderColor: hasPacerDropoff ? colors.accent : colors.border,
                     },
                   ]}
                 >
                   {hasPacerDropoff && (
-                    <Ionicons name="checkmark" size={16} color={colors.snow} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   )}
                 </View>
               </TouchableOpacity>

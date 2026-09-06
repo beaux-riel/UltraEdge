@@ -1,3 +1,5 @@
+import PhotoField from '../../components/PhotoField';
+import BrandSelect from '../../components/BrandSelect';
 /**
  * UltraEdge Create Gear Screen
  * Form to add new gear items to the master inventory
@@ -51,7 +53,7 @@ const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: 'lbs', label: 'lbs' },
 ];
 
-export default function CreateGearScreen({ navigation }: any) {
+export default function CreateGearScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
@@ -60,6 +62,7 @@ export default function CreateGearScreen({ navigation }: any) {
 
   // Form state
   const [name, setName] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState<GearCategory | 'nutrition'>('other');
   const [weight, setWeight] = useState('');
@@ -67,11 +70,12 @@ export default function CreateGearScreen({ navigation }: any) {
   const [quantity, setQuantity] = useState('1');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   const canSave = name.trim().length > 0;
 
   const handleSave = async () => {
-    if (!canSave || saving) return;
+    if (!canSave || saving || photoBusy) return;
 
     setSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -80,6 +84,7 @@ export default function CreateGearScreen({ navigation }: any) {
       const newItem = {
         name: name.trim(),
         brand: brand.trim() || undefined,
+        imageUrl: imageUrl || undefined,
         category,
         weight: weight ? parseFloat(weight) : undefined,
         weightUnit,
@@ -89,12 +94,12 @@ export default function CreateGearScreen({ navigation }: any) {
         isActive: true,
       };
 
-      await addGearItem(newItem);
+      const created = await addGearItem(newItem);
       
       Alert.alert(
         'Gear Added',
-        `"${name}" has been added to your gear closet.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        `"${name}" has been saved to your gear closet.`,
+        [{ text: route?.params?.eventId ? 'Assign to race' : 'OK', onPress: () => route?.params?.eventId ? navigation.replace('SelectGear', { eventId: route.params.eventId, selectedGearId: created.id }) : navigation.goBack() }]
       );
     } catch (error) {
       console.error('Failed to save gear item:', error);
@@ -128,7 +133,7 @@ export default function CreateGearScreen({ navigation }: any) {
         <Button
           size="sm"
           onPress={handleSave}
-          disabled={!canSave}
+          disabled={!canSave || photoBusy}
           loading={saving}
         >
           Save
@@ -164,23 +169,11 @@ export default function CreateGearScreen({ navigation }: any) {
           />
         </View>
 
+        <PhotoField value={imageUrl} onChange={setImageUrl} disabled={saving} onBusyChange={setPhotoBusy} />
         {/* Brand */}
         <View style={styles.field}>
           <Label>Brand</Label>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.cream,
-                borderColor: colors.border,
-                color: colors.bark,
-              },
-            ]}
-            placeholder="e.g., Salomon"
-            placeholderTextColor={colors.mist}
-            value={brand}
-            onChangeText={setBrand}
-          />
+          <BrandSelect value={brand} onChange={setBrand} />
         </View>
 
         {/* Category */}
@@ -254,8 +247,8 @@ export default function CreateGearScreen({ navigation }: any) {
                   style={[
                     styles.unitButton,
                     {
-                      backgroundColor: weightUnit === unit.value ? colors.trail : colors.cream,
-                      borderColor: weightUnit === unit.value ? colors.trail : colors.border,
+                      backgroundColor: weightUnit === unit.value ? colors.accent : colors.cream,
+                      borderColor: weightUnit === unit.value ? colors.accent : colors.border,
                     },
                   ]}
                   onPress={() => {
@@ -266,7 +259,7 @@ export default function CreateGearScreen({ navigation }: any) {
                   <Text
                     variant="bodySmall"
                     style={{
-                      color: weightUnit === unit.value ? colors.snow : colors.stone,
+                      color: weightUnit === unit.value ? colors.onAccent : colors.stone,
                       fontWeight: '600',
                     }}
                   >

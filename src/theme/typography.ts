@@ -1,22 +1,22 @@
 /**
  * UltraEdge Typography System
- * Primary: Nunito — Rounded, friendly, excellent readability
- * Accent: Playfair Display — For large display numbers only
+ * Primary: Native system grotesk — crisp, accessible, platform tuned
+ * Display: Native system bold
  * Mono: JetBrains Mono — For numerical data in tables
  */
 
 // Font family names as provided by @expo-google-fonts
 export const fonts = {
   primary: {
-    regular: 'Nunito_400Regular',
-    medium: 'Nunito_500Medium',
-    semiBold: 'Nunito_600SemiBold',
-    bold: 'Nunito_700Bold',
-    extraBold: 'Nunito_800ExtraBold',
+    regular: 'System',
+    medium: 'System',
+    semiBold: 'System',
+    bold: 'System',
+    extraBold: 'System',
   },
   display: {
-    regular: 'PlayfairDisplay_400Regular',
-    bold: 'PlayfairDisplay_700Bold',
+    regular: 'System',
+    bold: 'System',
   },
   mono: {
     regular: 'JetBrainsMono_400Regular',
@@ -27,7 +27,7 @@ export const fonts = {
 // System font fallbacks (used before custom fonts load)
 export const systemFonts = {
   primary: 'System',
-  display: 'Georgia',
+  display: 'System',
   mono: 'Courier New',
 } as const;
 
@@ -41,19 +41,19 @@ export function getFont(font: string, fallback: string): string {
 export const typography = {
   // Display — Hero numbers, big stats
   display: {
-    fontSize: 36,
+    fontSize: 44,
     fontFamily: fonts.display.bold,
     fontWeight: '700' as const,
-    lineHeight: 40, // 1.1
+    lineHeight: 48, // 1.1
     letterSpacing: -0.72, // -0.02em
   },
 
   // H1 — Screen titles
   h1: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: fonts.primary.bold,
     fontWeight: '700' as const,
-    lineHeight: 34, // 1.2
+    lineHeight: 38, // 1.2
     letterSpacing: -0.28, // -0.01em
   },
 
@@ -125,6 +125,7 @@ export const typography = {
   mono: {
     fontSize: 14,
     fontFamily: fonts.mono.medium,
+    fontVariant: ['tabular-nums'] as ('tabular-nums')[],
     fontWeight: '500' as const,
     lineHeight: 20,
     letterSpacing: 0,
@@ -143,6 +144,7 @@ export const typography = {
   weightBadge: {
     fontSize: 12,
     fontFamily: fonts.mono.medium,
+    fontVariant: ['tabular-nums'] as ('tabular-nums')[],
     fontWeight: '500' as const,
     lineHeight: 16,
     letterSpacing: 0,

@@ -206,7 +206,7 @@ export default function CheckpointsListScreen() {
   const route = useRoute<ScreenRouteProp>();
   
   const { eventId, eventName = 'Event' } = route.params;
-  const { getCheckpointsByEventId, loading, deleteCheckpoint } = useCheckpoints();
+  const { getCheckpointsByEventId, loading, error, refreshCheckpoints } = useCheckpoints();
   
   const checkpoints = useMemo(() => 
     getCheckpointsByEventId(eventId),
@@ -215,11 +215,11 @@ export default function CheckpointsListScreen() {
   
   const [refreshing, setRefreshing] = React.useState(false);
   
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate refresh - in real app, would sync with backend
-    setTimeout(() => setRefreshing(false), 500);
-  }, []);
+    await refreshCheckpoints();
+    setRefreshing(false);
+  }, [refreshCheckpoints]);
   
   const handleCheckpointPress = useCallback((checkpointId: string) => {
     navigation.navigate('CheckpointDetail', { eventId, checkpointId });
@@ -292,8 +292,16 @@ export default function CheckpointsListScreen() {
           )}
         </View>
         
+        {error && (
+          <Card style={styles.emptyCard}>
+            <CardContent>
+              <Body>{error}</Body>
+              <Button onPress={onRefresh}>Retry loading checkpoints</Button>
+            </CardContent>
+          </Card>
+        )}
         {/* Empty State */}
-        {checkpoints.length === 0 && !loading && (
+        {checkpoints.length === 0 && !loading && !error && (
           <Card style={styles.emptyCard}>
             <CardContent>
               <View style={styles.emptyContent}>
@@ -338,7 +346,7 @@ export default function CheckpointsListScreen() {
         <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
           <Button
             onPress={handleCreateCheckpoint}
-            icon={<Ionicons name="add" size={20} color={colors.snow} />}
+            icon={<Ionicons name="add" size={20} color={colors.onAccent} />}
           >
             Add Checkpoint
           </Button>

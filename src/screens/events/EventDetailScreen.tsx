@@ -1,9 +1,12 @@
+import RaceGuidePanel from '../../components/RaceGuidePanel';
+import MandatoryGearPanel from '../../components/MandatoryGearPanel';
+import { parseDateOnly, daysUntilDate } from '../../lib/dateOnly';
 /**
  * UltraEdge Event Detail Screen
  * View a single event with all details, checkpoints, gear, and crew
  */
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -13,14 +16,14 @@ import {
   RefreshControl,
   Animated,
   Linking,
+  StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useTheme } from '../../theme';
 import { 
@@ -41,36 +44,21 @@ import { useGear, GearItem } from '../../context/GearContext';
 import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
 import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.types';
-import { eventStatsFromRoute } from '../../lib/gpx';
+import { EVENT_CREW_KEY, EventCrewAssignment, removeEventCrewAssignment } from '../../lib/eventCrew';
+import { runLocalPlanOperation, readArray } from '../../lib/localPlanStorage';
+import { removeEventGear, updateEventGear, EVENT_GEAR_KEY, EventGearAllocation } from '../../lib/eventGear';
+import { saveGpxPlan } from '../../lib/importGpxPlan';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
+import RaceOperationsPanel from '../../components/RaceOperationsPanel';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
-
-// Storage keys for event relationships
-const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-const EVENT_CREW_KEY = '@ultraedge/event-crew';
-
-// Types for event relationships
-interface EventGearAllocation {
-  eventId: string;
-  gearItemId: string;
-  isWorn: boolean;
-  isCarried: boolean;
-  quantity: number;
-  notes?: string;
-}
-
-interface EventCrewAssignment {
-  eventId: string;
-  crewMemberId: string;
-  notes?: string;
-}
 
 export default function EventDetailScreen({ navigation, route }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   
   // Contexts
   const { getEvent, updateEvent, deleteEvent, refreshEvents } = useEvents();
@@ -87,27 +75,21 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   
   // Local state for event relationships
   const [eventGear, setEventGear] = useState<EventGearAllocation[]>([]);
+  const packingSaveInProgress = useRef(false);
+  const [packingSaving, setPackingSaving] = useState(false);
   const [eventCrew, setEventCrew] = useState<EventCrewAssignment[]>([]);
 
   // Load event relationships from AsyncStorage
   const loadRelationships = useCallback(async () => {
     try {
-      const [gearData, crewData] = await Promise.all([
-        AsyncStorage.getItem(EVENT_GEAR_KEY),
-        AsyncStorage.getItem(EVENT_CREW_KEY),
-      ]);
-      
-      if (gearData) {
-        const allGear: EventGearAllocation[] = JSON.parse(gearData);
-        setEventGear(allGear.filter(g => g.eventId === eventId));
-      }
-      
-      if (crewData) {
-        const allCrew: EventCrewAssignment[] = JSON.parse(crewData);
-        setEventCrew(allCrew.filter(c => c.eventId === eventId));
-      }
+      const [allGear, allCrew] = await runLocalPlanOperation(() => Promise.all([
+        readArray<EventGearAllocation>(EVENT_GEAR_KEY),
+        readArray<EventCrewAssignment>(EVENT_CREW_KEY),
+      ]));
+      setEventGear(allGear.filter(g => g.eventId === eventId));
+      setEventCrew(allCrew.filter(c => c.eventId === eventId));
     } catch (error) {
-      console.error('Failed to load event relationships:', error);
+      Alert.alert('Plan unavailable', 'Gear and crew could not be loaded. Pull to refresh before relying on this plan.');
     }
   }, [eventId]);
 
@@ -132,6 +114,11 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     }, [loadRelationships])
   );
 
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('light-content', true);
+    return () => StatusBar.setBarStyle(isDarkMode ? 'light-content' : 'dark-content', true);
+  }, [isDarkMode]));
+
   const onRefresh = async () => {
     setRefreshing(true);
     await Promise.all([refreshEvents(), loadRelationships()]);
@@ -148,7 +135,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteCheckpoint(eventId, checkpoint.id),
+          onPress: async () => {
+            try { await deleteCheckpoint(eventId, checkpoint.id); }
+            catch { Alert.alert('Not deleted', 'The checkpoint could not be deleted. Please try again.'); }
+          },
         },
       ]
     );
@@ -166,13 +156,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const stored = await AsyncStorage.getItem(EVENT_GEAR_KEY);
-              const allGear: EventGearAllocation[] = stored ? JSON.parse(stored) : [];
-              const updated = allGear.filter(g => !(g.eventId === eventId && g.gearItemId === gearItemId));
-              await AsyncStorage.setItem(EVENT_GEAR_KEY, JSON.stringify(updated));
+              const updated = await removeEventGear(eventId, gearItemId);
               setEventGear(updated.filter(g => g.eventId === eventId));
             } catch (error) {
-              console.error('Failed to remove gear:', error);
+              Alert.alert('Not removed', 'Gear could not be removed. Please try again.');
             }
           },
         },
@@ -192,13 +179,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const stored = await AsyncStorage.getItem(EVENT_CREW_KEY);
-              const allCrew: EventCrewAssignment[] = stored ? JSON.parse(stored) : [];
-              const updated = allCrew.filter(c => !(c.eventId === eventId && c.crewMemberId === crewMemberId));
-              await AsyncStorage.setItem(EVENT_CREW_KEY, JSON.stringify(updated));
+              const updated = await removeEventCrewAssignment(eventId, crewMemberId);
               setEventCrew(updated.filter(c => c.eventId === eventId));
             } catch (error) {
-              console.error('Failed to unassign crew:', error);
+              Alert.alert('Not removed', 'Crew could not be unassigned. Please try again.');
             }
           },
         },
@@ -217,8 +201,12 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteEvent(eventId);
-            navigation.goBack();
+            try {
+              if (await deleteEvent(eventId)) navigation.goBack();
+              else Alert.alert('Not deleted', 'The event could not be deleted. Please refresh and try again.');
+            } catch {
+              Alert.alert('Not deleted', 'The event could not be deleted. Please refresh and try again.');
+            }
           },
         },
       ]
@@ -308,7 +296,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   // Format date for display
   const formatEventDate = (dateStr: string | null) => {
     if (!dateStr) return 'Date TBD';
-    const date = new Date(dateStr);
+    const date = parseDateOnly(dateStr);
+    if (!date) return 'Date TBD';
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
@@ -317,13 +306,10 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     });
   };
 
-  // Calculate days until event
+  // Calculate days to the start line
   const getDaysUntil = (dateStr: string | null): number | null => {
     if (!dateStr) return null;
-    const eventDate = new Date(dateStr);
-    const today = new Date();
-    const diffTime = eventDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return daysUntilDate(dateStr);
   };
 
   // Get status badge color
@@ -401,7 +387,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             <Body numberOfLines={1}>{checkpoint.name}</Body>
             <BodySmall color="tertiary">
               {typeInfo.label}
-              {checkpoint.distance_from_start ? ` • ${checkpoint.distance_from_start} mi` : ''}
+              {checkpoint.distance_from_start != null ? ` • ${checkpoint.distance_from_start.toLocaleString('en-US', { maximumFractionDigits: 1 })} mi` : ''}
             </BodySmall>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.stone} />
@@ -410,53 +396,63 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     );
   };
 
-  // Render gear item
-  const renderGearItem = (
-    { allocation, item }: { allocation: EventGearAllocation; item: GearItem },
-    index: number
-  ) => {
-    return (
-      <Swipeable
-        key={item.id}
-        renderRightActions={(progress, dragX) => renderDeleteAction(progress, dragX)}
-        onSwipeableOpen={() => handleRemoveGear(item.id, item.name)}
-        friction={2}
-        rightThreshold={60}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.navigate('GearDetail', { gearId: item.id })}
-          style={[
-            styles.listItem,
-            { 
-              backgroundColor: colors.surface,
-              borderBottomColor: colors.border,
-              borderBottomWidth: index < eventGearItems.length - 1 ? 1 : 0,
-            }
-          ]}
-        >
-          <View style={[styles.listItemIcon, { backgroundColor: colors.trail + '20' }]}>
-            <Ionicons name="cube-outline" size={18} color={colors.trail} />
-          </View>
-          <View style={styles.listItemContent}>
-            <Body numberOfLines={1}>{item.name}</Body>
-            <BodySmall color="tertiary">
-              {item.brand || item.category}
-              {item.weight ? ` • ${item.weight} ${item.weightUnit}` : ''}
-            </BodySmall>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.stone} />
-        </TouchableOpacity>
-      </Swipeable>
-    );
+  const handlePackingChange = async (gearItemId: string, updates: Parameters<typeof updateEventGear>[2]) => {
+    if (packingSaveInProgress.current) return;
+    packingSaveInProgress.current = true;
+    setPackingSaving(true);
+    try {
+      const saved = await updateEventGear(eventId, gearItemId, updates);
+      setEventGear(saved.filter(row => row.eventId === eventId));
+    } catch {
+      Alert.alert('Packing not saved', 'Your change could not be saved. Refresh and try again.');
+    } finally {
+      packingSaveInProgress.current = false;
+      setPackingSaving(false);
+    }
   };
+
+  const renderGearItem = ({ allocation, item }: { allocation: EventGearAllocation; item: GearItem }, index: number) => (
+    <Swipeable key={item.id} renderRightActions={(progress, dragX) => renderDeleteAction(progress, dragX)}
+      onSwipeableOpen={() => handleRemoveGear(item.id, item.name)} friction={2} rightThreshold={60}>
+      <View style={{ backgroundColor: colors.surface, padding: 16, gap: 12, borderBottomColor: colors.border, borderBottomWidth: index < eventGearItems.length - 1 ? 1 : 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="checkbox" accessibilityLabel={`Packed ${item.name}`} accessibilityState={{ checked: !!allocation.isPacked }}
+            onPress={() => handlePackingChange(item.id, { isPacked: !allocation.isPacked })} style={{ padding: 8 }}>
+            <Ionicons name={allocation.isPacked ? 'checkbox' : 'square-outline'} size={26} color={colors.forest} />
+          </TouchableOpacity>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('GearDetail', { gearId: item.id })}>
+            <Body>{item.name}</Body>
+            <BodySmall color="tertiary">{allocation.isPacked ? 'Packed' : 'To pack'}{item.weight ? ` • ${item.weight * allocation.quantity} ${item.weightUnit}` : ''}</BodySmall>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Carry ${item.name} in vest`} onPress={() => handlePackingChange(item.id, { isCarried: true, isWorn: false })}
+            style={{ padding: 12, borderRadius: 8, backgroundColor: allocation.isCarried ? colors.forest + '25' : colors.parchment }}>
+            <BodySmall>In vest</BodySmall>
+          </TouchableOpacity>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Wear ${item.name}`} onPress={() => handlePackingChange(item.id, { isCarried: false, isWorn: true })}
+            style={{ padding: 12, borderRadius: 8, backgroundColor: allocation.isWorn ? colors.forest + '25' : colors.parchment }}>
+            <BodySmall>Worn</BodySmall>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Decrease ${item.name} quantity`} disabled={packingSaving || allocation.quantity <= 1}
+            onPress={() => handlePackingChange(item.id, { quantity: allocation.quantity - 1 })} style={{ padding: 12 }}><Body>−</Body></TouchableOpacity>
+          <Body>{allocation.quantity}</Body>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Increase ${item.name} quantity`}
+            onPress={() => handlePackingChange(item.id, { quantity: allocation.quantity + 1 })} style={{ padding: 12 }}><Body>+</Body></TouchableOpacity>
+        </View>
+      </View>
+    </Swipeable>
+  );
 
   // Render crew member item
   const renderCrewItem = (
     { assignment, member }: { assignment: EventCrewAssignment; member: CrewMember },
     index: number
   ) => {
-    const roleInfo = ROLE_CONFIG[member.role];
-    
+    const roles = assignment.roles ?? [];
+    const primaryRoleInfo = roles.length > 0 ? ROLE_CONFIG[roles[0]] : null;
+    const iconColor = primaryRoleInfo?.color ?? colors.trail;
+
     return (
       <Swipeable
         key={member.id}
@@ -469,22 +465,50 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           onPress={() => navigation.navigate('CrewDetail', { crewId: member.id })}
           style={[
             styles.listItem,
-            { 
+            {
               backgroundColor: colors.surface,
               borderBottomColor: colors.border,
               borderBottomWidth: index < eventCrewMembers.length - 1 ? 1 : 0,
             }
           ]}
         >
-          <View style={[styles.listItemIcon, { backgroundColor: roleInfo.color + '20' }]}>
-            <Ionicons name={roleInfo.icon as any} size={18} color={roleInfo.color} />
+          <View style={[styles.listItemIcon, { backgroundColor: iconColor + '20' }]}>
+            <Ionicons
+              name={(primaryRoleInfo?.icon as any) ?? 'person'}
+              size={18}
+              color={iconColor}
+            />
           </View>
           <View style={styles.listItemContent}>
             <Body numberOfLines={1}>{member.name}</Body>
-            <BodySmall color="tertiary">
-              {member.customRole || roleInfo.label}
-              {member.phone ? ` • ${member.phone}` : ''}
-            </BodySmall>
+            {roles.length > 0 ? (
+              <View style={styles.crewRoleChips}>
+                {roles.map(role => {
+                  const config = ROLE_CONFIG[role];
+                  const label =
+                    role === 'other' && assignment.customRole
+                      ? assignment.customRole
+                      : config.label;
+                  return (
+                    <View
+                      key={role}
+                      style={[styles.crewRoleChip, { backgroundColor: config.color + '20' }]}
+                    >
+                      <Text
+                        variant="caption"
+                        style={{ color: config.color }}
+                      >
+                        {label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <BodySmall color="tertiary">
+                No roles set · Tap to edit
+              </BodySmall>
+            )}
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.stone} />
         </TouchableOpacity>
@@ -496,6 +520,9 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { backgroundColor: colors.parchment }]}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="on-drag"
           style={styles.scrollView}
           contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
           showsVerticalScrollIndicator={false}
@@ -508,30 +535,27 @@ export default function EventDetailScreen({ navigation, route }: Props) {
           }
         >
           {/* Hero Header */}
-          <LinearGradient
-            colors={isDarkMode 
-              ? [colors.forest, colors.parchment] 
-              : [colors.forest, colors.forestSoft, colors.parchment]
-            }
-            style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
-          >
+          <View style={[styles.hero, { backgroundColor: colors.hero, paddingTop: insets.top + spacing.md }]}>
             {/* Navigation */}
             <View style={styles.heroNav}>
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={styles.navButton}
+                accessibilityRole="button" accessibilityLabel="Back"
               >
                 <Ionicons name="arrow-back" size={24} color={colors.snow} />
               </TouchableOpacity>
               <View style={styles.heroActions}>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('EditEvent', { eventId })}
+                  accessibilityRole="button" accessibilityLabel="Edit race plan"
                   style={styles.navButton}
                 >
                   <Ionicons name="pencil" size={22} color={colors.snow} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleDelete}
+                  accessibilityRole="button" accessibilityLabel="Delete event"
                   style={styles.navButton}
                 >
                   <Ionicons name="trash-outline" size={22} color={colors.snow} />
@@ -544,14 +568,15 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: getStatusColor(event.status) + '30' },
+                  { backgroundColor: 'rgba(255,255,255,0.08)' },
                 ]}
               >
-                <Caption style={{ color: getStatusColor(event.status), fontWeight: '600' }}>
+                <Caption style={{ color: colors.accent, fontWeight: '700', letterSpacing: 1.4 }}>
                   {event.status.toUpperCase().replace('_', ' ')}
                 </Caption>
               </View>
-              <H1 style={{ color: colors.snow, marginTop: spacing.xs }}>{event.name}</H1>
+              <Caption style={{ color: colors.heroText, letterSpacing: 2, marginTop: spacing.lg }}>RACE FIELD GUIDE</Caption>
+              <H1 style={{ color: colors.heroText, marginTop: spacing.sm, fontSize: fontScale > 1.5 ? 26 : 36, lineHeight: fontScale > 1.5 ? 31 : 40 }}>{event.name}</H1>
               <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: spacing.xs }}>
                 {formatEventDate(event.event_date)}
                 {event.event_time && ` • ${event.event_time}`}
@@ -568,53 +593,56 @@ export default function EventDetailScreen({ navigation, route }: Props) {
 
             {/* Countdown */}
             {daysUntil !== null && daysUntil > 0 && (
-              <View style={styles.countdown}>
-                <Text variant="display" style={{ color: colors.snow }}>
+              <View style={[styles.countdown, { borderTopColor: 'rgba(255,255,255,0.16)' }]}>
+                <Text variant="h2" style={{ color: colors.accent }}>
                   {daysUntil}
                 </Text>
                 <BodySmall style={{ color: 'rgba(255,255,255,0.8)' }}>
-                  days until event
+                  days to the start line
                 </BodySmall>
               </View>
             )}
-          </LinearGradient>
+          </View>
 
-          {/* Stats Cards */}
-          <View style={[styles.content, { marginTop: -spacing.xl }]}>
-            <View style={styles.statsRow}>
-              {/* Distance */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="navigate-outline" size={24} color={colors.forest} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.total_distance || '—'}
-                  </Text>
-                  <Caption>{event.distance_unit}</Caption>
-                </CardContent>
-              </Card>
-
-              {/* Elevation */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="trending-up-outline" size={24} color={colors.trail} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.total_elevation_gain?.toLocaleString() || '—'}
-                  </Text>
-                  <Caption>{event.elevation_unit}</Caption>
-                </CardContent>
-              </Card>
-
-              {/* Time */}
-              <Card variant="elevated" style={styles.statCard}>
-                <CardContent>
-                  <Ionicons name="timer-outline" size={24} color={colors.sunrise} />
-                  <Text variant="h2" style={{ marginTop: spacing.xs }}>
-                    {event.target_time || '—'}
-                  </Text>
-                  <Caption>target</Caption>
-                </CardContent>
-              </Card>
+          {/* Measured course figures, kept separate from preparation status. */}
+          <View style={styles.content}>
+            <View style={[styles.statsRow, { borderBottomColor: colors.border }]}>
+              {[
+                { label: 'DISTANCE', value: event.total_distance == null ? '—' : event.total_distance.toLocaleString('en-US', { maximumFractionDigits: 1 }), unit: event.distance_unit === 'kilometers' ? 'km' : 'mi' },
+                { label: 'ASCENT', value: event.total_elevation_gain == null ? '—' : event.total_elevation_gain.toLocaleString('en-US', { maximumFractionDigits: 0 }), unit: event.elevation_unit === 'meters' ? 'm' : 'ft' },
+                { label: 'TARGET', value: event.target_time || '—', unit: 'time' },
+              ].map(stat => (
+                <View key={stat.label} style={[styles.statCard, { minWidth: 85 * fontScale }]}>
+                  <Caption style={{ letterSpacing: 1, fontSize: 10 }}>{stat.label}</Caption>
+                  <Text variant="h2" style={{ marginTop: spacing.xs, fontSize: 24, lineHeight: 30, fontVariant: ['tabular-nums'] }}>{stat.value}</Text>
+                  <Caption>{stat.unit}</Caption>
+                </View>
+              ))}
             </View>
+
+            <RaceGuidePanel event={event} />
+            <MandatoryGearPanel event={event} gear={eventGearItems.map(row => row.item)} allocations={eventGear} />
+            <RaceOperationsPanel initialStation={route.params?.operationsCheckpointId} event={event} checkpoints={checkpoints} crew={eventCrewMembers.map(row => row.member)} bags={eventDropBags} gear={eventGearItems.map(row => row.item)} />
+
+            {/* Course Route (GPX) */}
+            <GPXRouteSection
+              eventId={eventId}
+              gpxFileUrl={event.gpx_file_url}
+              onGpxChange={async (fileUri, stats) => {
+                const updates: EventUpdate = { gpx_file_url: fileUri };
+                if (stats && fileUri) {
+                  const added = await saveGpxPlan(eventId, fileUri, stats);
+                  await refreshEvents();
+                  Alert.alert('Course imported', stats.checkpoints?.length
+                    ? `${added} checkpoints added. Existing checkpoints were kept. Review estimated distances, especially on loops or out-and-back courses.`
+                    : 'This GPX contains no waypoint or named checkpoint records. Add checkpoints manually using the race guide.');
+                  return;
+                }
+                if (!await updateEvent(eventId, updates)) {
+                  throw new Error('The event is no longer available. Refresh before importing a route.');
+                }
+              }}
+            />
 
             {/* Description */}
             {event.description && (
@@ -669,22 +697,6 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               </TouchableOpacity>
             )}
 
-            {/* Course Route (GPX) */}
-            <GPXRouteSection
-              eventId={eventId}
-              gpxFileUrl={event.gpx_file_url}
-              onGpxChange={async (fileUri, stats) => {
-                const updates: EventUpdate = { gpx_file_url: fileUri };
-                if (stats) {
-                  Object.assign(
-                    updates,
-                    eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
-                  );
-                }
-                await updateEvent(eventId, updates);
-              }}
-            />
-
             {/* Race Plan Export */}
             <ExportRacePlanButton
               eventId={eventId}
@@ -699,6 +711,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race checkpoint"
                   onPress={() => navigation.navigate('CreateCheckpoint', { eventId })}
                 >
                   Add
@@ -725,10 +738,11 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             {/* Gear Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <H2>Gear</H2>
+                <H2>Vest & worn gear</H2>
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race gear"
                   onPress={handleAddGear}
                 >
                   Add
@@ -744,7 +758,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                     <View style={styles.emptySection}>
                       <Ionicons name="cube-outline" size={40} color={colors.mist} />
                       <BodySmall color="tertiary" align="center" style={{ marginTop: spacing.sm }}>
-                        No gear assigned to this event.{'\n'}Track what you'll wear and carry.
+                        Your vest packing list is empty.{'\n'}Track what you'll wear and carry.
                       </BodySmall>
                     </View>
                   </CardContent>
@@ -756,13 +770,21 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <H2>Crew</H2>
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  onPress={handleAddCrew}
-                >
-                  Add
-                </Button>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {eventCrewMembers.length > 0 && (
+                    <Button variant="tertiary" size="sm" accessibilityLabel="Edit race crew roles" onPress={() => navigation.navigate('SelectCrew', { eventId })}>
+                      Edit roles
+                    </Button>
+                  )}
+                  <Button
+                    variant="tertiary"
+                    size="sm"
+                    accessibilityLabel="Add race crew"
+                    onPress={handleAddCrew}
+                  >
+                    Add
+                  </Button>
+                </View>
               </View>
               {eventCrewMembers.length > 0 ? (
                 <Card style={{ overflow: 'hidden' }}>
@@ -789,6 +811,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race drop bag"
                   onPress={() => navigation.navigate('CreateDropBag', { eventId })}
                 >
                   Add
@@ -863,9 +886,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: 20,
-    paddingBottom: 48,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 24,
   },
   heroNav: {
     flexDirection: 'row',
@@ -873,7 +894,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navButton: {
-    padding: 8,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
   },
   heroActions: {
     flexDirection: 'row',
@@ -894,23 +917,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   countdown: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    gap: 10,
+    borderTopWidth: 1,
+    paddingTop: 16,
+    marginTop: 20,
   },
   content: {
     paddingHorizontal: 20,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingVertical: 24,
+    borderBottomWidth: 1,
+    marginBottom: 4,
   },
   statCard: {
     flex: 1,
-    alignItems: 'center',
+    minWidth: 85,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -939,13 +969,13 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
   },
   listItemIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -953,6 +983,17 @@ const styles = StyleSheet.create({
   listItemContent: {
     flex: 1,
     marginRight: 8,
+  },
+  crewRoleChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 3,
+  },
+  crewRoleChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   deleteAction: {
     width: 70,

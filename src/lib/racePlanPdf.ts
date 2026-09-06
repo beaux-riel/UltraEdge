@@ -1,3 +1,6 @@
+import { RaceOperations, projectRace, clockLabel } from './raceOperations';
+import { resolveLocalGpxUri } from './localGpxUri';
+import { parseDateOnly } from './dateOnly';
 /**
  * Race Plan PDF generation.
  *
@@ -46,6 +49,7 @@ export interface RacePlanGearItem {
   quantity: number;
   isWorn?: boolean;
   isCarried?: boolean;
+  isPacked?: boolean;
   notes?: string | null;
 }
 
@@ -70,6 +74,8 @@ export interface RacePlanData {
   dropBags: RacePlanDropBag[];
   /** Raw GPX XML for the course, when the event has one. */
   gpxXml?: string | null;
+  operations?: RaceOperations;
+  operationsLogistics?: string[];
 }
 
 // ============================================================================
@@ -119,9 +125,8 @@ function fmtStoredElevation(value: number, unit: ElevationUnit): string {
 
 function fmtEventDate(eventDate: string | null): string | null {
   if (!eventDate) {return null;}
-  const iso = /^\d{4}-\d{2}-\d{2}$/.test(eventDate) ? `${eventDate}T00:00:00` : eventDate;
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) {return eventDate;}
+  const date = parseDateOnly(eventDate);
+  if (!date) {return eventDate;}
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -383,7 +388,11 @@ function buildCover(data: RacePlanData, metrics: RouteMetrics | null): string {
 }
 
 function buildRouteSection(data: RacePlanData, metrics: RouteMetrics | null): string {
-  if (!metrics) {return '';}
+  if (!metrics) {
+    return data.event.gpx_file_url || data.gpxXml
+      ? '<section class="section"><h2>Course Route Unavailable</h2><p>The saved course could not be loaded. This plan does not include its route map or elevation profile.</p></section>'
+      : '';
+  }
   const { event } = data;
   const map = buildRouteMapSvg(metrics, data.checkpoints);
   const profile = buildElevationSvg(metrics, event.distance_unit, event.elevation_unit);
@@ -400,7 +409,7 @@ function buildRouteSection(data: RacePlanData, metrics: RouteMetrics | null): st
   <section class="section">
     ${sectionHeader(ICONS.route, 'Course Route')}
     ${map}${map ? legend : ''}
-    ${profile ? `${sectionHeader(ICONS.elevation, 'Elevation Profile')}${profile}` : ''}
+    ${profile ? `<div class="print-block">${sectionHeader(ICONS.elevation, 'Elevation Profile')}${profile}</div>` : ''}
   </section>`;
 }
 
@@ -503,12 +512,14 @@ function buildGearSection(data: RacePlanData): string {
         .map(item => {
           const tags: string[] = [];
           if (item.isWorn) {tags.push('worn');}
-          if (item.isCarried) {tags.push('carried');}
+          if (item.isCarried) {tags.push('in vest');}
+          tags.push(item.isPacked ? 'packed' : 'not packed');
           const qty = item.quantity > 1 ? ` &times;${item.quantity}` : '';
           return (
-            '<div class="gear-item"><span class="checkbox"></span>' +
+            `<div class="gear-item"><span class="checkbox">${item.isPacked ? '&#10003;' : ''}</span>` +
             `<span class="gear-name">${escapeHtml(item.name)}${item.brand ? ` <span class="sub">${escapeHtml(item.brand)}</span>` : ''}${qty}` +
-            `${tags.length > 0 ? ` <span class="tag">${tags.join(' &middot; ')}</span>` : ''}</span></div>`
+            `${tags.length > 0 ? ` <span class="tag">${tags.join(' &middot; ')}</span>` : ''}` +
+            `${item.notes ? `<br/><span class="sub">${escapeHtml(item.notes)}</span>` : ''}</span></div>`
           );
         })
         .join('');
@@ -525,7 +536,7 @@ function buildGearSection(data: RacePlanData): string {
 }
 
 function buildDropBagsSection(data: RacePlanData): string {
-  const bags = data.dropBags.filter(bag => bag.items.length > 0 || bag.notes);
+  const bags = data.dropBags;
   if (bags.length === 0) {return '';}
 
   const cards = bags
@@ -540,14 +551,14 @@ function buildDropBagsSection(data: RacePlanData): string {
       return `<div class="bag-card">
         <div class="bag-title">${escapeHtml(bag.name)}</div>
         ${bag.checkpointName ? `<div class="bag-location">at ${escapeHtml(bag.checkpointName)}</div>` : ''}
-        ${items ? `<ul>${items}</ul>` : ''}
+        ${items ? `<ul>${items}</ul>` : '<div class="sub">No items listed.</div>'}
         ${bag.notes ? `<div class="sub">${escapeHtml(bag.notes)}</div>` : ''}
       </div>`;
     })
     .join('');
 
   return `
-  <section class="section">
+  <section class="section print-block">
     ${sectionHeader(ICONS.dropBag, 'Drop Bags')}
     <div class="bag-grid">${cards}</div>
   </section>`;
@@ -639,9 +650,14 @@ const STYLES = `
   .map-legend span { display: flex; align-items: center; gap: 5px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
+  /* Inline blocks are atomic in the iOS print formatter, which may ignore
+     break-inside on flex boxes. Keep a chart title and its graphic together. */
+  .print-block { display: inline-block; width: 100%; break-inside: avoid; page-break-inside: avoid; }
   .gear-grid { column-count: 2; column-gap: 24px; }
   .gear-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
-  .gear-item { display: flex; align-items: flex-start; gap: 7px; padding: 3px 0; font-size: 11px; }
+  .gear-item { display: inline-block; width: 100%; padding: 3px 0; font-size: 11px; break-inside: avoid; page-break-inside: avoid; }
+  .gear-name { display: inline-block; width: calc(100% - 23px); vertical-align: top; }
+  .gear-item .checkbox { display: inline-block; margin-right: 7px; vertical-align: top; }
   .checkbox {
     width: 11px; height: 11px; flex: none; margin-top: 2px;
     border: 1.5px solid ${TRAIL}; border-radius: 3px; background: #FFFFFF;
@@ -670,8 +686,24 @@ const STYLES = `
   }
 `;
 
+function buildOperationsSection(data: RacePlanData): string {
+  if (!data.operations) return '';
+  const projection = projectRace(data.event, data.checkpoints, data.operations);
+  const rows = projection?.rows.map(row => `<tr><td>${escapeHtml(row.name)}</td><td>${escapeHtml(clockLabel(row.best))}</td><td>${escapeHtml(clockLabel(row.arrival))}</td><td>${escapeHtml(clockLabel(row.slow))}</td><td>${row.stop} min</td><td>${escapeHtml(clockLabel(row.departure))}</td></tr>`).join('') ?? '';
+  return `<section class="section"><h2>Race timeline & logistics</h2><p>Target is moving time; stops add to finish. Distance-based projections, ±${data.operations.variation}%. Times use the exporting device’s timezone. Offline reports on this device.</p>
+    ${projection ? `<p>Expected finish: ${escapeHtml(clockLabel(projection.finish))}. Planned stops: ${projection.stopMinutes} minutes. ${projection.lastReport ? 'Last report: ' + escapeHtml(clockLabel(Date.parse(projection.lastReport))) : 'No actual reports yet.'}</p><table><thead><tr><th>Station</th><th>Best</th><th>Expected in</th><th>Slow</th><th>Stop</th><th>Out</th></tr></thead><tbody>${rows}</tbody></table>` : '<p>Complete race timing and checkpoint distances to calculate ETAs.</p>'}
+    ${(data.operationsLogistics ?? []).map(line => `<p>${escapeHtml(line)}</p>`).join('')}
+    ${data.operations.reports.map(report => `<p>${escapeHtml(data.checkpoints.find(cp => cp.id === report.checkpointId)?.name ?? 'Checkpoint')} — ${report.source} ${report.kind}: ${escapeHtml(clockLabel(Date.parse(report.at)))}</p>`).join('')}
+    </section>`;
+}
+
 /** Assemble the complete printable HTML document. */
 export function buildRacePlanHtml(data: RacePlanData): string {
+  const projection = data.operations ? projectRace(data.event, data.checkpoints, data.operations) : null;
+  if (projection) data = { ...data, checkpoints: data.checkpoints.map(cp => {
+    const row = projection.rows.find(row => row.id === cp.id);
+    return row ? { ...cp, estimated_arrival: clockLabel(row.arrival) } : cp;
+  }) };
   let metrics: RouteMetrics | null = null;
   if (data.gpxXml) {
     try {
@@ -699,7 +731,10 @@ export function buildRacePlanHtml(data: RacePlanData): string {
 ${buildCover(data, metrics)}
 ${buildRouteSection(data, metrics)}
 ${buildCheckpointsSection(data)}
+${buildOperationsSection(data)}
 ${buildCrewSection(data)}
+${data.event.mandatoryGear?.length ? `<section class="section"><h2>Mandatory race equipment</h2><p>Requirements entered for this race. Verify against the official guide.</p>${data.event.mandatoryGear.map(r => `<p>□ ${escapeHtml(r.name)} ×${r.quantity}</p>`).join('')}</section>` : ''}
+${data.event.raceGuide ? `<section class="section"><h2>Official race guide</h2><p>${escapeHtml(data.event.raceGuide.name)} — attached in UltraEdge. Share the original PDF separately with your crew.</p></section>` : ''}
 ${buildGearSection(data)}
 ${buildDropBagsSection(data)}
 <div class="footer">
@@ -719,6 +754,10 @@ ${buildDropBagsSection(data)}
  * `file:` URI, then a fresh download for remote storage paths. Returns null
  * when unavailable so the PDF simply omits the route section.
  */
+function validatedGpx(xml: string): string | null {
+  return computeRouteMetrics(parseGpx(xml)) ? xml : null;
+}
+
 export async function loadGpxXmlForEvent(
   eventId: string,
   gpxFileUrl: string | null,
@@ -726,17 +765,17 @@ export async function loadGpxXmlForEvent(
   if (!gpxFileUrl) {return null;}
   try {
     if (!isRemoteGpxPath(gpxFileUrl)) {
-      const local = new File(gpxFileUrl);
-      return local.exists ? await local.text() : null;
+      const local = new File(resolveLocalGpxUri(gpxFileUrl, Paths.document.uri));
+      return local.exists ? validatedGpx(await local.text()) : null;
     }
 
     const dir = new Directory(Paths.document, 'gpx');
     dir.create({ intermediates: true, idempotent: true });
     const cached = new File(dir, `${eventId}.gpx`);
-    if (cached.exists) {return await cached.text();}
+    if (cached.exists) {return validatedGpx(await cached.text());}
 
     await downloadGpx(gpxFileUrl, cached);
-    return await cached.text();
+    return validatedGpx(await cached.text());
   } catch {
     return null;
   }

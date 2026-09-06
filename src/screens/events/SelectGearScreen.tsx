@@ -14,7 +14,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { addEventGear, EVENT_GEAR_KEY, EventGearAllocation } from '../../lib/eventGear';
+import { readArray, runLocalPlanOperation } from '../../lib/localPlanStorage';
 
 import { useTheme } from '../../theme';
 import { 
@@ -29,17 +30,6 @@ import {
 import { useGear, GearItem } from '../../context/GearContext';
 
 type Props = NativeStackScreenProps<any, 'SelectGear'>;
-
-const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-
-interface EventGearAllocation {
-  eventId: string;
-  gearItemId: string;
-  isWorn: boolean;
-  isCarried: boolean;
-  quantity: number;
-  notes?: string;
-}
 
 // Category icons
 const CATEGORY_ICONS: Record<string, string> = {
@@ -63,24 +53,20 @@ export default function SelectGearScreen({ navigation, route }: Props) {
   
   const eventId = route.params?.eventId;
   
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(route.params?.selectedGearId ? [route.params.selectedGearId] : []));
   const [alreadyAddedIds, setAlreadyAddedIds] = useState<Set<string>>(new Set());
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Load already added gear
   useEffect(() => {
     const loadExisting = async () => {
       try {
-        const stored = await AsyncStorage.getItem(EVENT_GEAR_KEY);
-        if (stored) {
-          const allGear: EventGearAllocation[] = JSON.parse(stored);
-          const eventGearIds = new Set(
-            allGear.filter(g => g.eventId === eventId).map(g => g.gearItemId)
-          );
-          setAlreadyAddedIds(eventGearIds);
-        }
+        const allGear = await runLocalPlanOperation(() => readArray<EventGearAllocation>(EVENT_GEAR_KEY));
+        setAlreadyAddedIds(new Set(allGear.filter(g => g.eventId === eventId).map(g => g.gearItemId)));
+        setLoaded(true);
       } catch (error) {
-        console.error('Failed to load existing gear:', error);
+        Alert.alert('Gear unavailable', 'Existing assignments could not be loaded. Go back and reopen this screen to retry.');
       }
     };
     loadExisting();
@@ -106,6 +92,7 @@ export default function SelectGearScreen({ navigation, route }: Props) {
 
   // Save selections
   const handleSave = async () => {
+    if (!loaded || saving) return;
     if (selectedIds.size === 0) {
       navigation.goBack();
       return;
@@ -113,21 +100,8 @@ export default function SelectGearScreen({ navigation, route }: Props) {
 
     setSaving(true);
     try {
-      const stored = await AsyncStorage.getItem(EVENT_GEAR_KEY);
-      const allGear: EventGearAllocation[] = stored ? JSON.parse(stored) : [];
-      
-      // Add new allocations
-      const newAllocations: EventGearAllocation[] = Array.from(selectedIds).map(gearItemId => ({
-        eventId,
-        gearItemId,
-        isWorn: false,
-        isCarried: true,
-        quantity: 1,
-      }));
-      
-      const updated = [...allGear, ...newAllocations];
-      await AsyncStorage.setItem(EVENT_GEAR_KEY, JSON.stringify(updated));
-      
+      await addEventGear(eventId, Array.from(selectedIds));
+
       navigation.goBack();
     } catch (error) {
       console.error('Failed to save gear:', error);
@@ -186,7 +160,7 @@ export default function SelectGearScreen({ navigation, route }: Props) {
       </Body>
       <Button
         variant="secondary"
-        onPress={() => navigation.navigate('CreateGear', { eventId })}
+        onPress={() => navigation.replace('CreateGear', { eventId })}
         style={{ marginTop: spacing.lg }}
       >
         Create New Gear
@@ -214,10 +188,10 @@ export default function SelectGearScreen({ navigation, route }: Props) {
         <TouchableOpacity 
           onPress={handleSave} 
           style={styles.saveButton}
-          disabled={saving}
+          disabled={saving || !loaded}
         >
           <Body style={{ color: colors.forest, fontWeight: '600' }}>
-            {saving ? 'Saving...' : `Add (${selectedIds.size})`}
+            {!loaded ? 'Loading...' : saving ? 'Saving...' : `Add (${selectedIds.size})`}
           </Body>
         </TouchableOpacity>
       </View>

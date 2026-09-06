@@ -117,13 +117,13 @@ export function PricingCard({
           style={[
             styles.highlightBadge,
             {
-              backgroundColor: colors.forest,
+              backgroundColor: colors.accent,
               borderRadius: radius.xs,
             },
           ]}
         >
-          <Ionicons name="star" size={10} color={colors.snow} />
-          <Text style={[styles.highlightText, { color: colors.snow, fontFamily: typography.label.fontFamily }]}>
+          <Ionicons name="star" size={10} color={colors.onAccent} />
+          <Text style={[styles.highlightText, { color: colors.onAccent, fontFamily: typography.label.fontFamily }]}>
             {highlightLabel}
           </Text>
         </View>
@@ -232,20 +232,20 @@ export function PricingCard({
           style={[
             styles.ctaButton,
             {
-              backgroundColor: isHighlighted ? colors.forest : colors.trail,
+              backgroundColor: isHighlighted ? colors.accent : colors.hero,
               borderRadius: radius.sm,
               opacity: disabled ? 0.5 : 1,
             },
           ]}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color={colors.snow} />
+            <ActivityIndicator size="small" color={isHighlighted ? colors.onAccent : colors.heroText} />
           ) : (
             <Text
               style={[
                 styles.ctaText,
                 {
-                  color: colors.snow,
+                  color: isHighlighted ? colors.onAccent : colors.heroText,
                   fontFamily: typography.label.fontFamily,
                   fontSize: 13,
                 },
@@ -262,10 +262,10 @@ export function PricingCard({
         <View
           style={[
             styles.selectedIndicator,
-            { backgroundColor: colors.sunrise },
+            { backgroundColor: colors.accent },
           ]}
         >
-          <Ionicons name="checkmark" size={14} color={colors.snow} />
+          <Ionicons name="checkmark" size={14} color={colors.onAccent} />
         </View>
       )}
     </TouchableOpacity>

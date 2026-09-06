@@ -3,7 +3,8 @@
  * Bottom tabs + stack navigation for all CRUD screens
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,6 +18,10 @@ import { useTheme } from '../theme';
 
 // Home
 import HomeScreen from '../screens/HomeScreen';
+
+// Onboarding
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
+import { isOnboardingComplete } from '../lib/onboarding';
 
 // Events (will be created by agent)
 import EventsListScreen from '../screens/events/EventsListScreen';
@@ -58,17 +63,20 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import WeightLogScreen from '../screens/profile/WeightLogScreen';
 
 // Auth
-import { SignInScreen, SignUpScreen } from '../screens/auth';
 
 // Settings
 import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
 import AboutScreen from '../screens/settings/AboutScreen';
+import PrivacySupportScreen from '../screens/settings/PrivacySupportScreen';
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
 export type RootStackParamList = {
+  // Onboarding (first launch only)
+  Onboarding: undefined;
+
   // Tabs
   Main: undefined;
   
@@ -79,6 +87,7 @@ export type RootStackParamList = {
   // Settings
   Subscription: undefined;
   About: undefined;
+  PrivacySupport: undefined;
   
   // Events
   CreateEvent: undefined;
@@ -163,9 +172,9 @@ function MainTabs() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.forest,
-        tabBarInactiveTintColor: colors.mist,
+        tabBarInactiveTintColor: colors.stone,
         tabBarStyle: {
-          backgroundColor: colors.cream,
+          backgroundColor: colors.parchment,
           borderTopColor: colors.borderLight,
           paddingTop: 8,
           height: 84,
@@ -240,6 +249,13 @@ export default function AppNavigator() {
   const { colors } = theme;
   const screenOptions = useScreenOptions();
 
+  // null = still reading the flag; render a blank screen so onboarding never flashes
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    isOnboardingComplete().then(setOnboardingComplete);
+  }, []);
+
   // Custom navigation theme
   const navigationTheme = {
     ...(isDarkMode ? DarkTheme : DefaultTheme),
@@ -254,16 +270,31 @@ export default function AppNavigator() {
     },
   };
 
+
+  if (onboardingComplete === null) {
+    return <View style={{ flex: 1, backgroundColor: colors.parchment }} />;
+  }
+
   return (
     <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Navigator
+        screenOptions={screenOptions}
+        initialRouteName={onboardingComplete ? 'Main' : 'Onboarding'}
+      >
+        {/* Onboarding (first launch only) */}
+        <Stack.Screen
+          name="Onboarding"
+          component={OnboardingScreen}
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+
         {/* Main Tabs */}
         <Stack.Screen
           name="Main"
           component={MainTabs}
           options={{ headerShown: false }}
         />
-        
+
         {/* Event Screens */}
         <Stack.Screen
           name="CreateEvent"
@@ -387,29 +418,16 @@ export default function AppNavigator() {
           options={{ headerShown: false }}
         />
         
-        {/* Auth Screens (optional - accessible from Profile) */}
-        <Stack.Screen
-          name="SignIn"
-          component={SignInScreen}
-          options={{ 
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="SignUp"
-          component={SignUpScreen}
-          options={{ 
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        
         {/* Settings Screens */}
         <Stack.Screen
           name="Subscription"
           component={SubscriptionScreen}
-          options={{ title: 'Subscription' }}
+          options={{ title: 'Your local plans' }}
+        />
+        <Stack.Screen
+          name="PrivacySupport"
+          component={PrivacySupportScreen}
+          options={{ title: 'Privacy & Support' }}
         />
         <Stack.Screen
           name="About"

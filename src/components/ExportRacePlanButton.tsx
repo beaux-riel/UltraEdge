@@ -1,3 +1,4 @@
+import { loadOperations } from '../lib/raceOperations';
 /**
  * ExportRacePlanButton — generates a shareable race day plan PDF.
  *
@@ -18,6 +19,10 @@ import { Button } from './ui';
 import { useEvents } from '../context/EventContext';
 import { useCheckpoints } from '../context/CheckpointContext';
 import { useCrewMembers, ROLE_CONFIG } from '../context/CrewContext';
+import {
+  EVENT_CREW_KEY,
+  EventCrewAssignment,
+} from '../lib/eventCrew';
 import { useGear } from '../context/GearContext';
 import { useDropBags } from '../context/DropBagContext';
 import {
@@ -28,24 +33,7 @@ import {
   RacePlanGearItem,
 } from '../lib/racePlanPdf';
 
-// Per-event relationship records (same storage as EventDetailScreen).
-const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-const EVENT_CREW_KEY = '@ultraedge/event-crew';
-
-interface EventGearAllocation {
-  eventId: string;
-  gearItemId: string;
-  isWorn: boolean;
-  isCarried: boolean;
-  quantity: number;
-  notes?: string;
-}
-
-interface EventCrewAssignment {
-  eventId: string;
-  crewMemberId: string;
-  notes?: string;
-}
+import { EVENT_GEAR_KEY, EventGearAllocation } from '../lib/eventGear';
 
 interface ExportRacePlanButtonProps {
   eventId: string;
@@ -54,28 +42,37 @@ interface ExportRacePlanButtonProps {
 }
 
 async function readJson<T>(key: string): Promise<T[]> {
-  try {
-    const raw = await AsyncStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T[]) : [];
-  } catch {
-    return [];
-  }
+  const raw = await AsyncStorage.getItem(key);
+  if (!raw) return [];
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) throw new Error('Saved plan relationships could not be read.');
+  return parsed as T[];
 }
 
 export function ExportRacePlanButton({ eventId, fullWidth = true, style }: ExportRacePlanButtonProps) {
   const { theme } = useTheme();
   const { colors } = theme;
 
-  const { getEvent } = useEvents();
-  const { getCheckpointsByEventId, getCheckpointById } = useCheckpoints();
-  const { getCrewMember } = useCrewMembers();
-  const { getGearItem } = useGear();
-  const { getDropBagsByEvent } = useDropBags();
+  const events = useEvents();
+  const { getEvent } = events;
+  const checkpointsState = useCheckpoints();
+  const { getCheckpointsByEventId, getCheckpointById } = checkpointsState;
+  const crewState = useCrewMembers();
+  const { getCrewMember } = crewState;
+  const gearState = useGear();
+  const { getGearItem } = gearState;
+  const bagsState = useDropBags();
+  const { getDropBagsByEvent } = bagsState;
 
   const [generating, setGenerating] = useState(false);
 
   const handleExport = async () => {
     if (generating) {return;}
+
+    if ([events, checkpointsState, crewState, gearState, bagsState].some(state => state.loading || state.error)) {
+      Alert.alert('Plan Not Ready', 'All saved planning data must load successfully before exporting. Please reopen the plan and try again.');
+      return;
+    }
 
     const event = getEvent(eventId);
     if (!event) {
@@ -94,11 +91,18 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
       const crew: RacePlanCrewMember[] = [];
       for (const assignment of crewAssignments) {
         const member = getCrewMember(assignment.crewMemberId);
-        if (!member) {continue;}
+        if (!member) {throw new Error('An assigned crew member is missing. Review crew assignments before exporting.');}
+        const roles = assignment.roles ?? [];
         const roleLabel =
-          member.role === 'other' && member.customRole
-            ? member.customRole
-            : ROLE_CONFIG[member.role]?.label ?? 'Crew';
+          roles.length > 0
+            ? roles
+                .map(role =>
+                  role === 'other' && assignment.customRole
+                    ? assignment.customRole
+                    : ROLE_CONFIG[role]?.label ?? 'Crew',
+                )
+                .join(' / ')
+            : 'Crew';
         crew.push({
           name: member.name,
           role: roleLabel,
@@ -115,7 +119,7 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
       const gear: RacePlanGearItem[] = [];
       for (const allocation of gearAllocations) {
         const item = getGearItem(allocation.gearItemId);
-        if (!item) {continue;}
+        if (!item) {throw new Error('An allocated gear item is missing. Review gear assignments before exporting.');}
         gear.push({
           name: item.name,
           brand: item.brand ?? null,
@@ -123,6 +127,7 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
           quantity: allocation.quantity || 1,
           isWorn: allocation.isWorn,
           isCarried: allocation.isCarried,
+          isPacked: allocation.isPacked,
           notes: allocation.notes ?? item.notes ?? null,
         });
       }
@@ -131,7 +136,7 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
       const dropBags: RacePlanDropBag[] = getDropBagsByEvent(eventId).map(bag => ({
         name: bag.name,
         checkpointName: bag.checkpointId
-          ? getCheckpointById(eventId, bag.checkpointId)?.name ?? null
+          ? getCheckpointById(eventId, bag.checkpointId)?.name ?? 'Checkpoint unavailable — confirm bag location'
           : null,
         items: bag.items.map(item => ({
           name: item.name,
@@ -144,7 +149,23 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
       // Course GPX (best-effort; the PDF omits the route section when null).
       const gpxXml = await loadGpxXmlForEvent(eventId, event.gpx_file_url);
 
-      await exportRacePlan({ event, checkpoints, crew, gear, dropBags, gpxXml });
+      if (event.gpx_file_url && !gpxXml) {
+        const proceed = await new Promise<boolean>(resolve => Alert.alert(
+          'Route Unavailable',
+          'The course route could not be loaded. Export the plan without its route map?',
+          [{ text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Export Without Route', onPress: () => resolve(true) }],
+          { cancelable: true, onDismiss: () => resolve(false) },
+        ));
+        if (!proceed) return;
+      }
+      const operations = await loadOperations(eventId);
+      const operationsLogistics = operations.duties.map(duty => `${getCheckpointById(eventId, duty.checkpointId)?.name ?? 'Checkpoint'}: ${getCrewMember(duty.crewMemberId)?.name ?? 'Crew'} — ${duty.role.replace('_', ' ')}`);
+      for (const vehicle of operations.vehicles) {
+        operationsLogistics.push(`${vehicle.name} • Owner: ${vehicle.ownerId ? getCrewMember(vehicle.ownerId)?.name ?? 'Unassigned' : 'Unassigned'} • Crew: ${vehicle.crewIds.map(id => getCrewMember(id)?.name ?? 'Unassigned').join(', ') || 'None'} • Cargo: ${operations.cargo.filter(item => item.vehicleId === vehicle.id).map(item => item.label).join(', ') || 'None'}`);
+      }
+      operationsLogistics.push('Bag items travel with their bag unless a separate item allocation is listed.');
+      await exportRacePlan({ event, checkpoints, crew, gear, dropBags, gpxXml, operations, operationsLogistics });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong.';
       Alert.alert('Export Failed', `Could not generate the race plan PDF. ${message}`);

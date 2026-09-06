@@ -1,6 +1,7 @@
 /**
  * UltraEdge Select Crew Screen
- * Select existing crew members to assign to an event
+ * Select existing crew members to assign to an event, with per-event roles.
+ * A member can hold multiple roles for one event.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -8,70 +9,76 @@ import {
   View,
   StyleSheet,
   FlatList,
+  TextInput,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
-import { 
-  H1, 
-  H3, 
-  Body, 
-  BodySmall, 
-  Button, 
+import {
+  Text,
+  H1,
+  H3,
+  Body,
+  BodySmall,
+  Button,
 } from '../../components/ui';
-import { useCrewMembers, CrewMember, ROLE_CONFIG } from '../../context/CrewContext';
+import { useCrewMembers, CrewMember, CrewRole, ROLES, ROLE_CONFIG } from '../../context/CrewContext';
+import {
+  EventCrewAssignment,
+  loadEventCrewAssignments,
+  upsertEventCrewAssignments,
+} from '../../lib/eventCrew';
 
 type Props = NativeStackScreenProps<any, 'SelectCrew'>;
-
-const EVENT_CREW_KEY = '@ultraedge/event-crew';
-
-interface EventCrewAssignment {
-  eventId: string;
-  crewMemberId: string;
-  notes?: string;
-}
 
 export default function SelectCrewScreen({ navigation, route }: Props) {
   const { theme } = useTheme();
   const { colors, spacing } = theme;
   const insets = useSafeAreaInsets();
-  const { crewMembers } = useCrewMembers();
-  
+  const { crewMembers, loading: crewLoading, error: crewError } = useCrewMembers();
+
   const eventId = route.params?.eventId;
-  
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(route.params?.selectedCrewId ? [route.params.selectedCrewId] : []));
+  const [rolesById, setRolesById] = useState<Record<string, CrewRole[]>>({});
+  const [customRoleById, setCustomRoleById] = useState<Record<string, string>>({});
   const [alreadyAddedIds, setAlreadyAddedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Load already assigned crew
   useEffect(() => {
     const loadExisting = async () => {
+      setLoading(true);
       try {
-        const stored = await AsyncStorage.getItem(EVENT_CREW_KEY);
-        if (stored) {
-          const allCrew: EventCrewAssignment[] = JSON.parse(stored);
-          const eventCrewIds = new Set(
-            allCrew.filter(c => c.eventId === eventId).map(c => c.crewMemberId)
-          );
-          setAlreadyAddedIds(eventCrewIds);
-        }
-      } catch (error) {
-        console.error('Failed to load existing crew:', error);
-      }
+        const allCrew = await loadEventCrewAssignments();
+        const existing = allCrew.filter(c => c.eventId === eventId);
+        setAlreadyAddedIds(new Set(existing.map(c => c.crewMemberId)));
+        setSelectedIds(new Set([...existing.map(c => c.crewMemberId), ...(route.params?.selectedCrewId ? [route.params.selectedCrewId] : [])]));
+        setRolesById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.roles || []])));
+        setCustomRoleById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.customRole || ''])));
+        setLoadError(null);
+      } catch {
+        setLoadError('Crew assignments could not be loaded. Close this screen and try again.');
+      } finally { setLoading(false); }
     };
     loadExisting();
-  }, [eventId]);
+  }, [eventId, route.params?.selectedCrewId]);
 
-  // Filter out already-assigned crew
-  const availableCrew = crewMembers.filter(c => !alreadyAddedIds.has(c.id));
+  // Existing assignments remain visible so their roles can be edited.
+  const availableCrew = loading || crewLoading || loadError || crewError ? [] : [...crewMembers].sort(
+    (a, b) => Number(b.id === route.params?.selectedCrewId) - Number(a.id === route.params?.selectedCrewId)
+  );
 
-  // Toggle selection
+  // Toggle member selection
   const toggleSelection = (id: string) => {
+    if (alreadyAddedIds.has(id)) return;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -83,8 +90,21 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
     });
   };
 
+  // Toggle a role on a selected member
+  const toggleRole = (memberId: string, role: CrewRole) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRolesById(prev => {
+      const current = prev[memberId] ?? [];
+      const next = current.includes(role)
+        ? current.filter(r => r !== role)
+        : [...current, role];
+      return { ...prev, [memberId]: next };
+    });
+  };
+
   // Save selections
   const handleSave = async () => {
+    if (loading || crewLoading || loadError || crewError || saving || !eventId) return;
     if (selectedIds.size === 0) {
       navigation.goBack();
       return;
@@ -92,18 +112,23 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
 
     setSaving(true);
     try {
-      const stored = await AsyncStorage.getItem(EVENT_CREW_KEY);
-      const allCrew: EventCrewAssignment[] = stored ? JSON.parse(stored) : [];
-      
-      // Add new assignments
-      const newAssignments: EventCrewAssignment[] = Array.from(selectedIds).map(crewMemberId => ({
-        eventId,
-        crewMemberId,
-      }));
-      
-      const updated = [...allCrew, ...newAssignments];
-      await AsyncStorage.setItem(EVENT_CREW_KEY, JSON.stringify(updated));
-      
+      // Add new assignments with their per-event roles
+      const newAssignments: EventCrewAssignment[] = Array.from(selectedIds).map(
+        crewMemberId => {
+          const roles = rolesById[crewMemberId] ?? [];
+          return {
+            eventId,
+            crewMemberId,
+            roles,
+            customRole: roles.includes('other')
+              ? customRoleById[crewMemberId]?.trim() || null
+              : null,
+          };
+        }
+      );
+
+      await upsertEventCrewAssignments(newAssignments);
+
       navigation.goBack();
     } catch (error) {
       console.error('Failed to save crew:', error);
@@ -113,38 +138,118 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
     }
   };
 
+  // Get initials for avatar
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
+
   // Render crew item
   const renderCrewItem = ({ item }: { item: CrewMember }) => {
     const isSelected = selectedIds.has(item.id);
-    const roleInfo = ROLE_CONFIG[item.role];
-    
+    const memberRoles = rolesById[item.id] ?? [];
+
     return (
-      <TouchableOpacity
-        onPress={() => toggleSelection(item.id)}
+      <View
         style={[
           styles.listItem,
-          { 
+          {
             backgroundColor: isSelected ? colors.forest + '10' : colors.surface,
             borderColor: isSelected ? colors.forest : colors.border,
-          }
+          },
         ]}
       >
-        <View style={[styles.listItemIcon, { backgroundColor: roleInfo.color + '20' }]}>
-          <Ionicons name={roleInfo.icon as any} size={20} color={roleInfo.color} />
-        </View>
-        <View style={styles.listItemContent}>
-          <Body numberOfLines={1}>{item.name}</Body>
-          <BodySmall color="tertiary">
-            {item.customRole || roleInfo.label}
-            {item.phone ? ` • ${item.phone}` : ''}
-          </BodySmall>
-        </View>
-        <Ionicons 
-          name={isSelected ? 'checkbox' : 'square-outline'} 
-          size={24} 
-          color={isSelected ? colors.forest : colors.stone} 
-        />
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => toggleSelection(item.id)} accessibilityRole="checkbox" accessibilityState={{ checked: isSelected }} accessibilityLabel={item.name} style={styles.memberRow}>
+          <View style={[styles.listItemIcon, { backgroundColor: colors.trail + '20' }]}>
+            <Text variant="h3" style={{ color: colors.trail }}>
+              {getInitials(item.name)}
+            </Text>
+          </View>
+          <View style={styles.listItemContent}>
+            <Body numberOfLines={1}>{item.name}</Body>
+            {(item.phone || item.email) && (
+              <BodySmall color="tertiary" numberOfLines={1}>
+                {item.phone || item.email}
+              </BodySmall>
+            )}
+          </View>
+          <Ionicons
+            name={isSelected ? 'checkbox' : 'square-outline'}
+            size={24}
+            color={isSelected ? colors.forest : colors.stone}
+          />
+        </TouchableOpacity>
+
+        {/* Per-event role chips (multi-select) */}
+        {isSelected && (
+          <View style={styles.rolesSection}>
+            <BodySmall color="secondary" style={{ marginBottom: 6 }}>
+              Roles for this event{alreadyAddedIds.has(item.id) ? ' · Assigned' : ''}
+            </BodySmall>
+            <View style={styles.roleChips}>
+              {ROLES.map(role => {
+                const config = ROLE_CONFIG[role];
+                const isActive = memberRoles.includes(role);
+
+                return (
+                  <TouchableOpacity
+                    key={role}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={`${config.label} for ${item.name}`}
+                    accessibilityState={{ checked: isActive }}
+                    onPress={() => toggleRole(item.id, role)}
+                    style={[
+                      styles.roleChip,
+                      {
+                        backgroundColor: isActive ? config.color : colors.cream,
+                        borderColor: isActive ? config.color : colors.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={config.icon as any}
+                      size={14}
+                      color={isActive ? colors.snow : config.color}
+                    />
+                    <Text
+                      variant="bodySmall"
+                      style={{
+                        color: isActive ? colors.snow : colors.stone,
+                        marginLeft: 4,
+                      }}
+                    >
+                      {config.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Custom label when "Other" is included */}
+            {memberRoles.includes('other') && (
+              <TextInput
+                style={[
+                  styles.customRoleInput,
+                  {
+                    backgroundColor: colors.cream,
+                    borderColor: colors.border,
+                    color: colors.bark,
+                  },
+                ]}
+                accessibilityLabel={`Custom role for ${item.name}`}
+                placeholder="Custom role, e.g. Support Runner"
+                placeholderTextColor={colors.mist}
+                value={customRoleById[item.id] ?? ''}
+                onChangeText={text =>
+                  setCustomRoleById(prev => ({ ...prev, [item.id]: text }))
+                }
+                autoCapitalize="words"
+              />
+            )}
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -153,16 +258,14 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
     <View style={styles.emptyState}>
       <Ionicons name="people-outline" size={64} color={colors.mist} />
       <H3 color="secondary" style={{ marginTop: spacing.md }}>
-        No Crew Available
+        {loading || crewLoading ? 'Loading crew…' : loadError || crewError ? 'Unable to load crew' : 'No Crew Available'}
       </H3>
       <Body color="tertiary" align="center" style={{ marginTop: spacing.xs, marginHorizontal: spacing.xl }}>
-        {alreadyAddedIds.size > 0 
-          ? 'All your crew members are already assigned to this event.'
-          : 'Create some crew members first, then come back to assign them.'}
+        {loadError || crewError || (loading || crewLoading ? 'Reading saved assignments…' : 'Create some crew members first, then come back to assign them.')}
       </Body>
       <Button
         variant="secondary"
-        onPress={() => navigation.navigate('CreateCrew', { eventId })}
+        onPress={() => navigation.replace('CreateCrew', { eventId })}
         style={{ marginTop: spacing.lg }}
       >
         Create New Crew
@@ -186,14 +289,14 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="close" size={24} color={colors.stone} />
         </TouchableOpacity>
-        <H1 style={{ flex: 1, textAlign: 'center' }}>Select Crew</H1>
-        <TouchableOpacity 
-          onPress={handleSave} 
+        <H1 style={{ flex: 1, textAlign: 'center' }}>Crew & Roles</H1>
+        <TouchableOpacity
+          onPress={handleSave}
           style={styles.saveButton}
-          disabled={saving}
+          disabled={saving || loading || crewLoading || !!loadError || !!crewError}
         >
           <Body style={{ color: colors.forest, fontWeight: '600' }}>
-            {saving ? 'Saving...' : `Add (${selectedIds.size})`}
+            {saving ? 'Saving...' : 'Save'}
           </Body>
         </TouchableOpacity>
       </View>
@@ -208,6 +311,12 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
           availableCrew.length === 0 && styles.emptyListContent,
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={availableCrew.length > 0 ? (
+          <BodySmall color="secondary" style={{ marginBottom: spacing.md }}>
+            Select crew, then tap one or more roles below their name. Roles apply only to this race. Tap Save to keep your changes.
+          </BodySmall>
+        ) : null}
         ListEmptyComponent={renderEmptyState}
         ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
       />
@@ -247,11 +356,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   listItemIcon: {
     width: 40,
@@ -264,6 +375,33 @@ const styles = StyleSheet.create({
   listItemContent: {
     flex: 1,
     marginRight: 12,
+  },
+  rolesSection: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+  },
+  roleChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  roleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  customRoleInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    marginTop: 10,
   },
   emptyState: {
     alignItems: 'center',

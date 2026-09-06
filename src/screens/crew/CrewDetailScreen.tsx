@@ -3,7 +3,7 @@
  * View full details of a single crew member
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -15,10 +15,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../theme';
 import { Text, H1, H3, Body, BodySmall, Button, Card, CardContent } from '../../components/ui';
 import { useCrewMembers, ROLE_CONFIG } from '../../context/CrewContext';
+import { useEvents } from '../../context/EventContext';
+import { loadEventCrewAssignments, EventCrewAssignment } from '../../lib/eventCrew';
 
 export default function CrewDetailScreen({ navigation, route }: any) {
   const { theme } = useTheme();
@@ -26,12 +29,32 @@ export default function CrewDetailScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
 
   const { crewMembers, deleteCrewMember } = useCrewMembers();
+  const { getEvent } = useEvents();
 
   // Get crew member from context
   const member = useMemo(() => {
     const crewId = route.params?.crewId;
     return crewMembers.find((m) => m.id === crewId) || null;
   }, [route.params?.crewId, crewMembers]);
+
+  // Per-event assignments for this member
+  const [assignments, setAssignments] = useState<EventCrewAssignment[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadEventCrewAssignments().then(all => {
+        if (active) {
+          setAssignments(all.filter(a => a.crewMemberId === route.params?.crewId));
+        }
+      }).catch(() => {
+        if (active) Alert.alert('Roles unavailable', 'Crew assignments could not be loaded. Please reopen this screen to try again.');
+      });
+      return () => {
+        active = false;
+      };
+    }, [route.params?.crewId])
+  );
 
   if (!member) {
     return (
@@ -54,11 +77,6 @@ export default function CrewDetailScreen({ navigation, route }: any) {
       </View>
     );
   }
-
-  const roleConfig = ROLE_CONFIG[member.role];
-  const displayRole = member.role === 'other' && member.customRole
-    ? member.customRole
-    : roleConfig.label;
 
   // Get initials for avatar
   const getInitials = (name: string): string => {
@@ -83,8 +101,12 @@ export default function CrewDetailScreen({ navigation, route }: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteCrewMember(member.id);
-            navigation.goBack();
+            try {
+              if (!await deleteCrewMember(member.id)) throw new Error('The record could not be found. Refresh and try again.');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Not deleted', error instanceof Error ? error.message : 'Please try again.');
+            }
           },
         },
       ]
@@ -137,25 +159,17 @@ export default function CrewDetailScreen({ navigation, route }: any) {
         {/* Hero Section */}
         <View style={styles.heroSection}>
           {/* Avatar */}
-          <View style={[styles.avatar, { backgroundColor: roleConfig.color + '20' }]}>
+          <View style={[styles.avatar, { backgroundColor: colors.trail + '20' }]}>
             {member.avatar_url ? (
-              <Ionicons name="person" size={48} color={roleConfig.color} />
+              <Ionicons name="person" size={48} color={colors.trail} />
             ) : (
-              <Text variant="display" style={{ color: roleConfig.color }}>
+              <Text variant="display" style={{ color: colors.trail }}>
                 {getInitials(member.name)}
               </Text>
             )}
           </View>
 
           <H1 style={{ marginTop: spacing.md, textAlign: 'center' }}>{member.name}</H1>
-
-          {/* Role Badge */}
-          <View style={[styles.roleBadge, { backgroundColor: roleConfig.color + '20' }]}>
-            <Ionicons name={roleConfig.icon as any} size={18} color={roleConfig.color} />
-            <Text variant="body" style={{ color: roleConfig.color, marginLeft: 8 }}>
-              {displayRole}
-            </Text>
-          </View>
         </View>
 
         {/* Quick Actions */}
@@ -234,20 +248,82 @@ export default function CrewDetailScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* Events Section (Future Feature Placeholder) */}
+        {/* Assigned Events with per-event roles */}
         <View style={styles.eventsSection}>
           <H3 style={{ marginBottom: spacing.md }}>Assigned Events</H3>
           <Card variant="standard">
             <CardContent>
-              <View style={styles.placeholderContent}>
-                <Ionicons name="calendar-outline" size={32} color={colors.mist} />
-                <Body color="secondary" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
-                  Event assignments coming soon!
-                </Body>
-                <BodySmall color="tertiary" style={{ marginTop: spacing.xs, textAlign: 'center' }}>
-                  You'll be able to assign crew members to specific events and checkpoints.
-                </BodySmall>
-              </View>
+              {assignments.length === 0 ? (
+                <View style={styles.placeholderContent}>
+                  <Ionicons name="calendar-outline" size={32} color={colors.mist} />
+                  <Body color="secondary" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
+                    Not assigned to any events yet.
+                  </Body>
+                  <BodySmall color="tertiary" style={{ marginTop: spacing.xs, textAlign: 'center' }}>
+                    Assign {member.name.split(' ')[0]} to an event to set their roles for race day.
+                  </BodySmall>
+                </View>
+              ) : (
+                assignments.map((assignment, index) => {
+                  const event = getEvent(assignment.eventId);
+                  const roles = assignment.roles ?? [];
+
+                  return (
+                    <View
+                      key={`${assignment.eventId}-${assignment.crewMemberId}`}
+                      style={[
+                        styles.eventRow,
+                        {
+                          borderBottomColor: colors.borderLight,
+                          borderBottomWidth: index < assignments.length - 1 ? 1 : 0,
+                        },
+                      ]}
+                    >
+                      <Body numberOfLines={1} style={{ fontWeight: '600' }}>
+                        {event?.name ?? 'Unknown event'}
+                      </Body>
+                      <View style={styles.roleChips}>
+                        {roles.length === 0 ? (
+                          <BodySmall color="tertiary">No roles set</BodySmall>
+                        ) : (
+                          roles.map(role => {
+                            const config = ROLE_CONFIG[role];
+                            const label =
+                              role === 'other' && assignment.customRole
+                                ? assignment.customRole
+                                : config.label;
+                            return (
+                              <View
+                                key={role}
+                                style={[styles.roleChip, { backgroundColor: config.color + '20' }]}
+                              >
+                                <Ionicons name={config.icon as any} size={12} color={config.color} />
+                                <Text
+                                  variant="bodySmall"
+                                  style={{ color: config.color, marginLeft: 4 }}
+                                >
+                                  {label}
+                                </Text>
+                              </View>
+                            );
+                          })
+                        )}
+                      </View>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        accessibilityLabel={`Edit roles for ${member.name} at ${event?.name ?? 'this event'}`}
+                        onPress={() => navigation.navigate('SelectCrew', {
+                          eventId: assignment.eventId,
+                          selectedCrewId: member.id,
+                        })}
+                      >
+                        Edit roles
+                      </Button>
+                    </View>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
         </View>
@@ -323,14 +399,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 12,
-  },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -367,6 +435,22 @@ const styles = StyleSheet.create({
   placeholderContent: {
     alignItems: 'center',
     paddingVertical: 16,
+  },
+  eventRow: {
+    paddingVertical: 12,
+  },
+  roleChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  roleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   actionsSection: {
     marginTop: 8,

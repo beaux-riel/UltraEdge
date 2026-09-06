@@ -5,7 +5,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveArrayChanges, runLocalPlanOperation, readArray, subscribePlanChanges } from '../lib/localPlanStorage';
 
 // Simple UUID generator for local storage
 const generateId = (): string => {
@@ -26,6 +26,7 @@ export interface DropBagItem {
 }
 
 export interface DropBag {
+  imageUrl?: string | null;
   id: string;
   name: string;
   eventId: string;
@@ -37,6 +38,7 @@ export interface DropBag {
 }
 
 export interface DropBagInsert {
+  imageUrl?: string | null;
   name: string;
   eventId: string;
   checkpointId?: string | null;
@@ -45,13 +47,30 @@ export interface DropBagInsert {
 }
 
 export interface DropBagUpdate {
+  imageUrl?: string | null;
   name?: string;
   checkpointId?: string | null;
   items?: DropBagItem[];
   notes?: string | null;
 }
 
+export interface DropBagTemplate {
+  id: string;
+  name: string;
+  items: DropBagItem[];
+  notes: string | null;
+  created_at: string;
+}
+
+export const DROP_BAG_TEMPLATE_KEY = '@ultraedge/dropbag-templates';
+
+export const copyDropBagItems = (items: DropBagItem[]): DropBagItem[] =>
+  items.map(item => ({ ...item, id: generateId() }));
+
 interface DropBagContextType {
+  templates: DropBagTemplate[];
+  saveDropBagTemplate: (bagId: string) => Promise<DropBagTemplate>;
+  deleteDropBagTemplate: (id: string) => Promise<void>;
   dropBags: DropBag[];
   loading: boolean;
   error: string | null;
@@ -84,6 +103,7 @@ interface DropBagProviderProps {
 }
 
 export function DropBagProvider({ children }: DropBagProviderProps) {
+  const [templates, setTemplates] = useState<DropBagTemplate[]>([]);
   const [dropBags, setDropBags] = useState<DropBag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,13 +113,13 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as DropBag[];
-        // Sort by created_at descending (newest first)
-        parsed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setDropBags(parsed);
-      }
+      const [parsed, savedTemplates] = await runLocalPlanOperation(async () => Promise.all([
+        readArray<DropBag>(STORAGE_KEY), readArray<DropBagTemplate>(DROP_BAG_TEMPLATE_KEY),
+      ]));
+      setTemplates(savedTemplates);
+      // Sort by created_at descending (newest first)
+      parsed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setDropBags(parsed);
     } catch (err) {
       console.error('Failed to load drop bags:', err);
       setError('Failed to load drop bags');
@@ -110,17 +130,22 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
 
   // Save drop bags to storage
   const saveDropBags = async (updatedBags: DropBag[]) => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBags));
+      const saved = await saveArrayChanges(STORAGE_KEY, dropBags, updatedBags);
+      setDropBags(saved);
     } catch (err) {
       console.error('Failed to save drop bags:', err);
-      throw new Error('Failed to save drop bags');
+      throw err instanceof Error ? err : new Error('Failed to save drop bags');
     }
   };
 
   // Initial load
   useEffect(() => {
-    loadDropBags();
+    void loadDropBags();
+    return subscribePlanChanges(keys => {
+      if (keys.includes(STORAGE_KEY) || keys.includes(DROP_BAG_TEMPLATE_KEY)) void loadDropBags();
+    });
   }, [loadDropBags]);
 
   // Create a new drop bag
@@ -131,16 +156,35 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
       name: bagData.name,
       eventId: bagData.eventId,
       checkpointId: bagData.checkpointId || null,
-      items: bagData.items || [],
+      items: copyDropBagItems(bagData.items || []),
       notes: bagData.notes || null,
+      imageUrl: bagData.imageUrl || null,
       created_at: now,
       updated_at: now,
     };
 
     const updatedBags = [newBag, ...dropBags];
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return newBag;
+  };
+
+  const saveDropBagTemplate = async (bagId: string): Promise<DropBagTemplate> => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
+    const bag = dropBags.find(row => row.id === bagId);
+    if (!bag) throw new Error('Drop bag no longer exists.');
+    const template: DropBagTemplate = {
+      id: generateId(), name: bag.name, items: copyDropBagItems(bag.items),
+      notes: bag.notes, created_at: new Date().toISOString(),
+    };
+    const saved = await saveArrayChanges(DROP_BAG_TEMPLATE_KEY, templates, [template, ...templates]);
+    setTemplates(saved);
+    return template;
+  };
+
+  const deleteDropBagTemplate = async (id: string): Promise<void> => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
+    const saved = await saveArrayChanges(DROP_BAG_TEMPLATE_KEY, templates, templates.filter(row => row.id !== id));
+    setTemplates(saved);
   };
 
   // Update an existing drop bag
@@ -157,7 +201,6 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     const updatedBags = [...dropBags];
     updatedBags[index] = updatedBag;
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return updatedBag;
   };
 
@@ -168,7 +211,6 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
 
     const updatedBags = dropBags.filter(b => b.id !== id);
     await saveDropBags(updatedBags);
-    setDropBags(updatedBags);
     return true;
   };
 
@@ -237,6 +279,9 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     <DropBagContext.Provider
       value={{
         dropBags,
+        templates,
+        saveDropBagTemplate,
+        deleteDropBagTemplate,
         loading,
         error,
         createDropBag,

@@ -11,21 +11,18 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as Sentry from '@sentry/react-native';
 
 // Theme & Fonts
 import { ThemeProvider, useTheme } from './src/theme';
 import { useFonts } from './src/hooks/useFonts';
 
 // Data Providers
-import { AuthProvider } from './src/context/AuthContext';
 import { MoverProvider } from './src/context/MoverContext';
 import { EventProvider } from './src/context/EventContext';
 import { CheckpointProvider } from './src/context/CheckpointContext';
 import { GearProvider } from './src/context/GearContext';
 import { CrewProvider } from './src/context/CrewContext';
 import { DropBagProvider } from './src/context/DropBagContext';
-import { SubscriptionProvider } from './src/context/SubscriptionContext';
 
 // Navigation
 import AppNavigator from './src/navigation/AppNavigator';
@@ -62,16 +59,6 @@ function AppContent() {
   );
 }
 
-const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
-
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    enabled: !__DEV__,
-    tracesSampleRate: 0.2,
-  });
-}
-
 // Root component with all providers
 function App() {
   return (
@@ -79,23 +66,19 @@ function App() {
       <GestureHandlerRootView style={styles.root}>
         <SafeAreaProvider>
           <ThemeProvider>
-            <AuthProvider>
-              <SubscriptionProvider>
-                <MoverProvider>
-                  <EventProvider>
-                    <CheckpointProvider>
-                      <GearProvider>
-                        <CrewProvider>
-                          <DropBagProvider>
-                            <AppContent />
-                          </DropBagProvider>
-                        </CrewProvider>
-                      </GearProvider>
-                    </CheckpointProvider>
-                  </EventProvider>
-                </MoverProvider>
-              </SubscriptionProvider>
-            </AuthProvider>
+            <MoverProvider>
+              <EventProvider>
+                <CheckpointProvider>
+                  <GearProvider>
+                    <CrewProvider>
+                      <DropBagProvider>
+                        <AppContent />
+                      </DropBagProvider>
+                    </CrewProvider>
+                  </GearProvider>
+                </CheckpointProvider>
+              </EventProvider>
+            </MoverProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -103,7 +86,7 @@ function App() {
   );
 }
 
-export default SENTRY_DSN ? Sentry.wrap(App) : App;
+export default App;
 
 const styles = StyleSheet.create({
   root: {

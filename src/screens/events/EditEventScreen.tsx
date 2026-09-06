@@ -69,7 +69,7 @@ export default function EditEventScreen({ navigation, route }: Props) {
     try {
       setIsSubmitting(true);
 
-      await updateEvent(eventId, {
+      const saved = await updateEvent(eventId, {
         name: formData.name,
         description: formData.description || null,
         event_date: formData.event_date,
@@ -84,6 +84,7 @@ export default function EditEventScreen({ navigation, route }: Props) {
         status: formData.status,
         race_website: formData.race_website || null,
       });
+      if (!saved) throw new Error('This record was deleted. Return to the list and refresh.');
 
       // Navigate back to detail screen
       navigation.goBack();
@@ -91,7 +92,7 @@ export default function EditEventScreen({ navigation, route }: Props) {
       console.error('Failed to update event:', error);
       Alert.alert(
         'Error',
-        'Failed to update event. Please try again.',
+        error instanceof Error ? error.message : 'Failed to update event. Please try again.',
         [{ text: 'OK' }]
       );
     } finally {

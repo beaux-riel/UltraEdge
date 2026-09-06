@@ -29,6 +29,7 @@ import {
   Card,
   CardContent,
 } from '../../components/ui';
+import MoverStorageNotice from '../../components/MoverStorageNotice';
 import { useMover } from '../../context/MoverContext';
 import type { DistanceUnit, ElevationUnit, WeightUnit } from '../../lib/database.types';
 
@@ -102,8 +103,8 @@ function UnitSelector<T extends string>({
                 <BodySmall color="tertiary">{option.description}</BodySmall>
               </View>
               {isSelected && (
-                <View style={[styles.checkmark, { backgroundColor: colors.forest }]}>
-                  <Ionicons name="checkmark" size={16} color={colors.snow} />
+                <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
+                  <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                 </View>
               )}
             </View>
@@ -132,6 +133,13 @@ export default function EditProfileScreen({ navigation }: any) {
   const [elevationUnit, setElevationUnit] = useState<ElevationUnit>(profile.elevation_unit);
   const [isSaving, setIsSaving] = useState(false);
   
+  useEffect(() => {
+    setDisplayName(profile.display_name);
+    setWeightUnit(profile.weight_unit);
+    setDistanceUnit(profile.distance_unit);
+    setElevationUnit(profile.elevation_unit);
+  }, [profile]);
+
   // Track if changes were made
   const hasChanges = 
     displayName !== profile.display_name ||
@@ -226,6 +234,7 @@ export default function EditProfileScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <MoverStorageNotice />
           {/* Display Name */}
           <View style={styles.section}>
             <Label style={{ marginBottom: 12 }}>DISPLAY NAME</Label>

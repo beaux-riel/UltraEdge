@@ -14,6 +14,11 @@ jest.mock('expo-font', () => ({
   loadAsync: jest.fn(),
 }));
 
+// Mock AsyncStorage (native module unavailable in jest)
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   notificationAsync: jest.fn(),

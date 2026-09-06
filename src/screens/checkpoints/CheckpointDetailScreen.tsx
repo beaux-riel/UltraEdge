@@ -21,6 +21,7 @@ import { useCheckpoints, CHECKPOINT_TYPE_INFO } from '../../context/CheckpointCo
 import { Checkpoint, CheckpointType } from '../../lib/database.types';
 
 type RootStackParamList = {
+  EventDetail: { eventId: string; operationsCheckpointId?: string };
   CheckpointDetail: { eventId: string; checkpointId: string };
   EditCheckpoint: { eventId: string; checkpointId: string };
   CheckpointsList: { eventId: string };
@@ -123,9 +124,13 @@ export default function CheckpointDetailScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Duplicate',
-          onPress: () => {
-            duplicateCheckpoint(eventId, checkpointId);
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              await duplicateCheckpoint(eventId, checkpointId);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Not saved', 'Changes could not be saved. Please try again.');
+            }
           },
         },
       ]
@@ -141,9 +146,13 @@ export default function CheckpointDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            deleteCheckpoint(eventId, checkpointId);
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              await deleteCheckpoint(eventId, checkpointId);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Not saved', 'Changes could not be saved. Please try again.');
+            }
           },
         },
       ]
@@ -328,22 +337,26 @@ export default function CheckpointDetailScreen() {
           </View>
         )}
 
+        <View style={styles.section}>
+          <Button onPress={() => navigation.navigate('EventDetail', { eventId, operationsCheckpointId: checkpointId })}>Plan stop & record race times</Button>
+        </View>
+
         {/* Estimated Times */}
         {(checkpoint.estimated_arrival || checkpoint.estimated_duration) && (
           <View style={styles.section}>
-            <Label style={{ marginBottom: spacing.md }}>TIME ESTIMATES</Label>
+            <Label style={{ marginBottom: spacing.md }}>SAVED REFERENCE TIMES</Label>
             <Card variant="standard">
               <CardContent>
                 <DetailRow
                   icon="time"
                   iconColor={colors.forest}
-                  label="Estimated Arrival"
+                  label="Reference arrival (see race timeline for live ETA)"
                   value={checkpoint.estimated_arrival}
                 />
                 <DetailRow
                   icon="hourglass"
                   iconColor={colors.trail}
-                  label="Time at Checkpoint"
+                  label="Reference stop duration"
                   value={checkpoint.estimated_duration}
                 />
               </CardContent>
@@ -391,7 +404,7 @@ export default function CheckpointDetailScreen() {
       <View style={[styles.fabContainer, { bottom: insets.bottom + 24 }]}>
         <Button
           onPress={handleEdit}
-          icon={<Ionicons name="pencil" size={18} color={colors.snow} />}
+          icon={<Ionicons name="pencil" size={18} color={colors.onAccent} />}
         >
           Edit Checkpoint
         </Button>

@@ -151,3 +151,24 @@ describe('distanceMarkers with display units', () => {
     );
   });
 });
+
+describe('untrusted GPX data', () => {
+  it('rejects malformed XML and other XML documents', () => {
+    expect(() => parseGpx('<gpx><trk>')).toThrow();
+    expect(() => parseGpx('<html><trkpt lat="45" lon="-120"/></html>')).toThrow();
+  });
+  it('skips out-of-range and partially numeric coordinates, ignores infinite elevations', () => {
+    const xml = '<gpx><trk><trkseg>' +
+      '<trkpt lat="91" lon="0"/><trkpt lat="45junk" lon="0"/>' +
+      '<trkpt lat="45" lon="181"/><trkpt lat="" lon="0"/>' +
+      '<trkpt lat="45" lon="-120"><ele>Infinity</ele></trkpt>' +
+      '<trkpt lat="45.01" lon="-120"><ele>100</ele></trkpt>' +
+      '</trkseg></trk></gpx>';
+    const points = parseGpx(xml);
+    expect(points).toHaveLength(2);
+    expect(points[0].ele).toBeUndefined();
+    const metrics = computeRouteMetrics(points)!;
+    expect(Number.isFinite(metrics.totalDistanceMi)).toBe(true);
+    expect(metrics.hasElevation).toBe(false);
+  });
+});

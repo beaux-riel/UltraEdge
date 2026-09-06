@@ -1,0 +1,36 @@
+appId: com.beaux.ultraedge
+---
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*QA Forest 50.*"
+- scrollUntilVisible:
+    element: "Add race crew"
+    direction: DOWN
+- tapOn: "Add race crew"
+- tapOn: "Create New"
+- tapOn: "e.g., John Smith"
+- inputText: "QA Morgan"
+- tapOn: "Save"
+- tapOn: "Assign to race"
+- assertVisible: "QA Morgan"
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: ".*QA Morgan.*"
+    direction: DOWN
+- assertVisible: ".*QA Morgan.*"
+- scrollUntilVisible:
+    element: "Add race gear"
+    direction: UP
+- tapOn: "Add race gear"
+- tapOn: "Create New"
+- tapOn: "e.g., Salomon Sense Ride 5"
+- inputText: "QA Headlamp"
+- tapOn: "Save"
+- tapOn: "Assign to race"
+- tapOn: "Add \\(1\\)"
+- scrollUntilVisible:
+    element: "Packed QA Headlamp"
+    direction: DOWN
+- assertVisible: "Packed QA Headlamp"
+- takeScreenshot: workflow-created-and-assigned

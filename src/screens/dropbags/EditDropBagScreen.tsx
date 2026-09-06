@@ -1,3 +1,4 @@
+import PhotoField from '../../components/PhotoField';
 /**
  * UltraEdge Edit Drop Bag Screen
  * Edit an existing drop bag's details, checkpoint, and items
@@ -12,6 +13,8 @@ import {
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
+  Modal,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,11 +47,13 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   // Form state
   const [name, setName] = useState('');
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [selectedItems, setSelectedItems] = useState<DropBagItem[]>([]);
   const [showCheckpointPicker, setShowCheckpointPicker] = useState(false);
   const [showGearPicker, setShowGearPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   // Initialize form with existing data
   useEffect(() => {
@@ -56,6 +61,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
       setName(dropBag.name);
       setSelectedCheckpointId(dropBag.checkpointId || '');
       setNotes(dropBag.notes || '');
+      setImageUrl(dropBag.imageUrl || null);
       setSelectedItems([...dropBag.items]);
     }
   }, [dropBag]);
@@ -116,6 +122,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   };
 
   const handleSave = async () => {
+    if (photoBusy || showGearPicker || saving) return;
     // Validation
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter a name for this drop bag.');
@@ -124,16 +131,18 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
 
     try {
       setSaving(true);
-      await updateDropBag(dropBagId, {
+      const saved = await updateDropBag(dropBagId, {
         name: name.trim(),
         checkpointId: selectedCheckpointId || null,
         items: selectedItems,
         notes: notes.trim() || null,
+        imageUrl,
       });
+      if (!saved) throw new Error('This record was deleted. Return to the list and refresh.');
       navigation.goBack();
     } catch (error) {
       console.error('Failed to update drop bag:', error);
-      Alert.alert('Error', 'Failed to update drop bag. Please try again.');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update drop bag. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -299,7 +308,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
               <H3>Items</H3>
               <TouchableOpacity
                 style={[styles.addButton, { backgroundColor: colors.forest + '15' }]}
-                onPress={() => setShowGearPicker(true)}
+                onPress={() => { Keyboard.dismiss(); setShowGearPicker(true); }}
               >
                 <Ionicons name="add" size={18} color={colors.forest} />
                 <Text variant="bodySmall" style={{ color: colors.forest, marginLeft: 4 }}>
@@ -363,6 +372,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
             )}
           </View>
 
+          <PhotoField value={imageUrl} onChange={setImageUrl} disabled={saving} onBusyChange={setPhotoBusy} />
           {/* Notes */}
           <View style={styles.field}>
             <Caption style={{ marginBottom: spacing.xs }}>Notes</Caption>
@@ -390,15 +400,16 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
 
       {/* Gear Picker Modal */}
       {showGearPicker && (
+        <Modal transparent animationType="slide" onRequestClose={() => setShowGearPicker(false)}>
         <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.parchment }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.parchment, paddingBottom: insets.bottom }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <H3>Add Gear</H3>
               <TouchableOpacity onPress={() => setShowGearPicker(false)}>
                 <Ionicons name="close" size={24} color={colors.bark} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               {gearItems.filter(g => !g.retired).length === 0 ? (
                 <View style={styles.emptyModal}>
                   <Ionicons name="bag-handle-outline" size={40} color={colors.mist} />
@@ -412,6 +423,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
                   .map(gear => (
                     <TouchableOpacity
                       key={gear.id}
+                      accessibilityRole="button" accessibilityLabel={`Add ${gear.name} to drop bag`}
                       style={[
                         styles.gearPickerItem,
                         { borderBottomColor: colors.borderLight },
@@ -432,6 +444,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
             </ScrollView>
           </View>
         </View>
+        </Modal>
       )}
 
       {/* Save Button - Fixed at bottom */}
@@ -443,7 +456,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
         <Button
           onPress={handleSave}
           loading={saving}
-          disabled={saving || !name.trim()}
+          disabled={photoBusy || showGearPicker || saving || !name.trim()}
           style={{ flex: 1 }}
         >
           Save Changes
@@ -566,7 +579,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    maxHeight: '70%',
+    height: '65%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
@@ -578,6 +591,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   modalScroll: {
+    flex: 1,
     padding: 20,
   },
   emptyModal: {

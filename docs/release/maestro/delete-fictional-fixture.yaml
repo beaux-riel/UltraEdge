@@ -1,0 +1,17 @@
+appId: com.beaux.ultraedge
+---
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*Moonridge.*"
+- tapOn:
+    point: "90%,11%"
+- assertVisible: "Delete Event"
+- tapOn: "Delete"
+- assertVisible: ".*Native smoke 50K.*"
+- assertNotVisible: ".*Moonridge.*"
+- stopApp
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- assertVisible: ".*Native smoke 50K.*"
+- assertNotVisible: ".*Moonridge.*"

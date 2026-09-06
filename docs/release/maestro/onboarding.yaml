@@ -1,0 +1,16 @@
+appId: com.beaux.ultraedge
+---
+- assertVisible: "Plan your race"
+- tapOn: "Next"
+- assertVisible: "Dial in your gear"
+- tapOn: "Next"
+- assertVisible: "Rally your crew"
+- tapOn: "Next"
+- assertVisible: "Share the plan"
+- tapOn: "Start planning"
+- assertVisible: "Events, tab, 2 of 5"
+- stopApp
+- launchApp
+- assertVisible: "Events, tab, 2 of 5"
+- assertNotVisible: "Plan your race"
+- takeScreenshot: onboarding-completed

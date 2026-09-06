@@ -72,7 +72,9 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
   }, [eventId, route.params?.selectedCrewId]);
 
   // Existing assignments remain visible so their roles can be edited.
-  const availableCrew = loading || crewLoading || loadError || crewError ? [] : crewMembers;
+  const availableCrew = loading || crewLoading || loadError || crewError ? [] : [...crewMembers].sort(
+    (a, b) => Number(b.id === route.params?.selectedCrewId) - Number(a.id === route.params?.selectedCrewId)
+  );
 
   // Toggle member selection
   const toggleSelection = (id: string) => {
@@ -193,6 +195,9 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
                 return (
                   <TouchableOpacity
                     key={role}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={`${config.label} for ${item.name}`}
+                    accessibilityState={{ checked: isActive }}
                     onPress={() => toggleRole(item.id, role)}
                     style={[
                       styles.roleChip,
@@ -232,6 +237,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
                     color: colors.bark,
                   },
                 ]}
+                accessibilityLabel={`Custom role for ${item.name}`}
                 placeholder="Custom role, e.g. Support Runner"
                 placeholderTextColor={colors.mist}
                 value={customRoleById[item.id] ?? ''}
@@ -283,7 +289,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="close" size={24} color={colors.stone} />
         </TouchableOpacity>
-        <H1 style={{ flex: 1, textAlign: 'center' }}>Select Crew</H1>
+        <H1 style={{ flex: 1, textAlign: 'center' }}>Crew & Roles</H1>
         <TouchableOpacity
           onPress={handleSave}
           style={styles.saveButton}
@@ -306,6 +312,11 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={availableCrew.length > 0 ? (
+          <BodySmall color="secondary" style={{ marginBottom: spacing.md }}>
+            Select crew, then tap one or more roles below their name. Roles apply only to this race. Tap Save to keep your changes.
+          </BodySmall>
+        ) : null}
         ListEmptyComponent={renderEmptyState}
         ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
       />

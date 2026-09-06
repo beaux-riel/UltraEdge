@@ -25,12 +25,12 @@ it('does not copy or change the saved route for invalid or oversized imports', a
   await expect(importLocalGpx('file:///picked.gpx', 'race', save)).rejects.toThrow('two valid');
   expect(save).not.toHaveBeenCalled(); expect(mockCopy).not.toHaveBeenCalled();
 });
-it('cleans only the staged file when durable event saving fails', async () => {
+it('keeps the staged file recoverable when a journaled save fails', async () => {
   const save = jest.fn().mockRejectedValue(new Error('Disk full'));
   await expect(importLocalGpx('file:///old.gpx', 'race', save)).rejects.toThrow('Disk full');
   const staged = save.mock.calls[0][0];
   expect(staged).not.toBe('file:///old.gpx');
-  expect(mockDelete).toHaveBeenCalledWith(staged);
+  expect(mockDelete).not.toHaveBeenCalled();
   expect(mockDelete).not.toHaveBeenCalledWith('file:///old.gpx');
 });
 it('returns a new file only after the saved reference succeeds', async () => {

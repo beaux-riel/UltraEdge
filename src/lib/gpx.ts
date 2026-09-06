@@ -89,8 +89,8 @@ export function parseGpx(xml: string): GpxPoint[] {
   if (doc.documentElement?.localName !== 'gpx') {
     throw new Error('Choose a GPX course file.');
   }
-  let nodes = doc.getElementsByTagName('trkpt');
-  if (nodes.length === 0) nodes = doc.getElementsByTagName('rtept');
+  let nodes = doc.getElementsByTagNameNS('*', 'trkpt');
+  if (nodes.length === 0) nodes = doc.getElementsByTagNameNS('*', 'rtept');
 
   const points: GpxPoint[] = [];
   for (let i = 0; i < nodes.length; i++) {
@@ -100,7 +100,7 @@ export function parseGpx(xml: string): GpxPoint[] {
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
 
     let ele: number | undefined;
-    const eleNodes = node.getElementsByTagName('ele');
+    const eleNodes = node.getElementsByTagNameNS('*', 'ele');
     if (eleNodes.length > 0) {
       const parsed = Number(eleNodes[0].textContent?.trim() || NaN);
       if (Number.isFinite(parsed)) ele = parsed;
@@ -367,6 +367,7 @@ export function elevationUnitForDistance(unit: DistanceUnit): ElevationUnit {
 
 /** The route figures needed to populate an event's course stats. */
 export interface GpxRouteStats {
+  checkpoints?: GpxCheckpoint[];
   totalDistanceMi: number;
   elevationGainFt: number | null;
   elevationLossFt: number | null;
@@ -398,4 +399,48 @@ export function eventStatsFromRoute(
         ? Math.round(feetToUnit(stats.elevationLossFt, elevationUnit))
         : null,
   };
+}
+
+/** Explicit GPX markers only: ordinary course samples are not aid stations. */
+export interface GpxCheckpoint extends GpxPoint {
+  name: string;
+  description: string | null;
+  distanceMi: number;
+}
+
+export function parseGpxCheckpoints(xml: string, metrics: RouteMetrics): GpxCheckpoint[] {
+  const doc = new DOMParser({ onError: () => { throw new Error('The GPX file contains malformed XML.'); } }).parseFromString(xml, 'text/xml');
+  const markers: GpxCheckpoint[] = [];
+  for (const tag of ['wpt', 'rtept', 'trkpt']) {
+    const nodes = doc.getElementsByTagNameNS('*', tag);
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const field = (name: string) => node.getElementsByTagNameNS('*', name)[0]?.textContent?.trim() || '';
+      const name = field('name');
+      if (tag !== 'wpt' && !name) continue;
+      const lat = Number(node.getAttribute('lat')?.trim() || NaN);
+      const lon = Number(node.getAttribute('lon')?.trim() || NaN);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+      // Project onto each course segment to avoid rounding to sparse track vertices.
+      let best = Infinity;
+      let distanceMi = 0;
+      for (let j = 1; j < metrics.points.length; j++) {
+        const a = metrics.points[j - 1], b = metrics.points[j];
+        const scale = Math.cos(lat * Math.PI / 180);
+        const dx = (b.lon - a.lon) * scale, dy = b.lat - a.lat;
+        const length2 = dx * dx + dy * dy;
+        const t = length2 ? Math.max(0, Math.min(1, (((lon - a.lon) * scale) * dx + (lat - a.lat) * dy) / length2)) : 0;
+        const separation = haversineMiles(lat, lon, a.lat + t * dy, a.lon + t * (b.lon - a.lon));
+        if (separation < best) {
+          best = separation;
+          distanceMi = a.distanceMi + t * (b.distanceMi - a.distanceMi);
+        }
+      }
+      const ele = Number(field('ele') || NaN);
+      const marker = { lat, lon, name: name || `Waypoint ${i + 1}`, description: field('desc') || field('cmt') || null,
+        ele: Number.isFinite(ele) ? ele : undefined, distanceMi };
+      if (!markers.some(m => m.name === marker.name && m.lat === lat && m.lon === lon)) markers.push(marker);
+    }
+  }
+  return markers.sort((a, b) => a.distanceMi - b.distanceMi);
 }

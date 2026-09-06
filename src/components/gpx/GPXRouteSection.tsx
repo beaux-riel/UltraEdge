@@ -15,7 +15,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { useTheme } from '../../theme';
 import { H2, BodySmall, Button, Card, CardContent } from '../ui';
 import { isRemoteGpxPath, downloadGpx } from '../../lib/gpxStorage';
-import { GpxRouteStats } from '../../lib/gpx';
+import { GpxRouteStats, computeRouteMetrics, parseGpx, parseGpxCheckpoints } from '../../lib/gpx';
 import { importLocalGpx } from '../../lib/importGpx';
 import GPXViewer from './GPXViewer';
 
@@ -138,6 +138,19 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
     }
   };
 
+  const handleReadCheckpoints = async () => {
+    if (!resolvedUri || busy) return;
+    setBusy(true);
+    try {
+      const xml = await new File(resolvedUri).text();
+      const metrics = computeRouteMetrics(parseGpx(xml));
+      if (!metrics) throw new Error('This GPX needs at least two valid course points.');
+      await onGpxChange(resolvedUri, { ...metrics, checkpoints: parseGpxCheckpoints(xml, metrics) });
+    } catch (error) {
+      Alert.alert('Import Failed', error instanceof Error ? error.message : 'Unable to read checkpoints.');
+    } finally { setBusy(false); }
+  };
+
   const handleRemove = () => {
     Alert.alert('Remove Route?', 'Remove the route from this plan on this device?', [
       { text: 'Cancel', style: 'cancel' },
@@ -168,6 +181,9 @@ export default function GPXRouteSection({ eventId, gpxFileUrl, onGpxChange }: GP
             fileUri={resolvedUri}
             width={contentWidth ?? width - spacing.lg * 2 - CARD_PADDING * 2}
           />
+          <Button variant="secondary" size="sm" onPress={handleReadCheckpoints} disabled={busy} style={{ marginTop: spacing.sm }}>
+            {busy ? 'Importing…' : 'Import checkpoints from GPX'}
+          </Button>
           <Button
             variant="secondary"
             size="sm"

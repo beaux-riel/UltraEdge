@@ -45,7 +45,7 @@ import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.
 import { EVENT_CREW_KEY, EventCrewAssignment, removeEventCrewAssignment } from '../../lib/eventCrew';
 import { runLocalPlanOperation, readArray } from '../../lib/localPlanStorage';
 import { removeEventGear, updateEventGear, EVENT_GEAR_KEY, EventGearAllocation } from '../../lib/eventGear';
-import { eventStatsFromRoute } from '../../lib/gpx';
+import { saveGpxPlan } from '../../lib/importGpxPlan';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
@@ -503,7 +503,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               </View>
             ) : (
               <BodySmall color="tertiary">
-                {member.phone || 'No roles set'}
+                No roles set · Tap to edit
               </BodySmall>
             )}
           </View>
@@ -620,11 +620,13 @@ export default function EventDetailScreen({ navigation, route }: Props) {
               gpxFileUrl={event.gpx_file_url}
               onGpxChange={async (fileUri, stats) => {
                 const updates: EventUpdate = { gpx_file_url: fileUri };
-                if (stats) {
-                  Object.assign(
-                    updates,
-                    eventStatsFromRoute(stats, event.distance_unit, event.elevation_unit)
-                  );
+                if (stats && fileUri) {
+                  const added = await saveGpxPlan(eventId, fileUri, stats);
+                  await refreshEvents();
+                  Alert.alert('Course imported', stats.checkpoints?.length
+                    ? `${added} checkpoints added. Existing checkpoints were kept. Review estimated distances, especially on loops or out-and-back courses.`
+                    : 'This GPX contains no waypoint or named checkpoint records. Add checkpoints manually using the race guide.');
+                  return;
                 }
                 if (!await updateEvent(eventId, updates)) {
                   throw new Error('The event is no longer available. Refresh before importing a route.');
@@ -758,14 +760,21 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <H2>Crew</H2>
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  accessibilityLabel="Add race crew"
-                  onPress={handleAddCrew}
-                >
-                  Add
-                </Button>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {eventCrewMembers.length > 0 && (
+                    <Button variant="tertiary" size="sm" accessibilityLabel="Edit race crew roles" onPress={() => navigation.navigate('SelectCrew', { eventId })}>
+                      Edit roles
+                    </Button>
+                  )}
+                  <Button
+                    variant="tertiary"
+                    size="sm"
+                    accessibilityLabel="Add race crew"
+                    onPress={handleAddCrew}
+                  >
+                    Add
+                  </Button>
+                </View>
               </View>
               {eventCrewMembers.length > 0 ? (
                 <Card style={{ overflow: 'hidden' }}>

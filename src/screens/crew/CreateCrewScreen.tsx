@@ -52,11 +52,14 @@ export default function CreateCrewScreen({ navigation, route }: any) {
         notes: notes.trim() || null,
       });
 
-      Alert.alert(
-        'Crew Member Added',
-        `${name} has been added to your crew.`,
-        [{ text: route?.params?.eventId ? 'Assign to race' : 'OK', onPress: () => route?.params?.eventId ? navigation.replace('SelectCrew', { eventId: route.params.eventId, selectedCrewId: created.id }) : navigation.goBack() }]
-      );
+      if (route?.params?.eventId) {
+        navigation.replace('SelectCrew', {
+          eventId: route.params.eventId,
+          selectedCrewId: created.id,
+        });
+      } else {
+        navigation.goBack();
+      }
     } catch (error) {
       console.error('Failed to save crew member:', error);
       Alert.alert('Error', 'Failed to save crew member. Please try again.');
@@ -85,7 +88,7 @@ export default function CreateCrewScreen({ navigation, route }: any) {
           disabled={!canSave}
           loading={saving}
         >
-          Save
+          {route?.params?.eventId ? 'Next: Roles' : 'Save'}
         </Button>
       </View>
 

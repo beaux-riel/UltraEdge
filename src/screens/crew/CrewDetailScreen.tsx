@@ -47,6 +47,8 @@ export default function CrewDetailScreen({ navigation, route }: any) {
         if (active) {
           setAssignments(all.filter(a => a.crewMemberId === route.params?.crewId));
         }
+      }).catch(() => {
+        if (active) Alert.alert('Roles unavailable', 'Crew assignments could not be loaded. Please reopen this screen to try again.');
       });
       return () => {
         active = false;
@@ -307,6 +309,17 @@ export default function CrewDetailScreen({ navigation, route }: any) {
                           })
                         )}
                       </View>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        accessibilityLabel={`Edit roles for ${member.name} at ${event?.name ?? 'this event'}`}
+                        onPress={() => navigation.navigate('SelectCrew', {
+                          eventId: assignment.eventId,
+                          selectedCrewId: member.id,
+                        })}
+                      >
+                        Edit roles
+                      </Button>
                     </View>
                   );
                 })

@@ -1,0 +1,9 @@
+appId: com.beaux.ultraedge
+---
+# Requires freshly installed app on a disposable simulator. Does not seed data.
+- launchApp
+- runFlow: onboarding.yaml
+- runFlow: workflow-create.yaml
+- runFlow: workflow-pack.yaml
+- runFlow: workflow-reuse.yaml
+- runFlow: workflow-create-from-race.yaml

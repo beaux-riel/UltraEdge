@@ -4,7 +4,7 @@ import { parseDateOnly, daysUntilDate } from '../../lib/dateOnly';
  * View a single event with all details, checkpoints, gear, and crew
  */
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -44,25 +44,12 @@ import { useDropBags } from '../../context/DropBagContext';
 import { Event, EventStatus, EventUpdate, Checkpoint } from '../../lib/database.types';
 import { EVENT_CREW_KEY, EventCrewAssignment, removeEventCrewAssignment } from '../../lib/eventCrew';
 import { runLocalPlanOperation, readArray } from '../../lib/localPlanStorage';
-import { removeEventGear } from '../../lib/eventGear';
+import { removeEventGear, updateEventGear, EVENT_GEAR_KEY, EventGearAllocation } from '../../lib/eventGear';
 import { eventStatsFromRoute } from '../../lib/gpx';
 import GPXRouteSection from '../../components/gpx/GPXRouteSection';
 import ExportRacePlanButton from '../../components/ExportRacePlanButton';
 
 type Props = NativeStackScreenProps<any, 'EventDetail'>;
-
-// Storage key for event gear relationships
-const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-
-// Types for event relationships
-interface EventGearAllocation {
-  eventId: string;
-  gearItemId: string;
-  isWorn: boolean;
-  isCarried: boolean;
-  quantity: number;
-  notes?: string;
-}
 
 export default function EventDetailScreen({ navigation, route }: Props) {
   const { theme, isDarkMode } = useTheme();
@@ -85,6 +72,8 @@ export default function EventDetailScreen({ navigation, route }: Props) {
   
   // Local state for event relationships
   const [eventGear, setEventGear] = useState<EventGearAllocation[]>([]);
+  const packingSaveInProgress = useRef(false);
+  const [packingSaving, setPackingSaving] = useState(false);
   const [eventCrew, setEventCrew] = useState<EventCrewAssignment[]>([]);
 
   // Load event relationships from AsyncStorage
@@ -404,45 +393,53 @@ export default function EventDetailScreen({ navigation, route }: Props) {
     );
   };
 
-  // Render gear item
-  const renderGearItem = (
-    { allocation, item }: { allocation: EventGearAllocation; item: GearItem },
-    index: number
-  ) => {
-    return (
-      <Swipeable
-        key={item.id}
-        renderRightActions={(progress, dragX) => renderDeleteAction(progress, dragX)}
-        onSwipeableOpen={() => handleRemoveGear(item.id, item.name)}
-        friction={2}
-        rightThreshold={60}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.navigate('GearDetail', { gearId: item.id })}
-          style={[
-            styles.listItem,
-            { 
-              backgroundColor: colors.surface,
-              borderBottomColor: colors.border,
-              borderBottomWidth: index < eventGearItems.length - 1 ? 1 : 0,
-            }
-          ]}
-        >
-          <View style={[styles.listItemIcon, { backgroundColor: colors.trail + '20' }]}>
-            <Ionicons name="cube-outline" size={18} color={colors.trail} />
-          </View>
-          <View style={styles.listItemContent}>
-            <Body numberOfLines={1}>{item.name}</Body>
-            <BodySmall color="tertiary">
-              {item.brand || item.category}
-              {item.weight ? ` • ${item.weight} ${item.weightUnit}` : ''}
-            </BodySmall>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.stone} />
-        </TouchableOpacity>
-      </Swipeable>
-    );
+  const handlePackingChange = async (gearItemId: string, updates: Parameters<typeof updateEventGear>[2]) => {
+    if (packingSaveInProgress.current) return;
+    packingSaveInProgress.current = true;
+    setPackingSaving(true);
+    try {
+      const saved = await updateEventGear(eventId, gearItemId, updates);
+      setEventGear(saved.filter(row => row.eventId === eventId));
+    } catch {
+      Alert.alert('Packing not saved', 'Your change could not be saved. Refresh and try again.');
+    } finally {
+      packingSaveInProgress.current = false;
+      setPackingSaving(false);
+    }
   };
+
+  const renderGearItem = ({ allocation, item }: { allocation: EventGearAllocation; item: GearItem }, index: number) => (
+    <Swipeable key={item.id} renderRightActions={(progress, dragX) => renderDeleteAction(progress, dragX)}
+      onSwipeableOpen={() => handleRemoveGear(item.id, item.name)} friction={2} rightThreshold={60}>
+      <View style={{ backgroundColor: colors.surface, padding: 16, gap: 12, borderBottomColor: colors.border, borderBottomWidth: index < eventGearItems.length - 1 ? 1 : 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="checkbox" accessibilityLabel={`Packed ${item.name}`} accessibilityState={{ checked: !!allocation.isPacked }}
+            onPress={() => handlePackingChange(item.id, { isPacked: !allocation.isPacked })} style={{ padding: 8 }}>
+            <Ionicons name={allocation.isPacked ? 'checkbox' : 'square-outline'} size={26} color={colors.forest} />
+          </TouchableOpacity>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('GearDetail', { gearId: item.id })}>
+            <Body>{item.name}</Body>
+            <BodySmall color="tertiary">{allocation.isPacked ? 'Packed' : 'To pack'}{item.weight ? ` • ${item.weight * allocation.quantity} ${item.weightUnit}` : ''}</BodySmall>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Carry ${item.name} in vest`} onPress={() => handlePackingChange(item.id, { isCarried: true, isWorn: false })}
+            style={{ padding: 12, borderRadius: 8, backgroundColor: allocation.isCarried ? colors.forest + '25' : colors.parchment }}>
+            <BodySmall>In vest</BodySmall>
+          </TouchableOpacity>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Wear ${item.name}`} onPress={() => handlePackingChange(item.id, { isCarried: false, isWorn: true })}
+            style={{ padding: 12, borderRadius: 8, backgroundColor: allocation.isWorn ? colors.forest + '25' : colors.parchment }}>
+            <BodySmall>Worn</BodySmall>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Decrease ${item.name} quantity`} disabled={packingSaving || allocation.quantity <= 1}
+            onPress={() => handlePackingChange(item.id, { quantity: allocation.quantity - 1 })} style={{ padding: 12 }}><Body>−</Body></TouchableOpacity>
+          <Body>{allocation.quantity}</Body>
+          <TouchableOpacity disabled={packingSaving} accessibilityRole="button" accessibilityLabel={`Increase ${item.name} quantity`}
+            onPress={() => handlePackingChange(item.id, { quantity: allocation.quantity + 1 })} style={{ padding: 12 }}><Body>+</Body></TouchableOpacity>
+        </View>
+      </View>
+    </Swipeable>
+  );
 
   // Render crew member item
   const renderCrewItem = (
@@ -702,6 +699,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race checkpoint"
                   onPress={() => navigation.navigate('CreateCheckpoint', { eventId })}
                 >
                   Add
@@ -728,10 +726,11 @@ export default function EventDetailScreen({ navigation, route }: Props) {
             {/* Gear Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <H2>Gear</H2>
+                <H2>Vest & worn gear</H2>
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race gear"
                   onPress={handleAddGear}
                 >
                   Add
@@ -747,7 +746,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                     <View style={styles.emptySection}>
                       <Ionicons name="cube-outline" size={40} color={colors.mist} />
                       <BodySmall color="tertiary" align="center" style={{ marginTop: spacing.sm }}>
-                        No gear assigned to this event.{'\n'}Track what you'll wear and carry.
+                        Your vest packing list is empty.{'\n'}Track what you'll wear and carry.
                       </BodySmall>
                     </View>
                   </CardContent>
@@ -762,6 +761,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race crew"
                   onPress={handleAddCrew}
                 >
                   Add
@@ -792,6 +792,7 @@ export default function EventDetailScreen({ navigation, route }: Props) {
                 <Button
                   variant="tertiary"
                   size="sm"
+                  accessibilityLabel="Add race drop bag"
                   onPress={() => navigation.navigate('CreateDropBag', { eventId })}
                 >
                   Add

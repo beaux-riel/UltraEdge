@@ -20,6 +20,8 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
   children: React.ReactNode;
+  accessibilityLabel?: string;
+  testID?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   onPress: () => void;
@@ -33,6 +35,8 @@ interface ButtonProps {
 
 export function Button({
   children,
+  accessibilityLabel,
+  testID,
   variant = 'primary',
   size = 'md',
   onPress,
@@ -116,6 +120,8 @@ export function Button({
   return (
     <TouchableOpacity
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       onPress={handlePress}
       disabled={disabled || loading}

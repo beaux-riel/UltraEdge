@@ -5,6 +5,7 @@ export const EVENT_GEAR_KEY = '@ultraedge/event-gear';
 export interface EventGearAllocation {
   eventId: string;
   gearItemId: string;
+  isPacked?: boolean;
   isWorn: boolean;
   isCarried: boolean;
   quantity: number;
@@ -35,5 +36,18 @@ export async function removeEventGear(eventId: string, gearItemId: string): Prom
     const updated = all.filter(row => !(row.eventId === eventId && row.gearItemId === gearItemId));
     await AsyncStorage.setItem(EVENT_GEAR_KEY, JSON.stringify(updated));
     return updated;
+  });
+}
+
+/** Edit only this race's packing list; shared inventory and other races stay intact. */
+export async function updateEventGear(eventId: string, gearItemId: string, updates: Partial<Pick<EventGearAllocation, 'quantity' | 'isWorn' | 'isCarried' | 'isPacked'>>): Promise<EventGearAllocation[]> {
+  return runLocalPlanOperation(async () => {
+    const all = await readArray<EventGearAllocation>(EVENT_GEAR_KEY);
+    const index = all.findIndex(row => row.eventId === eventId && row.gearItemId === gearItemId);
+    if (index < 0) throw new Error('This gear assignment was removed. Refresh before editing.');
+    if (updates.quantity !== undefined && (!Number.isInteger(updates.quantity) || updates.quantity < 1)) throw new Error('Quantity must be a positive whole number.');
+    all[index] = { ...all[index], ...updates };
+    await AsyncStorage.setItem(EVENT_GEAR_KEY, JSON.stringify(all));
+    return all;
   });
 }

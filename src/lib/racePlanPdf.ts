@@ -48,6 +48,7 @@ export interface RacePlanGearItem {
   quantity: number;
   isWorn?: boolean;
   isCarried?: boolean;
+  isPacked?: boolean;
   notes?: string | null;
 }
 
@@ -508,10 +509,11 @@ function buildGearSection(data: RacePlanData): string {
         .map(item => {
           const tags: string[] = [];
           if (item.isWorn) {tags.push('worn');}
-          if (item.isCarried) {tags.push('carried');}
+          if (item.isCarried) {tags.push('in vest');}
+          tags.push(item.isPacked ? 'packed' : 'not packed');
           const qty = item.quantity > 1 ? ` &times;${item.quantity}` : '';
           return (
-            '<div class="gear-item"><span class="checkbox"></span>' +
+            `<div class="gear-item"><span class="checkbox">${item.isPacked ? '&#10003;' : ''}</span>` +
             `<span class="gear-name">${escapeHtml(item.name)}${item.brand ? ` <span class="sub">${escapeHtml(item.brand)}</span>` : ''}${qty}` +
             `${tags.length > 0 ? ` <span class="tag">${tags.join(' &middot; ')}</span>` : ''}` +
             `${item.notes ? `<br/><span class="sub">${escapeHtml(item.notes)}</span>` : ''}</span></div>`

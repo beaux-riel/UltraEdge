@@ -53,3 +53,14 @@ it('loads the preserved route from the new sandbox after app update', async () =
   expect(await loadGpxXmlForEvent('race', 'file:///old-container/Documents/gpx/race.gpx')).toBe(mockXml);
   expect(mockOpenedFiles).toContain('file:///new-container/Documents/gpx/race.gpx');
 });
+
+ it('exports race-specific vest quantities and packed status', () => {
+  const html = buildRacePlanHtml({ ...plan, gear: [
+    { name: 'Soft flask', category: 'hydration', quantity: 2, isCarried: true, isPacked: true },
+    { name: 'Rain shell', category: 'clothing', quantity: 1, isWorn: true, isPacked: false },
+  ] });
+  expect(html).toContain('Soft flask &times;2');
+  expect(html).toContain('in vest &middot; packed');
+  expect(html).toContain('worn &middot; not packed');
+  expect(html).toContain('&#10003;');
+});

@@ -53,7 +53,7 @@ export default function SelectGearScreen({ navigation, route }: Props) {
   
   const eventId = route.params?.eventId;
   
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(route.params?.selectedGearId ? [route.params.selectedGearId] : []));
   const [alreadyAddedIds, setAlreadyAddedIds] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -160,7 +160,7 @@ export default function SelectGearScreen({ navigation, route }: Props) {
       </Body>
       <Button
         variant="secondary"
-        onPress={() => navigation.navigate('CreateGear', { eventId })}
+        onPress={() => navigation.replace('CreateGear', { eventId })}
         style={{ marginTop: spacing.lg }}
       >
         Create New Gear

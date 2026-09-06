@@ -51,7 +51,23 @@ export interface DropBagUpdate {
   notes?: string | null;
 }
 
+export interface DropBagTemplate {
+  id: string;
+  name: string;
+  items: DropBagItem[];
+  notes: string | null;
+  created_at: string;
+}
+
+export const DROP_BAG_TEMPLATE_KEY = '@ultraedge/dropbag-templates';
+
+export const copyDropBagItems = (items: DropBagItem[]): DropBagItem[] =>
+  items.map(item => ({ ...item, id: generateId() }));
+
 interface DropBagContextType {
+  templates: DropBagTemplate[];
+  saveDropBagTemplate: (bagId: string) => Promise<DropBagTemplate>;
+  deleteDropBagTemplate: (id: string) => Promise<void>;
   dropBags: DropBag[];
   loading: boolean;
   error: string | null;
@@ -84,6 +100,7 @@ interface DropBagProviderProps {
 }
 
 export function DropBagProvider({ children }: DropBagProviderProps) {
+  const [templates, setTemplates] = useState<DropBagTemplate[]>([]);
   const [dropBags, setDropBags] = useState<DropBag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +110,10 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      const parsed = await runLocalPlanOperation(() => readArray<DropBag>('@ultraedge/dropbags'));
+      const [parsed, savedTemplates] = await runLocalPlanOperation(async () => Promise.all([
+        readArray<DropBag>(STORAGE_KEY), readArray<DropBagTemplate>(DROP_BAG_TEMPLATE_KEY),
+      ]));
+      setTemplates(savedTemplates);
       // Sort by created_at descending (newest first)
       parsed.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setDropBags(parsed);
@@ -121,7 +141,7 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
   useEffect(() => {
     void loadDropBags();
     return subscribePlanChanges(keys => {
-      if (keys.includes('@ultraedge/dropbags')) void loadDropBags();
+      if (keys.includes(STORAGE_KEY) || keys.includes(DROP_BAG_TEMPLATE_KEY)) void loadDropBags();
     });
   }, [loadDropBags]);
 
@@ -133,7 +153,7 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
       name: bagData.name,
       eventId: bagData.eventId,
       checkpointId: bagData.checkpointId || null,
-      items: bagData.items || [],
+      items: copyDropBagItems(bagData.items || []),
       notes: bagData.notes || null,
       created_at: now,
       updated_at: now,
@@ -142,6 +162,25 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     const updatedBags = [newBag, ...dropBags];
     await saveDropBags(updatedBags);
     return newBag;
+  };
+
+  const saveDropBagTemplate = async (bagId: string): Promise<DropBagTemplate> => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
+    const bag = dropBags.find(row => row.id === bagId);
+    if (!bag) throw new Error('Drop bag no longer exists.');
+    const template: DropBagTemplate = {
+      id: generateId(), name: bag.name, items: copyDropBagItems(bag.items),
+      notes: bag.notes, created_at: new Date().toISOString(),
+    };
+    const saved = await saveArrayChanges(DROP_BAG_TEMPLATE_KEY, templates, [template, ...templates]);
+    setTemplates(saved);
+    return template;
+  };
+
+  const deleteDropBagTemplate = async (id: string): Promise<void> => {
+    if (loading || error) throw new Error('Saved data must load successfully before editing.');
+    const saved = await saveArrayChanges(DROP_BAG_TEMPLATE_KEY, templates, templates.filter(row => row.id !== id));
+    setTemplates(saved);
   };
 
   // Update an existing drop bag
@@ -236,6 +275,9 @@ export function DropBagProvider({ children }: DropBagProviderProps) {
     <DropBagContext.Provider
       value={{
         dropBags,
+        templates,
+        saveDropBagTemplate,
+        deleteDropBagTemplate,
         loading,
         error,
         createDropBag,

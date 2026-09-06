@@ -51,7 +51,7 @@ const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: 'lbs', label: 'lbs' },
 ];
 
-export default function CreateGearScreen({ navigation }: any) {
+export default function CreateGearScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
@@ -89,12 +89,12 @@ export default function CreateGearScreen({ navigation }: any) {
         isActive: true,
       };
 
-      await addGearItem(newItem);
+      const created = await addGearItem(newItem);
       
       Alert.alert(
         'Gear Added',
-        `"${name}" has been added to your gear closet.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        `"${name}" has been saved to your gear closet.`,
+        [{ text: route?.params?.eventId ? 'Assign to race' : 'OK', onPress: () => route?.params?.eventId ? navigation.replace('SelectGear', { eventId: route.params.eventId, selectedGearId: created.id }) : navigation.goBack() }]
       );
     } catch (error) {
       console.error('Failed to save gear item:', error);

@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
+  Modal,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -116,6 +118,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
   };
 
   const handleSave = async () => {
+    if (showGearPicker || saving) return;
     // Validation
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter a name for this drop bag.');
@@ -300,7 +303,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
               <H3>Items</H3>
               <TouchableOpacity
                 style={[styles.addButton, { backgroundColor: colors.forest + '15' }]}
-                onPress={() => setShowGearPicker(true)}
+                onPress={() => { Keyboard.dismiss(); setShowGearPicker(true); }}
               >
                 <Ionicons name="add" size={18} color={colors.forest} />
                 <Text variant="bodySmall" style={{ color: colors.forest, marginLeft: 4 }}>
@@ -391,15 +394,16 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
 
       {/* Gear Picker Modal */}
       {showGearPicker && (
+        <Modal transparent animationType="slide" onRequestClose={() => setShowGearPicker(false)}>
         <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.parchment }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.parchment, paddingBottom: insets.bottom }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <H3>Add Gear</H3>
               <TouchableOpacity onPress={() => setShowGearPicker(false)}>
                 <Ionicons name="close" size={24} color={colors.bark} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               {gearItems.filter(g => !g.retired).length === 0 ? (
                 <View style={styles.emptyModal}>
                   <Ionicons name="bag-handle-outline" size={40} color={colors.mist} />
@@ -413,6 +417,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
                   .map(gear => (
                     <TouchableOpacity
                       key={gear.id}
+                      accessibilityRole="button" accessibilityLabel={`Add ${gear.name} to drop bag`}
                       style={[
                         styles.gearPickerItem,
                         { borderBottomColor: colors.borderLight },
@@ -433,6 +438,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
             </ScrollView>
           </View>
         </View>
+        </Modal>
       )}
 
       {/* Save Button - Fixed at bottom */}
@@ -444,7 +450,7 @@ export default function EditDropBagScreen({ navigation, route }: Props) {
         <Button
           onPress={handleSave}
           loading={saving}
-          disabled={saving || !name.trim()}
+          disabled={showGearPicker || saving || !name.trim()}
           style={{ flex: 1 }}
         >
           Save Changes
@@ -567,7 +573,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    maxHeight: '70%',
+    height: '65%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
@@ -579,6 +585,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   modalScroll: {
+    flex: 1,
     padding: 20,
   },
   emptyModal: {

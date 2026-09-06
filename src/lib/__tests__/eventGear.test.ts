@@ -31,3 +31,14 @@ it('preserves malformed data rather than overwriting it and rejects deleted gear
   await expect(addEventGear('race', ['lamp'])).rejects.toThrow();
   expect(await AsyncStorage.getItem(EVENT_GEAR_KEY)).toBe('{');
 });
+
+it('validates race packing quantities and preserves the last saved state on write failure', async () => {
+  const { updateEventGear } = require('../eventGear');
+  await addEventGear('race', ['lamp']);
+  for (const quantity of [0, -1, 1.5, NaN]) await expect(updateEventGear('race', 'lamp', { quantity })).rejects.toThrow('whole number');
+  (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(new Error('Disk full'));
+  await expect(updateEventGear('race', 'lamp', { isPacked: true })).rejects.toThrow('Disk full');
+  expect(JSON.parse((await AsyncStorage.getItem(EVENT_GEAR_KEY))!)[0].isPacked).toBeUndefined();
+  await updateEventGear('race', 'lamp', { isPacked: true });
+  expect(JSON.parse((await AsyncStorage.getItem(EVENT_GEAR_KEY))!)[0].isPacked).toBe(true);
+});

@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
+  Modal,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +22,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useTheme } from '../../theme';
 import { Text, H2, H3, Body, BodySmall, Caption, Button, Card, CardContent } from '../../components/ui';
-import { useDropBags, DropBagItem } from '../../context/DropBagContext';
+import { useDropBags, DropBagItem, DropBagTemplate, copyDropBagItems } from '../../context/DropBagContext';
 import { useEvents } from '../../context/EventContext';
 import { useCheckpoints, CHECKPOINT_TYPE_INFO } from '../../context/CheckpointContext';
 import { useGear } from '../../context/GearContext';
@@ -34,7 +36,9 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
 
   const initialEventId = route.params?.eventId;
 
-  const { createDropBag } = useDropBags();
+  const { createDropBag, templates, deleteDropBagTemplate, loading, error } = useDropBags();
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   const { events, getEvent } = useEvents();
   const { getCheckpointsByEventId } = useCheckpoints();
   const { gearItems } = useGear();
@@ -70,6 +74,32 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
   const selectedCheckpoint = selectedCheckpointId 
     ? allEventCheckpoints.find(cp => cp.id === selectedCheckpointId) 
     : null;
+
+  const applyTemplate = (template: DropBagTemplate) => {
+    const apply = () => {
+      setName(template.name);
+      setNotes(template.notes || '');
+      setSelectedItems(copyDropBagItems(template.items));
+      setSelectedCheckpointId('');
+      setTemplateName(template.name);
+      setShowTemplates(false);
+    };
+    if (name.trim() || selectedItems.length || notes.trim()) {
+      Alert.alert('Use template?', 'Replace the current name, items and notes with this template?', [
+        { text: 'Cancel', style: 'cancel' }, { text: 'Use template', onPress: apply },
+      ]);
+    } else apply();
+  };
+
+  const removeTemplate = (template: DropBagTemplate) => {
+    Alert.alert('Delete template?', `Remove "${template.name}" from your saved templates? Existing race bags are kept.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await deleteDropBagTemplate(template.id); }
+        catch (err) { Alert.alert('Template not deleted', err instanceof Error ? err.message : 'Please try again.'); }
+      } },
+    ]);
+  };
 
   const handleAddGearItem = (gearId: string) => {
     const gear = gearItems.find(g => g.id === gearId);
@@ -108,6 +138,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
   };
 
   const handleSave = async () => {
+    if (showGearPicker || saving) return;
     // Validation
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter a name for this drop bag.');
@@ -146,6 +177,30 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
+          <View style={styles.field}>
+            <H3>Start from a template</H3>
+            <BodySmall color="secondary" style={{ marginVertical: spacing.sm }}>
+              {templates.length ? 'Reuse a saved packing list, then choose the race and checkpoint.' : 'Save any drop bag as a template from its detail screen to reuse it across races.'}
+            </BodySmall>
+            {templates.length > 0 && (
+              <>
+                <Button variant="secondary" onPress={() => setShowTemplates(!showTemplates)} disabled={loading || !!error}>
+                  {templateName ? `Template: ${templateName}` : 'Choose template'}
+                </Button>
+                {showTemplates && <Card style={styles.pickerDropdown}><CardContent>
+                  {templates.map(template => <View key={template.id} style={styles.pickerItem}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Use ${template.name} template`} style={{ flex: 1 }} onPress={() => applyTemplate(template)}>
+                      <Text variant="body">{template.name}</Text>
+                      <Caption color="secondary">{template.items.length} items</Caption>
+                    </TouchableOpacity>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Delete ${template.name} template`} style={{ padding: 12 }} onPress={() => removeTemplate(template)}>
+                      <Ionicons name="trash-outline" size={20} color={colors.clay} />
+                    </TouchableOpacity>
+                  </View>)}
+                </CardContent></Card>}
+              </>
+            )}
+          </View>
           {/* Name Input */}
           <View style={styles.field}>
             <Caption style={{ marginBottom: spacing.xs }}>Name *</Caption>
@@ -339,7 +394,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
               <H3>Items</H3>
               <TouchableOpacity
                 style={[styles.addButton, { backgroundColor: colors.forest + '15' }]}
-                onPress={() => setShowGearPicker(true)}
+                onPress={() => { Keyboard.dismiss(); setShowGearPicker(true); }}
               >
                 <Ionicons name="add" size={18} color={colors.forest} />
                 <Text variant="bodySmall" style={{ color: colors.forest, marginLeft: 4 }}>
@@ -430,15 +485,16 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
 
       {/* Gear Picker Modal */}
       {showGearPicker && (
+        <Modal transparent animationType="slide" onRequestClose={() => setShowGearPicker(false)}>
         <View style={[styles.modal, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-          <View style={[styles.modalContent, { backgroundColor: colors.parchment }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.parchment, paddingBottom: insets.bottom }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <H3>Add Gear</H3>
               <TouchableOpacity onPress={() => setShowGearPicker(false)}>
                 <Ionicons name="close" size={24} color={colors.bark} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               {gearItems.filter(g => !g.retired).length === 0 ? (
                 <View style={styles.emptyModal}>
                   <Ionicons name="bag-handle-outline" size={40} color={colors.mist} />
@@ -452,6 +508,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
                   .map(gear => (
                     <TouchableOpacity
                       key={gear.id}
+                      accessibilityRole="button" accessibilityLabel={`Add ${gear.name} to drop bag`}
                       style={[
                         styles.gearPickerItem,
                         { borderBottomColor: colors.borderLight },
@@ -472,6 +529,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
             </ScrollView>
           </View>
         </View>
+        </Modal>
       )}
 
       {/* Save Button - Fixed at bottom */}
@@ -483,7 +541,7 @@ export default function CreateDropBagScreen({ navigation, route }: Props) {
         <Button
           onPress={handleSave}
           loading={saving}
-          disabled={saving || !name.trim() || !selectedEventId}
+          disabled={showGearPicker || loading || !!error || saving || !name.trim() || !selectedEventId}
           style={{ flex: 1 }}
         >
           Create Drop Bag
@@ -593,7 +651,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    maxHeight: '70%',
+    height: '65%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
@@ -605,6 +663,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   modalScroll: {
+    flex: 1,
     padding: 20,
   },
   emptyModal: {

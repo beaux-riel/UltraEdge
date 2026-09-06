@@ -1,0 +1,73 @@
+appId: com.beaux.ultraedge
+---
+- launchApp
+- tapOn: "Events, tab, 2 of 5"
+- tapOn: ".*QA Alpine 100.*"
+- scrollUntilVisible:
+    element: "Add race checkpoint"
+    direction: DOWN
+- tapOn: "Add race checkpoint"
+- tapOn: "e.g., Foresthill Aid Station"
+- inputText: "QA Summit Aid"
+- tapOn: 'CHECKPOINT NAME \*'
+- scrollUntilVisible:
+    element: ".*Drop Bag.*"
+    direction: DOWN
+- tapOn: ".*Drop Bag.*"
+- scrollUntilVisible:
+    element: "Save Checkpoint"
+    direction: DOWN
+- tapOn: "Save Checkpoint"
+- scrollUntilVisible:
+    element: "Add race gear"
+    direction: DOWN
+- tapOn: "Add race gear"
+- tapOn: "Select Existing"
+- tapOn: ".*QA Soft Flask.*"
+- tapOn: "Add \\(1\\)"
+- scrollUntilVisible:
+    element: "Packed QA Soft Flask"
+    direction: DOWN
+- tapOn: "Increase QA Soft Flask quantity"
+- tapOn: "Packed QA Soft Flask"
+- assertVisible: ".*Packed.*"
+- takeScreenshot: workflow-vest-packed
+- scrollUntilVisible:
+    element: "Add race crew"
+    direction: DOWN
+- tapOn: "Add race crew"
+- tapOn: "Select Existing"
+- tapOn: "QA Alex"
+- tapOn: ".*Pacer.*"
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: "Add race drop bag"
+    direction: DOWN
+- tapOn: "Add race drop bag"
+- tapOn: "e.g., Mile 50 Bag, Night Gear"
+- inputText: "QA Night Bag"
+- tapOn: 'Name \*'
+- scrollUntilVisible:
+    element: '.*Select Checkpoint.*'
+    direction: DOWN
+- tapOn: '.*Select Checkpoint.*'
+- tapOn: '.*QA Summit Aid.*'
+- scrollUntilVisible:
+    element: ".*Add Gear.*"
+    direction: DOWN
+- tapOn: ".*Add Gear.*"
+- tapOn: "Add QA Soft Flask to drop bag"
+- assertNotVisible: "Add QA Soft Flask to drop bag"
+- assertVisible: ".*QA Soft Flask.*"
+- tapOn: "Create Drop Bag"
+- assertNotVisible: "New Drop Bag"
+- scrollUntilVisible:
+    element: ".*QA Night Bag.*"
+    direction: DOWN
+- tapOn: ".*QA Night Bag.*"
+- scrollUntilVisible:
+    element: "Save as template"
+    direction: DOWN
+- tapOn: "Save as template"
+- tapOn: "OK"
+- takeScreenshot: workflow-saved-template

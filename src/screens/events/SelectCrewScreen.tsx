@@ -44,7 +44,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
 
   const eventId = route.params?.eventId;
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(route.params?.selectedCrewId ? [route.params.selectedCrewId] : []));
   const [rolesById, setRolesById] = useState<Record<string, CrewRole[]>>({});
   const [customRoleById, setCustomRoleById] = useState<Record<string, string>>({});
   const [alreadyAddedIds, setAlreadyAddedIds] = useState<Set<string>>(new Set());
@@ -60,7 +60,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
         const allCrew = await loadEventCrewAssignments();
         const existing = allCrew.filter(c => c.eventId === eventId);
         setAlreadyAddedIds(new Set(existing.map(c => c.crewMemberId)));
-        setSelectedIds(new Set(existing.map(c => c.crewMemberId)));
+        setSelectedIds(new Set([...existing.map(c => c.crewMemberId), ...(route.params?.selectedCrewId ? [route.params.selectedCrewId] : [])]));
         setRolesById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.roles || []])));
         setCustomRoleById(Object.fromEntries(existing.map(c => [c.crewMemberId, c.customRole || ''])));
         setLoadError(null);
@@ -69,7 +69,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
       } finally { setLoading(false); }
     };
     loadExisting();
-  }, [eventId]);
+  }, [eventId, route.params?.selectedCrewId]);
 
   // Existing assignments remain visible so their roles can be edited.
   const availableCrew = loading || crewLoading || loadError || crewError ? [] : crewMembers;
@@ -259,7 +259,7 @@ export default function SelectCrewScreen({ navigation, route }: Props) {
       </Body>
       <Button
         variant="secondary"
-        onPress={() => navigation.navigate('CreateCrew', { eventId })}
+        onPress={() => navigation.replace('CreateCrew', { eventId })}
         style={{ marginTop: spacing.lg }}
       >
         Create New Crew

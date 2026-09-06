@@ -22,7 +22,7 @@ import { useTheme } from '../../theme';
 import { H2, Body, BodySmall, Button, Card, CardContent, Label } from '../../components/ui';
 import { useCrewMembers } from '../../context/CrewContext';
 
-export default function CreateCrewScreen({ navigation }: any) {
+export default function CreateCrewScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const { colors, spacing } = theme;
   const insets = useSafeAreaInsets();
@@ -45,7 +45,7 @@ export default function CreateCrewScreen({ navigation }: any) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await createCrewMember({
+      const created = await createCrewMember({
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
@@ -55,7 +55,7 @@ export default function CreateCrewScreen({ navigation }: any) {
       Alert.alert(
         'Crew Member Added',
         `${name} has been added to your crew.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        [{ text: route?.params?.eventId ? 'Assign to race' : 'OK', onPress: () => route?.params?.eventId ? navigation.replace('SelectCrew', { eventId: route.params.eventId, selectedCrewId: created.id }) : navigation.goBack() }]
       );
     } catch (error) {
       console.error('Failed to save crew member:', error);

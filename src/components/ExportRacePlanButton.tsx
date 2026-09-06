@@ -32,17 +32,7 @@ import {
   RacePlanGearItem,
 } from '../lib/racePlanPdf';
 
-// Per-event relationship records (same storage as EventDetailScreen).
-const EVENT_GEAR_KEY = '@ultraedge/event-gear';
-
-interface EventGearAllocation {
-  eventId: string;
-  gearItemId: string;
-  isWorn: boolean;
-  isCarried: boolean;
-  quantity: number;
-  notes?: string;
-}
+import { EVENT_GEAR_KEY, EventGearAllocation } from '../lib/eventGear';
 
 interface ExportRacePlanButtonProps {
   eventId: string;
@@ -136,6 +126,7 @@ export function ExportRacePlanButton({ eventId, fullWidth = true, style }: Expor
           quantity: allocation.quantity || 1,
           isWorn: allocation.isWorn,
           isCarried: allocation.isCarried,
+          isPacked: allocation.isPacked,
           notes: allocation.notes ?? item.notes ?? null,
         });
       }

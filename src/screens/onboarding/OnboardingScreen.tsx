@@ -1,6 +1,6 @@
 /**
  * UltraEdge Onboarding Screen
- * Four-slide first-launch walkthrough ending in a premium CTA.
+ * First-launch introduction to the free local race planner.
  */
 
 import React, { useRef, useState, useCallback } from 'react';
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   ViewToken,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +30,7 @@ interface Slide {
   iconColor: 'forest' | 'trail' | 'sky' | 'sunrise';
   title: string;
   body: string;
-  premium?: boolean;
+
 }
 
 const SLIDES: Slide[] = [
@@ -38,7 +39,7 @@ const SLIDES: Slide[] = [
     icon: 'trail-sign-outline',
     iconColor: 'forest',
     title: 'Plan your race',
-    body: 'Build your events, drop in checkpoints, and dial your pacing before the gun goes off.',
+    body: 'Create an event, add checkpoints and cutoffs, and keep your race preparation in one place.',
   },
   {
     key: 'gear',
@@ -52,15 +53,14 @@ const SLIDES: Slide[] = [
     icon: 'people-outline',
     iconColor: 'sky',
     title: 'Rally your crew',
-    body: 'Add your people once, then assign roles per event. Pacer at mile 60, driver at dawn.',
+    body: 'Keep crew contacts and assign roles for each event. Add checkpoint instructions so everyone knows the plan.',
   },
   {
-    key: 'premium',
-    icon: 'sparkles',
+    key: 'share',
+    icon: 'document-text-outline',
     iconColor: 'sunrise',
-    title: 'Race with an edge',
-    body: 'Sync every plan across your devices, unlock full crew features, and get race-day intelligence when it counts.',
-    premium: true,
+    title: 'Share the plan',
+    body: 'Export a PDF for your crew before race day. Your editable plans stay on this device; save a copy of the PDF somewhere safe. A PDF cannot restore an editable plan. No account or payment is needed.',
   },
 ];
 
@@ -78,25 +78,17 @@ export default function OnboardingScreen({ navigation }: Props) {
       if (viewableItems.length > 0 && viewableItems[0].index != null) {
         setCurrentIndex(viewableItems[0].index);
       }
-    }
+    },
   ).current;
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
 
   const finish = useCallback(
-    async (destination: 'app' | 'subscription') => {
-      // Persist before navigating so onboarding can never reappear
+    async () => {
       await setOnboardingComplete();
-      if (destination === 'subscription') {
-        navigation.reset({
-          index: 1,
-          routes: [{ name: 'Main' }, { name: 'Subscription' }],
-        });
-      } else {
-        navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
-      }
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     },
-    [navigation]
+    [navigation],
   );
 
   const handleNext = () => {
@@ -109,7 +101,7 @@ export default function OnboardingScreen({ navigation }: Props) {
     const tint = colors[item.iconColor];
 
     return (
-      <View style={[styles.slide, { width }]}>
+      <ScrollView style={{ width }} contentContainerStyle={styles.slide}>
         <View style={[styles.iconBadge, { backgroundColor: tint + '18' }]}>
           <Ionicons name={item.icon} size={72} color={tint} />
         </View>
@@ -124,23 +116,7 @@ export default function OnboardingScreen({ navigation }: Props) {
           {item.body}
         </Body>
 
-        {item.premium && (
-          <View style={styles.premiumList}>
-            {[
-              { icon: 'cloud-done-outline' as const, label: 'Cloud sync across devices' },
-              { icon: 'people-circle-outline' as const, label: 'Full crew management & notifications' },
-              { icon: 'pulse-outline' as const, label: 'Live predictions & pace analysis' },
-            ].map(feature => (
-              <View key={feature.label} style={styles.premiumRow}>
-                <Ionicons name={feature.icon} size={20} color={colors.sunrise} />
-                <BodySmall style={{ marginLeft: spacing.sm, flex: 1 }}>
-                  {feature.label}
-                </BodySmall>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
+      </ScrollView>
     );
   };
 
@@ -152,7 +128,9 @@ export default function OnboardingScreen({ navigation }: Props) {
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
         {!isLastSlide ? (
           <TouchableOpacity
-            onPress={() => finish('app')}
+            accessibilityRole="button"
+            accessibilityLabel="Skip introduction"
+            onPress={() => finish()}
             style={styles.skipButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -165,6 +143,8 @@ export default function OnboardingScreen({ navigation }: Props) {
 
       {/* Slides */}
       <FlatList
+        key={width}
+        initialScrollIndex={currentIndex}
         ref={listRef}
         data={SLIDES}
         renderItem={renderSlide}
@@ -178,8 +158,11 @@ export default function OnboardingScreen({ navigation }: Props) {
         getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
       />
 
+      <BodySmall align="center" style={{ marginVertical: spacing.sm }}>
+        {currentIndex + 1} of {SLIDES.length}
+      </BodySmall>
       {/* Dots */}
-      <View style={styles.dots}>
+      <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {SLIDES.map((slide, index) => (
           <View
             key={slide.key}
@@ -197,21 +180,11 @@ export default function OnboardingScreen({ navigation }: Props) {
       {/* Actions */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         {isLastSlide ? (
-          <>
-            <Button fullWidth size="lg" onPress={() => finish('subscription')}>
-              Start Premium
-            </Button>
-            <Button
-              fullWidth
-              variant="tertiary"
-              onPress={() => finish('app')}
-              style={{ marginTop: spacing.sm }}
-            >
-              Maybe later
-            </Button>
-          </>
+          <Button fullWidth size="lg" onPress={() => finish()} style={styles.action}>
+            Start planning
+          </Button>
         ) : (
-          <Button fullWidth size="lg" onPress={handleNext}>
+          <Button fullWidth size="lg" onPress={handleNext} style={styles.action}>
             Next
           </Button>
         )}
@@ -231,12 +204,13 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     minWidth: 44,
-    minHeight: 32,
+    minHeight: 44,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   slide: {
-    flex: 1,
+    flexGrow: 1,
+    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -248,16 +222,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  premiumList: {
-    marginTop: 28,
-    alignSelf: 'stretch',
-    paddingHorizontal: 32,
-  },
-  premiumRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -268,6 +232,11 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
+  },
+  action: {
+    height: undefined,
+    minHeight: 56,
+    paddingVertical: 14,
   },
   footer: {
     paddingHorizontal: 24,

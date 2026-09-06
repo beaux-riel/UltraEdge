@@ -32,7 +32,7 @@ export default function SignUpScreen({ navigation }: any) {
   const { colors, spacing, radius, typography } = theme;
   const insets = useSafeAreaInsets();
   
-  const { signUpWithEmail, signInWithApple, signInWithGoogle } = useAuth();
+  const { isAuthAvailable, signUpWithEmail, signInWithApple, signInWithGoogle } = useAuth();
 
   // Form state
   const [displayName, setDisplayName] = useState('');
@@ -148,7 +148,7 @@ export default function SignUpScreen({ navigation }: any) {
     }
   };
 
-  const isFormDisabled = isLoading || socialLoading !== null;
+  const isFormDisabled = !isAuthAvailable || isLoading || socialLoading !== null;
 
   // Input component to reduce repetition
   const renderInput = (
@@ -247,11 +247,12 @@ export default function SignUpScreen({ navigation }: any) {
             <Ionicons name="person-add-outline" size={48} color={colors.snow} style={{ marginBottom: spacing.sm }} />
             <H1 style={{ color: colors.snow }}>Create Account</H1>
             <BodySmall style={{ color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Join UltraEdge and sync your race plans
+              Create an optional account. Race plans stay on this device.
             </BodySmall>
           </View>
         </LinearGradient>
 
+        {!isAuthAvailable && <Body style={{ padding: 24 }}>Account services are unavailable in this build. Continue without an account to use your local planner.</Body>}
         {/* Form */}
         <View style={[styles.content, { marginTop: -spacing.xl }]}>
           <Card variant="elevated" style={styles.formCard}>
@@ -416,7 +417,7 @@ export default function SignUpScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.skipContainer}
             onPress={() => navigation.goBack()}
-            disabled={isFormDisabled}
+            disabled={isLoading || socialLoading !== null}
           >
             <BodySmall color="tertiary">
               Continue without an account →

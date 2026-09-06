@@ -17,16 +17,14 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Database } from './database.types';
+import { isSupabaseConfigured } from './authLinks';
+import { ACCOUNT_SERVICES_ENABLED } from './releaseScope';
 
 // Get from environment variables (Expo public env vars)
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '⚠️ Supabase credentials not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your environment.'
-  );
-}
+export const isAuthAvailable = ACCOUNT_SERVICES_ENABLED && isSupabaseConfigured(supabaseUrl, supabaseAnonKey);
 
 // ============================================================================
 // SECURE SESSION STORAGE
@@ -106,7 +104,7 @@ export const createSecureStorageAdapter = (): StorageAdapter => {
         }
         await SecureStore.setItemAsync(chunkCountKey(safeKey), String(count));
       } catch (error) {
-        console.error('SecureStore setItem error:', error);
+        throw new Error('Unable to securely save your session. Please try again.');
       }
     },
     removeItem: async (key: string) => {
@@ -115,19 +113,19 @@ export const createSecureStorageAdapter = (): StorageAdapter => {
         await removeChunks(safeKey);
         await SecureStore.deleteItemAsync(safeKey);
       } catch (error) {
-        console.error('SecureStore removeItem error:', error);
+        throw new Error('Unable to clear your saved session. Please try again.');
       }
     },
   };
 };
 
-const secureAuthStorage = createSecureStorageAdapter();
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = isAuthAvailable ? createClient<Database>(
+  supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureAuthStorage,
-    autoRefreshToken: true,
-    persistSession: true,
+    flowType: 'pkce',
+    storage: createSecureStorageAdapter(),
+    autoRefreshToken: isAuthAvailable,
+    persistSession: isAuthAvailable,
     detectSessionInUrl: false, // Important for React Native
   },
   realtime: {
@@ -140,14 +138,19 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       'X-Client-Info': 'ultraedge-mobile',
     },
   },
-});
+}) : null;
+
+export function requireSupabase() {
+  if (!supabase) throw new Error('Account services are unavailable in this build. Your local planner still works.');
+  return supabase;
+}
 
 // ============================================================================
 // AUTH HELPERS
 // ============================================================================
 
 export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await requireSupabase().auth.signUp({
     email,
     password,
   });
@@ -155,7 +158,7 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await requireSupabase().auth.signInWithPassword({
     email,
     password,
   });
@@ -163,17 +166,17 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await requireSupabase().auth.signOut();
   return { error };
 }
 
 export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await requireSupabase().auth.getSession();
   return { session: data.session, error };
 }
 
 export async function getUser() {
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await requireSupabase().auth.getUser();
   return { user: data.user, error };
 }
 
@@ -182,7 +185,7 @@ export async function getUser() {
 // ============================================================================
 
 export async function getMover(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('movers')
     .select('*')
     .eq('user_id', userId)
@@ -191,7 +194,7 @@ export async function getMover(userId: string) {
 }
 
 export async function createMover(userId: string, displayName: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('movers')
     .insert({
       user_id: userId,
@@ -203,7 +206,7 @@ export async function createMover(userId: string, displayName: string) {
 }
 
 export async function updateMoverWeight(moverId: string, weight: number, unit: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('movers')
     .update({
       current_weight: weight,
@@ -216,7 +219,7 @@ export async function updateMoverWeight(moverId: string, weight: number, unit: s
 
   // Also log to weight history
   if (!error) {
-    await supabase.from('weight_history').insert({
+    await requireSupabase().from('weight_history').insert({
       mover_id: moverId,
       weight,
       weight_unit: unit,
@@ -231,7 +234,7 @@ export async function updateMoverWeight(moverId: string, weight: number, unit: s
 // ============================================================================
 
 export async function getEvents(moverId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('events')
     .select('*')
     .eq('mover_id', moverId)
@@ -240,7 +243,7 @@ export async function getEvents(moverId: string) {
 }
 
 export async function getEventWithDetails(eventId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('events')
     .select(`
       *,
@@ -256,7 +259,7 @@ export async function getEventWithDetails(eventId: string) {
 }
 
 export async function createEvent(moverId: string, eventData: Partial<Database['public']['Tables']['events']['Insert']>) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('events')
     .insert({
       mover_id: moverId,
@@ -272,7 +275,7 @@ export async function createEvent(moverId: string, eventData: Partial<Database['
 // ============================================================================
 
 export async function getGearItems(moverId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('gear_items')
     .select('*')
     .eq('mover_id', moverId)
@@ -281,7 +284,7 @@ export async function getGearItems(moverId: string) {
 }
 
 export async function createGearItem(moverId: string, gearData: Partial<Database['public']['Tables']['gear_items']['Insert']>) {
-  const { data, error } = await supabase
+  const { data, error } = await requireSupabase()
     .from('gear_items')
     .insert({
       mover_id: moverId,
@@ -297,7 +300,7 @@ export async function createGearItem(moverId: string, gearData: Partial<Database
 // ============================================================================
 
 export async function calculateEventWeight(eventId: string) {
-  const { data, error } = await supabase.rpc('calculate_event_weight', {
+  const { data, error } = await requireSupabase().rpc('calculate_event_weight', {
     p_event_id: eventId,
   });
   return { weight: data, error };

@@ -63,11 +63,11 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import WeightLogScreen from '../screens/profile/WeightLogScreen';
 
 // Auth
-import { SignInScreen, SignUpScreen } from '../screens/auth';
 
 // Settings
 import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
 import AboutScreen from '../screens/settings/AboutScreen';
+import PrivacySupportScreen from '../screens/settings/PrivacySupportScreen';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -87,6 +87,7 @@ export type RootStackParamList = {
   // Settings
   Subscription: undefined;
   About: undefined;
+  PrivacySupport: undefined;
   
   // Events
   CreateEvent: undefined;
@@ -269,6 +270,7 @@ export default function AppNavigator() {
     },
   };
 
+
   if (onboardingComplete === null) {
     return <View style={{ flex: 1, backgroundColor: colors.parchment }} />;
   }
@@ -416,29 +418,16 @@ export default function AppNavigator() {
           options={{ headerShown: false }}
         />
         
-        {/* Auth Screens (optional - accessible from Profile) */}
-        <Stack.Screen
-          name="SignIn"
-          component={SignInScreen}
-          options={{ 
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="SignUp"
-          component={SignUpScreen}
-          options={{ 
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        
         {/* Settings Screens */}
         <Stack.Screen
           name="Subscription"
           component={SubscriptionScreen}
-          options={{ title: 'Subscription' }}
+          options={{ title: 'Your local plans' }}
+        />
+        <Stack.Screen
+          name="PrivacySupport"
+          component={PrivacySupportScreen}
+          options={{ title: 'Privacy & Support' }}
         />
         <Stack.Screen
           name="About"

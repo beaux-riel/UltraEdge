@@ -3,14 +3,13 @@
  * View profile with name, current weight, weight history chart, and preferences
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,8 +28,8 @@ import {
   Card,
   CardContent,
 } from '../../components/ui';
+import MoverStorageNotice from '../../components/MoverStorageNotice';
 import { useMover, WeightEntry } from '../../context/MoverContext';
-import { useAuth } from '../../context/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 160;
@@ -170,59 +169,9 @@ export default function ProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   
   const { profile, weightHistory, getWeightTrend, getWeightHistory30Days } = useMover();
-  const { user, isAuthenticated, signOut, supabase, isLoading: authLoading } = useAuth();
-  const [deletingAccount, setDeletingAccount] = useState(false);
-
   const trend = getWeightTrend();
   const chartData = getWeightHistory30Days();
 
-  // Handle sign out
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  // Handle account deletion (App Store Guideline 5.1.1(v))
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account?',
-      'This permanently deletes your account and all synced data (events, gear, crew, checkpoints, subscriptions). This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Are you absolutely sure?',
-              'All of your cloud data will be erased immediately.',
-              [
-                { text: 'Keep My Account', style: 'cancel' },
-                {
-                  text: 'Delete Everything',
-                  style: 'destructive',
-                  onPress: async () => {
-                    if (!supabase) return;
-                    setDeletingAccount(true);
-                    try {
-                      const { error } = await supabase.rpc('delete_my_account');
-                      if (error) throw error;
-                      await signOut();
-                      Alert.alert('Account Deleted', 'Your account and all synced data have been removed.');
-                    } catch (e) {
-                      Alert.alert('Deletion Failed', 'Could not delete your account. Please try again or contact support@ultraedge.app.');
-                    } finally {
-                      setDeletingAccount(false);
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
-  
   // Format date for last updated
   const formatLastUpdated = (dateStr: string | null) => {
     if (!dateStr) return 'Never';
@@ -272,6 +221,7 @@ export default function ProfileScreen({ navigation }: any) {
       contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
     >
+      <MoverStorageNotice />
       {/* Header */}
       <LinearGradient
         colors={isDarkMode 
@@ -475,131 +425,24 @@ export default function ProfileScreen({ navigation }: any) {
           </Card>
         </View>
 
-        {/* Account Section */}
         <View style={styles.section}>
-          <H2 style={{ marginBottom: spacing.md }}>Account</H2>
-          
+          <H2 style={{ marginBottom: spacing.md }}>Your local plans</H2>
           <Card>
-            {isAuthenticated && user ? (
-              <>
-                {/* Signed In State */}
-                <View style={styles.preferenceRow}>
-                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.meadow}15` }]}>
-                    <Ionicons name="checkmark-circle" size={20} color={colors.meadow} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Body>Signed In</Body>
-                    <BodySmall color="secondary" numberOfLines={1}>
-                      {user.email}
-                    </BodySmall>
-                  </View>
-                </View>
-                
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                
-                <TouchableOpacity
-                  style={styles.preferenceRow}
-                  onPress={() => navigation.navigate('Subscription')}
-                >
-                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.forest}15` }]}>
-                    <Ionicons name="star" size={20} color={colors.forest} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Body>Subscription</Body>
-                    <BodySmall color="secondary">
-                      Manage your premium features
-                    </BodySmall>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.mist} />
-                </TouchableOpacity>
-                
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                
-                <TouchableOpacity
-                  style={styles.preferenceRow}
-                  onPress={handleSignOut}
-                  disabled={authLoading}
-                >
-                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.clay}15` }]}>
-                    <Ionicons name="log-out-outline" size={20} color={colors.clay} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Body style={{ color: colors.clay }}>Sign Out</Body>
-                    <BodySmall color="tertiary">
-                      Your local data will remain on this device
-                    </BodySmall>
-                  </View>
-                </TouchableOpacity>
-
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                <TouchableOpacity
-                  style={styles.preferenceRow}
-                  onPress={handleDeleteAccount}
-                  disabled={deletingAccount || authLoading}
-                >
-                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.clay}15` }]}>
-                    <Ionicons name="trash-outline" size={20} color={colors.clay} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Body style={{ color: colors.clay }}>
-                      {deletingAccount ? 'Deleting Account…' : 'Delete Account'}
-                    </Body>
-                    <BodySmall color="tertiary">
-                      Permanently remove your account and synced data
-                    </BodySmall>
-                  </View>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {/* Signed Out State */}
-                <View style={[styles.accountPromo, { padding: spacing.lg }]}>
-                  <View style={[styles.accountPromoIcon, { backgroundColor: `${colors.forest}15` }]}>
-                    <Ionicons name="cloud-outline" size={32} color={colors.forest} />
-                  </View>
-                  <H3 style={{ marginTop: spacing.md, textAlign: 'center' }}>
-                    Sync Across Devices
-                  </H3>
-                  <BodySmall color="secondary" align="center" style={{ marginTop: spacing.xs }}>
-                    Sign in to backup your race plans and access them anywhere
-                  </BodySmall>
-                  <Button
-                    onPress={() => navigation.navigate('SignIn')}
-                    fullWidth
-                    style={{ marginTop: spacing.lg }}
-                  >
-                    Sign In
-                  </Button>
-                  <TouchableOpacity
-                    style={{ marginTop: spacing.md, padding: spacing.xs }}
-                    onPress={() => navigation.navigate('SignUp')}
-                  >
-                    <BodySmall color="secondary" align="center">
-                      Don't have an account? <BodySmall style={{ color: colors.forest }}>Sign Up</BodySmall>
-                    </BodySmall>
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
-                
-                <TouchableOpacity
-                  style={styles.preferenceRow}
-                  onPress={() => navigation.navigate('Subscription')}
-                >
-                  <View style={[styles.preferenceIcon, { backgroundColor: `${colors.sunrise}15` }]}>
-                    <Ionicons name="star" size={20} color={colors.sunrise} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Body>Go Premium</Body>
-                    <BodySmall color="secondary">
-                      Cloud sync, crew features & more
-                    </BodySmall>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.mist} />
-                </TouchableOpacity>
-              </>
-            )}
+            <CardContent>
+              <Body>Free planning on this device</Body>
+              <BodySmall color="secondary" style={{ marginTop: spacing.sm }}>
+                No account or payment is needed. Editable plans stay on this device;
+                there is no cloud sync or automatic backup. Deleting the app can remove
+                your plans. Export a PDF before race day and save it outside the app.
+                PDFs cannot restore editable plans.
+              </BodySmall>
+              <Button
+                onPress={() => navigation.navigate('Subscription')}
+                style={{ marginTop: spacing.md }}
+              >
+                About local storage and sharing
+              </Button>
+            </CardContent>
           </Card>
         </View>
 
@@ -618,6 +461,26 @@ export default function ProfileScreen({ navigation }: any) {
               <View style={{ flex: 1 }}>
                 <Body>About UltraEdge</Body>
                 <BodySmall color="secondary">The story behind the app</BodySmall>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.mist} />
+            </TouchableOpacity>
+          </Card>
+        </View>
+
+        <View style={styles.section}>
+          <Card>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Privacy and support"
+              style={styles.preferenceRow}
+              onPress={() => navigation.navigate('PrivacySupport')}
+            >
+              <View style={[styles.preferenceIcon, { backgroundColor: `${colors.forest}15` }]}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.forest} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Body>Privacy &amp; Support</Body>
+                <BodySmall color="secondary">Local data, sharing and help</BodySmall>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.mist} />
             </TouchableOpacity>

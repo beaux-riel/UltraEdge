@@ -1,98 +1,36 @@
-/**
- * Authentication Test Suite
- * Tests for auth context and flows
- */
+import { isSupabaseConfigured, parseAuthCallback, recoveryTokens } from '../lib/authLinks';
 
-describe('Authentication Flow', () => {
-  describe('Anonymous Usage', () => {
-    it('should allow app usage without authentication', () => {
-      // App should start at HomeScreen, not login
-      const INITIAL_ROUTE = 'Main';
-      expect(INITIAL_ROUTE).toBe('Main');
-    });
-
-    it('should store data locally for anonymous users', () => {
-      const STORAGE_KEY = '@ultraedge';
-      expect(STORAGE_KEY).toBeDefined();
-    });
-
-    it('should not require auth for free features', () => {
-      const freeFeatures = [
-        'create_event',
-        'add_gear',
-        'plan_checkpoints',
-        'create_drop_bags',
-        'track_mover_weight',
-      ];
-      
-      freeFeatures.forEach(feature => {
-        // All free features should work without auth
-        expect(feature).toBeDefined();
-      });
-    });
-  });
-
-  describe('Sign In Methods', () => {
-    it('should support email/password auth', () => {
-      const authMethods = ['email', 'apple', 'google'];
-      expect(authMethods).toContain('email');
-    });
-
-    it('should support Apple Sign In (App Store requirement)', () => {
-      const authMethods = ['email', 'apple', 'google'];
-      expect(authMethods).toContain('apple');
-    });
-
-    it('should support Google Sign In', () => {
-      const authMethods = ['email', 'apple', 'google'];
-      expect(authMethods).toContain('google');
-    });
-  });
-
-  describe('Auth State Management', () => {
-    it('should persist session across app restarts', () => {
-      // Session should be stored in AsyncStorage
-      const SESSION_STORAGE_KEY = 'supabase-auth';
-      expect(SESSION_STORAGE_KEY).toBeDefined();
-    });
-
-    it('should link anonymous data when signing in', () => {
-      // When user signs in, their local data should sync
-      const shouldMergeLocalData = true;
-      expect(shouldMergeLocalData).toBe(true);
-    });
-  });
-
-  describe('Sign Out Flow', () => {
-    it('should preserve local data on sign out', () => {
-      // User's local data remains after signing out
-      const preserveLocalData = true;
-      expect(preserveLocalData).toBe(true);
-    });
-
-    it('should clear session but not local storage', () => {
-      const clearSession = true;
-      const clearLocalStorage = false;
-      
-      expect(clearSession).toBe(true);
-      expect(clearLocalStorage).toBe(false);
-    });
+describe('Account configuration', () => {
+  it.each([['', ''], ['invalid', 'key'], ['https://xxxxx.supabase.co', 'long-placeholder-key-here'],
+    ['http://project.supabase.co', 'a'.repeat(30)], ['https://user:pass@project.supabase.co', 'a'.repeat(30)]])(
+    'disables missing or invalid configuration %s', (url, key) => expect(isSupabaseConfigured(url, key)).toBe(false));
+  it('accepts a configured HTTPS endpoint and public key', () => {
+    expect(isSupabaseConfigured('https://project.supabase.co', 'sb_publishable_12345678901234567890')).toBe(true);
   });
 });
 
-describe('Auth Screen Navigation', () => {
-  it('should present auth screens as modals', () => {
-    const PRESENTATION_MODE = 'modal';
-    expect(PRESENTATION_MODE).toBe('modal');
+describe('Auth callback boundary', () => {
+  it.each(['https://evil.example/auth/reset-password', 'other://auth/reset-password',
+    'ultraedge://evil/auth/reset-password', 'ultraedge://auth/reset-password/extra',
+    'ultraedge://auth/reset-password-evil', 'ultraedge://user@auth/reset-password',
+    'ultraedge://auth:8080/reset-password', 'ultraedge://auth/callback'])('rejects unrelated destinations %s', url => {
+    expect(parseAuthCallback(url, 'reset-password')).toBeNull();
   });
-
-  it('should be accessible from Profile screen', () => {
-    const accessPoints = ['ProfileScreen', 'SettingsScreen'];
-    expect(accessPoints).toContain('ProfileScreen');
+  it('accepts exact registered destinations and parses PKCE codes', () => {
+    expect(parseAuthCallback('ultraedge://auth/reset-password?code=example-code', 'reset-password')?.get('code')).toBe('example-code');
   });
-
-  it('should allow dismissing without signing in', () => {
-    const canDismiss = true;
-    expect(canDismiss).toBe(true);
+  it('rejects ambiguous parameters across fragment and query', () => {
+    expect(parseAuthCallback('ultraedge://auth/reset-password?code=one#code=two', 'reset-password')).toBeNull();
+    expect(parseAuthCallback('ultraedge://auth/reset-password#code=one&code=two', 'reset-password')).toBeNull();
+  });
+  it('accepts recovery token pairs, but rejects wrong types, errors and malformed tokens', () => {
+    const params = new URLSearchParams('type=recovery&access_token=header.payload.signature&refresh_token=refresh-token-123');
+    expect(recoveryTokens(params)?.refresh_token).toBe('refresh-token-123');
+    params.set('type', 'signup');
+    expect(recoveryTokens(params)).toBeNull();
+    params.set('type', 'recovery'); params.set('error', 'expired');
+    expect(recoveryTokens(params)).toBeNull();
+    params.delete('error'); params.set('access_token', 'not-a-token');
+    expect(recoveryTokens(params)).toBeNull();
   });
 });

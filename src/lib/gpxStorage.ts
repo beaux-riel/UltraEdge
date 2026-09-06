@@ -7,7 +7,7 @@
  */
 
 import { File } from 'expo-file-system';
-import { supabase } from './supabase';
+import { requireSupabase } from './supabase';
 
 const BUCKET = 'gpx-files';
 const SIGNED_URL_TTL_SECONDS = 300;
@@ -21,7 +21,7 @@ export const gpxStoragePath = (userId: string, eventId: string): string =>
 export async function uploadGpx(userId: string, eventId: string, localFile: File): Promise<string> {
   const path = gpxStoragePath(userId, eventId);
   const body = await localFile.text();
-  const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
+  const { error } = await requireSupabase().storage.from(BUCKET).upload(path, body, {
     contentType: 'application/gpx+xml',
     upsert: true,
   });
@@ -30,7 +30,7 @@ export async function uploadGpx(userId: string, eventId: string, localFile: File
 }
 
 export async function downloadGpx(path: string, destination: File): Promise<string> {
-  const { data, error } = await supabase.storage
+  const { data, error } = await requireSupabase().storage
     .from(BUCKET)
     .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
   if (error || !data?.signedUrl) throw error ?? new Error('Failed to create signed URL');
@@ -40,6 +40,6 @@ export async function downloadGpx(path: string, destination: File): Promise<stri
 }
 
 export async function removeGpx(path: string): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+  const { error } = await requireSupabase().storage.from(BUCKET).remove([path]);
   if (error) throw error;
 }
